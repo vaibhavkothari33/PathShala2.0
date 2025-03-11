@@ -105,7 +105,7 @@ const CoachingRegistration = () => {
   // Enhanced image upload handler
   const handleImageUpload = (e, type) => {
     const files = Array.from(e.target.files);
-    
+
     if (type === 'classroomImages' || type === 'galleryImages') {
       // Handle multiple images
       const newFiles = files.map(file => ({
@@ -214,34 +214,33 @@ const CoachingRegistration = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-
+  
     try {
       await coachingService.checkAuth();
-
+  
       const imageIds = {
-        logo: '',
-        coverImage: '',
-        classroomImages: [],
-        galleryImages: []
+        logo: null,
+        coverImage: null,
+        classroomImages: []
       };
-
+  
       if (formData.images.logo) {
-        const logoId = await coachingService.uploadImage(formData.images.logo);
-        imageIds.logo = logoId;
+        imageIds.logo = await coachingService.uploadImage(formData.images.logo);
+      } else {
+        toast.error("Logo image is required!");
+        return;
       }
-
+  
       if (formData.images.coverImage) {
-        const coverId = await coachingService.uploadImage(formData.images.coverImage);
-        imageIds.coverImage = coverId;
+        imageIds.coverImage = await coachingService.uploadImage(formData.images.coverImage);
       }
-
+  
       if (formData.images.classroomImages.length > 0) {
-        const classroomImageIds = await Promise.all(
+        imageIds.classroomImages = await Promise.all(
           formData.images.classroomImages.map(img => coachingService.uploadImage(img))
         );
-        imageIds.classroomImages = classroomImageIds;
       }
-
+  
       const updatedFaculty = await Promise.all(
         formData.faculty.map(async (faculty) => {
           if (faculty.image) {
@@ -251,34 +250,58 @@ const CoachingRegistration = () => {
           return faculty;
         })
       );
-
-      const submissionData = {
-        basicInfo: formData.basicInfo,
-        images: imageIds,
-        facilities: formData.facilities,
-        subjects: formData.subjects,
-        batches: formData.batches,
-        faculty: updatedFaculty,
-        userId: user.$id,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-
-      await coachingService.registerCoaching(submissionData);
-      toast.success('Coaching center registered successfully!');
-      navigate('/coaching/dashboard');
-    } catch (error) {
-      console.error('Registration error:', error);
-      if (error.message === 'User not authenticated') {
-        toast.error('Please login to continue');
-        navigate('/login');
-      } else {
-        toast.error(error.message || 'Failed to register coaching center');
+  
+      // ✅ Validate required fields
+      if (!formData.basicInfo.description) {
+        toast.error("Description is required!");
+        return;
       }
+  
+      const submissionData = {
+        name: formData.basicInfo.name,
+        description: formData.basicInfo.description,
+        address: formData.basicInfo.address,
+        city: formData.basicInfo.city,
+        phone: formData.basicInfo.phone,
+        email: formData.basicInfo.email,
+        website: formData.basicInfo.website,
+        establishedYear: formData.basicInfo.establishedYear,
+  
+        images_logo: imageIds.logo,
+        images_coverImage: imageIds.coverImage,
+        images_classroomImages: imageIds.classroomImages,
+  
+        batches_name: formData.batches.map(batch => batch.name),
+        batches_subjects: formData.batches.map(batch => batch.subjects),
+        batches_timing: formData.batches.map(batch => batch.timing),
+        batches_capacity: formData.batches.map(batch => batch.capacity),
+        batches_availableSeats: formData.batches.map(batch => batch.availableSeats),
+        batches_monthlyFee: formData.batches.map(batch => batch.monthlyFee),
+        batches_duration: formData.batches.map(batch => batch.duration),
+  
+        faculty_name: updatedFaculty.map(faculty => faculty.name),
+        faculty_qualification: updatedFaculty.map(faculty => faculty.qualification),
+        faculty_experience: updatedFaculty.map(faculty => faculty.experience),
+        faculty_subject: updatedFaculty.map(faculty => faculty.subject),
+        faculty_bio: updatedFaculty.map(faculty => faculty.bio),
+        faculty_image: updatedFaculty.map(faculty => faculty.image)
+      };
+  
+      console.log("Final Submission Data:", JSON.stringify(submissionData, null, 2));
+  
+     
+      
+      await coachingService.registerCoaching(submissionData);
+      toast.success("Coaching center registered successfully!");
+      navigate("/coaching/dashboard");
+    } catch (error) {
+      console.error("Registration error:", error);
+      toast.error(error.message || "Failed to register coaching center");
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <form onSubmit={handleSubmit} className="min-h-screen bg-gray-50 py-12">
@@ -422,7 +445,7 @@ const CoachingRegistration = () => {
           {/* Images Upload */}
           <section className="mb-12">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">Images</h2>
-            
+
             {/* Logo and Cover Image */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               {/* Logo Upload */}
@@ -581,7 +604,7 @@ const CoachingRegistration = () => {
                 Add Batch
               </button>
             </div>
-            
+
             {formData.batches.map((batch, index) => (
               <div key={index} className="bg-gray-50 rounded-lg p-6 mb-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -616,7 +639,7 @@ const CoachingRegistration = () => {
                 Add Faculty
               </button>
             </div>
-            
+
             {formData.faculty.map((faculty, index) => (
               <div key={index} className="bg-gray-50 rounded-lg p-6 mb-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -1,5 +1,5 @@
 import { ID, Query } from 'appwrite';
-import { databases, storage } from '../config/appwrite';
+import { databases, storage,account } from '../config/appwrite';
 
 // Use environment variables for constants
 const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
