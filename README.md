@@ -49,7 +49,7 @@ Pathshala is a comprehensive educational platform that connects students with co
 
 1. Clone the repository
 ```bash
-git clone https://github.com/yourusername/pathshala.git
+git clone https://github.com/vaibhavkothari33/PathShala2.0.git
 cd pathshala
 ```
 
