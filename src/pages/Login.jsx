@@ -10,18 +10,15 @@ const Login = () => {
   const [searchParams] = useSearchParams();
   const userType = searchParams.get('role') || 'student';
   const navigate = useNavigate();
-  const { login, register, loginWithGoogle, user } = useAuth();
+  const { login, loginWithGoogle, user } = useAuth();
   
-  const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    name: '',
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Redirect if already logged in
   useEffect(() => {
     if (user) {
       if (user.labels?.includes('coaching')) {
@@ -38,53 +35,18 @@ const Login = () => {
     setError(''); // Clear error when user types
   };
 
-  const toggleMode = () => {
-    setIsLogin(!isLogin);
-    setError('');
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
 
     try {
-      // Form validation
       if (!formData.email || !formData.password) {
-        setError('Please fill in all required fields');
-        setLoading(false);
-        return;
+        throw new Error('Please fill in all required fields');
       }
 
-      if (!isLogin && !formData.name) {
-        setError('Please enter your name to create an account');
-        setLoading(false);
-        return;
-      }
-
-      if (isLogin) {
-        // Login flow
-        const user = await login(formData.email, formData.password);
-        console.log('Login successful:', user);
-        
-        // Redirect based on user role
-        if (user?.labels?.includes('coaching')) {
-          navigate('/coaching/dashboard');
-        } else {
-          navigate('/student/dashboard');
-        }
-      } else {
-        // Registration flow
-        const user = await register(formData.email, formData.password, formData.name);
-        console.log('Registration successful:', user);
-        
-        // Redirect based on role
-        if (userType === 'coaching') {
-          navigate('/coaching/dashboard');
-        } else {
-          navigate('/student/dashboard');
-        }
-      }
+      await login(formData.email, formData.password);
+      // Navigation will be handled by the useEffect above
     } catch (error) {
       console.error('Auth error:', error);
       setError(error.message || 'Authentication failed');
@@ -97,12 +59,11 @@ const Login = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      console.log("Initiating Google login...");
       await loginWithGoogle();
-      // Note: Redirect will happen automatically
+      // Redirect will happen in AuthCallback component
     } catch (error) {
       console.error('Google login error:', error);
-      toast.error('Failed to initiate Google login');
+      setError(error.message || 'Failed to login with Google');
       setLoading(false);
     }
   };
@@ -220,16 +181,10 @@ const Login = () => {
             </div>
 
             <h2 className="text-center text-3xl font-extrabold text-gray-900 mb-2">
-              {isLogin ? 'Sign in to your account' : 'Create your account'}
+              Sign in to your account
             </h2>
             <p className="text-center text-sm text-gray-600 mb-8">
-              Join as a {userType}{' '}
-              <button 
-                onClick={() => navigate(`/login?role=${userType === 'student' ? 'coaching' : 'student'}`)}
-                className="text-indigo-600 hover:text-indigo-500 font-medium"
-              >
-                Switch to {userType === 'student' ? 'coaching' : 'student'}
-              </button>
+              Join as a {userType} 
             </p>
 
             {error && (
@@ -244,27 +199,6 @@ const Login = () => {
 
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="rounded-md shadow-sm space-y-4">
-                {!isLogin && (
-                  <div>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                      Full Name
-                    </label>
-                    <div className="mt-1 relative">
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                      <input
-                        id="name"
-                        name="name"
-                        type="text"
-                        required={!isLogin}
-                        value={formData.name}
-                        onChange={handleInputChange}
-                        className="appearance-none rounded-lg relative block w-full px-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                        placeholder="John Doe"
-                      />
-                    </div>
-                  </div>
-                )}
-
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                     Email address
@@ -289,11 +223,6 @@ const Login = () => {
                     <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                       Password
                     </label>
-                    {isLogin && (
-                      <a href="#" className="text-sm text-indigo-600 hover:text-indigo-500">
-                        Forgot password?
-                      </a>
-                    )}
                   </div>
                   <div className="mt-1 relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -324,11 +253,11 @@ const Login = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    {isLogin ? 'Signing in...' : 'Creating account...'}
+                    Signing in...
                   </div>
                 ) : (
                   <div className="flex items-center">
-                    {isLogin ? 'Sign In' : 'Create Account'}
+                    Sign In
                     <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </div>
                 )}
@@ -355,12 +284,10 @@ const Login = () => {
             </form>
 
             <div className="mt-8 text-center">
-              <button 
-                onClick={toggleMode}
-                className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
-              >
-                {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
-              </button>
+            Don't have an account? &nbsp;
+              <Link to="/register" className="font-medium text-indigo-600 hover:text-indigo-500">
+                Sign up instead
+              </Link>
             </div>
           </div>
 

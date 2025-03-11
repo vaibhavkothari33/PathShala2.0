@@ -3,15 +3,16 @@ import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import { FcGoogle } from 'react-icons/fc';
-import { ArrowRight, Mail, Lock, User, Upload, CheckCircle, School, BookOpen, Users } from 'lucide-react';
-import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { ArrowRight, Mail, Lock, User, CheckCircle, School, BookOpen, Users } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { storage } from '../config/appwrite'; // Update this import to use Appwrite storage
+import { ID } from 'appwrite';
 
 const Register = () => {
   const [searchParams] = useSearchParams();
   const userType = searchParams.get('role') || 'student';
   const navigate = useNavigate();
-  const { googleSignIn, emailSignUp, register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -29,6 +30,29 @@ const Register = () => {
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
+    setError(''); // Clear error when user types
+  };
+
+  const uploadProfilePicture = async (file) => {
+    try {
+      const fileId = ID.unique();
+      await storage.createFile(
+        import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID,
+        fileId,
+        file
+      );
+      
+      // Get the file view URL
+      const fileUrl = storage.getFileView(
+        import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID,
+        fileId
+      );
+      
+      return fileUrl;
+    } catch (error) {
+      console.error('Error uploading profile picture:', error);
+      throw error;
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -37,46 +61,66 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const user = await register(formData.email, formData.password, formData.name);
-      console.log('Registration/Login successful:', user);
-      
-      // Update profile
-      await user.updateProfile({
-        displayName: formData.name,
-      });
-
-      // If there's a profile picture, upload it
-      if (formData.profilePicture) {
-        const storage = getStorage();
-        const storageRef = ref(storage, `profilePictures/${user.uid}`);
-        await uploadBytes(storageRef, formData.profilePicture);
-        const photoURL = await getDownloadURL(storageRef);
-        await user.updateProfile({ photoURL });
+      // Validate form data
+      if (!formData.email || !formData.password || !formData.name) {
+        throw new Error('Please fill in all required fields');
       }
 
-      // Send verification email
-      await user.sendEmailVerification();
-      
-      // Redirect to coaching registration if user type is coaching
-      if (user.labels?.includes('coaching')) {
+      let profilePictureUrl = null;
+      if (formData.profilePicture) {
+        try {
+          profilePictureUrl = await uploadProfilePicture(formData.profilePicture);
+        } catch (uploadError) {
+          console.error('Profile picture upload failed:', uploadError);
+          toast.error('Failed to upload profile picture, continuing with registration');
+        }
+      }
+
+      // Register the user
+      const user = await register(formData.email, formData.password, formData.name);
+      console.log('Registration successful:', user);
+
+      // Add user role and profile picture if available
+      try {
+        // Note: You'll need to implement these methods in your AuthContext
+        await user.addLabel(userType);
+        if (profilePictureUrl) {
+          await user.updatePrefs({
+            profilePicture: profilePictureUrl
+          });
+        }
+      } catch (updateError) {
+        console.error('Error updating user profile:', updateError);
+      }
+
+      toast.success('Registration successful!');
+
+      // Redirect based on role
+      if (userType === 'coaching') {
         navigate('/coaching/dashboard');
       } else {
         navigate('/student/dashboard');
       }
     } catch (error) {
       console.error('Registration error:', error);
-      setError(error.message);
+      setError(error.message || 'Registration failed');
+      toast.error(error.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = async (e) => {
+    e.preventDefault();
     try {
-      await googleSignIn();
-      navigate(userType === 'student' ? '/student/dashboard' : '/coaching/dashboard');
+      setLoading(true);
+      console.log("Initiating Google login...");
+      await loginWithGoogle();
+      // Note: Redirect will happen in AuthCallback
     } catch (error) {
-      setError(error.message);
+      console.error('Google login error:', error);
+      toast.error('Failed to initiate Google login');
+      setLoading(false);
     }
   };
 
@@ -173,7 +217,7 @@ const Register = () => {
         </div>
 
         <div className="text-sm text-blue-200">
-          <p>© 2024 Pathshala. All rights reserved.</p>
+          <p>© 2025 Pathshala. All rights reserved.</p>
           <p className="mt-1">Trusted by 10,000+ students and 500+ coaching institutes</p>
         </div>
       </div>
@@ -328,6 +372,7 @@ const Register = () => {
                 whileTap={{ scale: 0.98 }}
                 type="button"
                 onClick={handleGoogleSignIn}
+                disabled={loading}
                 className="w-full flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
               >
                 <FcGoogle className="h-5 w-5 mr-2" />

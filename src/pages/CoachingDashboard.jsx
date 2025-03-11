@@ -14,8 +14,12 @@ import {
   Award,
   DollarSign,
   ChevronLeft,
-  MessageCircle
+  MessageCircle,
+  CheckCircle
 } from 'lucide-react';
+import { databases } from '../config/appwrite';
+import { Query } from 'appwrite';
+import { toast } from 'react-hot-toast';
 
 const CoachingDetails = () => {
   const { slug } = useParams();
@@ -25,73 +29,70 @@ const CoachingDetails = () => {
   const [selectedBatch, setSelectedBatch] = useState(null);
 
   useEffect(() => {
-    // Simulated API call - Replace with actual API call
-    setTimeout(() => {
-      setCoaching({
-        id: 1,
-        name: "Excellence Academy",
-        slug: "excellence-academy",
-        description: "Excellence Academy is a premier coaching institute dedicated to providing quality education in sciences and mathematics. With experienced faculty and proven teaching methodologies, we help students achieve their academic goals.",
-        subjects: ["Mathematics", "Physics", "Chemistry"],
-        rating: 4.8,
-        reviews: 156,
-        distance: "1.2",
-        price: "₹2000",
-        students: 120,
-        image: "https://example.com/image1.jpg",
-        location: "Sector 18, Noida",
-        address: "Plot 12, Sector 18, Noida, UP 201301",
-        availability: "Mon-Sat, 9 AM - 7 PM",
-        contact: {
-          phone: "+91 98765 43210",
-          email: "contact@excellenceacademy.com",
-          website: "www.excellenceacademy.com"
-        },
-        facilities: [
-          "Air Conditioned Classrooms",
-          "Digital Learning Tools",
-          "Library Access",
-          "Study Material Provided",
-          "Practice Tests",
-          "Doubt Clearing Sessions"
-        ],
-        batches: [
-          {
-            id: 1,
-            name: "Morning Batch",
-            timing: "6:00 AM - 8:00 AM",
-            subjects: ["Physics", "Chemistry"],
-            seats: 30,
-            available: 8,
-            price: "₹2500/month"
+    const fetchCoachingDetails = async () => {
+      try {
+        console.log('Fetching details for slug:', slug);
+        
+        // Query the coaching collection for the document with matching slug
+        const response = await databases.listDocuments(
+          import.meta.env.VITE_APPWRITE_DATABASE_ID,
+          import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID,
+          [
+            Query.equal('slug', [slug])
+          ]
+        );
+
+        console.log('Response:', response);
+
+        if (response.documents.length === 0) {
+          console.log('No coaching found with slug:', slug);
+          toast.error('Coaching center not found');
+          setLoading(false);
+          return;
+        }
+
+        const doc = response.documents[0];
+        console.log('Found coaching document:', doc);
+
+        // Format the coaching data
+        const coachingData = {
+          id: doc.$id,
+          name: doc.name,
+          slug: doc.slug,
+          description: doc.description,
+          subjects: doc.subjects || [],
+          rating: doc.rating || 4.5,
+          reviews: doc.reviews || 0,
+          students: doc.basicInfo?.totalStudents || 0,
+          image: doc.images?.coverImage,
+          location: doc.basicInfo?.address,
+          address: doc.basicInfo?.address,
+          availability: doc.basicInfo?.timings,
+          contact: {
+            phone: doc.basicInfo?.phone || '',
+            email: doc.basicInfo?.email || '',
+            website: doc.basicInfo?.website || ''
           },
-          {
-            id: 2,
-            name: "Evening Batch",
-            timing: "4:00 PM - 6:00 PM",
-            subjects: ["Mathematics"],
-            seats: 25,
-            available: 5,
-            price: "₹2000/month"
-          }
-        ],
-        faculty: [
-          {
-            name: "Dr. Sharma",
-            subject: "Physics",
-            experience: "15 years",
-            qualification: "PhD in Physics"
-          },
-          {
-            name: "Prof. Verma",
-            subject: "Mathematics",
-            experience: "12 years",
-            qualification: "M.Sc. Mathematics"
-          }
-        ]
-      });
-      setLoading(false);
-    }, 1000);
+          facilities: doc.facilities || [],
+          batches: doc.batches || [],
+          faculty: doc.faculty || [],
+          establishedYear: doc.basicInfo?.establishedYear,
+          price: doc.basicInfo?.fees || '₹2000'
+        };
+
+        console.log('Formatted coaching data:', coachingData);
+        setCoaching(coachingData);
+      } catch (error) {
+        console.error('Error fetching coaching details:', error);
+        toast.error('Failed to load coaching details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (slug) {
+      fetchCoachingDetails();
+    }
   }, [slug]);
 
   if (loading) {
@@ -107,7 +108,7 @@ const CoachingDetails = () => {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-gray-900">Coaching not found</h2>
-          <Link to="/dashboard" className="mt-4 text-indigo-600 hover:text-indigo-500">
+          <Link to="/student/dashboard" className="mt-4 text-indigo-600 hover:text-indigo-500">
             Return to Dashboard
           </Link>
         </div>
@@ -121,7 +122,7 @@ const CoachingDetails = () => {
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Link 
-            to="/dashboard" 
+            to="/student/dashboard" 
             className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
           >
             <ChevronLeft className="h-5 w-5 mr-1" />
@@ -176,17 +177,19 @@ const CoachingDetails = () => {
                       <p className="text-gray-600">{coaching.description}</p>
                     </div>
 
-                    <div>
-                      <h3 className="text-lg font-semibold mb-2">Facilities</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {coaching.facilities.map((facility, index) => (
-                          <div key={index} className="flex items-center">
-                            <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                            <span>{facility}</span>
-                          </div>
-                        ))}
+                    {coaching.facilities.length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-2">Facilities</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {coaching.facilities.map((facility, index) => (
+                            <div key={index} className="flex items-center">
+                              <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                              <span>{facility}</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 )}
 
@@ -211,13 +214,13 @@ const CoachingDetails = () => {
                               </div>
                               <div className="flex items-center">
                                 <Users className="h-4 w-4 mr-2" />
-                                {batch.available} seats available
+                                {batch.availableSeats} seats available
                               </div>
                             </div>
                           </div>
                           <div className="text-right">
                             <div className="text-lg font-semibold text-indigo-600">
-                              {batch.price}
+                              {batch.fees}
                             </div>
                             <button 
                               onClick={() => setSelectedBatch(batch.id)}
@@ -258,7 +261,6 @@ const CoachingDetails = () => {
 
                 {activeTab === 'reviews' && (
                   <div className="space-y-4">
-                    {/* Add reviews component here */}
                     <p className="text-gray-600">Reviews coming soon...</p>
                   </div>
                 )}
@@ -271,28 +273,36 @@ const CoachingDetails = () => {
             <div className="bg-white rounded-lg shadow p-6 sticky top-6">
               <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
               <div className="space-y-4">
-                <div className="flex items-center">
-                  <MapPin className="h-5 w-5 text-gray-400 mr-2" />
-                  <span className="text-gray-600">{coaching.address}</span>
-                </div>
-                <div className="flex items-center">
-                  <Phone className="h-5 w-5 text-gray-400 mr-2" />
-                  <a href={`tel:${coaching.contact.phone}`} className="text-indigo-600 hover:text-indigo-500">
-                    {coaching.contact.phone}
-                  </a>
-                </div>
-                <div className="flex items-center">
-                  <Mail className="h-5 w-5 text-gray-400 mr-2" />
-                  <a href={`mailto:${coaching.contact.email}`} className="text-indigo-600 hover:text-indigo-500">
-                    {coaching.contact.email}
-                  </a>
-                </div>
-                <div className="flex items-center">
-                  <Globe className="h-5 w-5 text-gray-400 mr-2" />
-                  <a href={`https://${coaching.contact.website}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-500">
-                    {coaching.contact.website}
-                  </a>
-                </div>
+                {coaching.address && (
+                  <div className="flex items-center">
+                    <MapPin className="h-5 w-5 text-gray-400 mr-2" />
+                    <span className="text-gray-600">{coaching.address}</span>
+                  </div>
+                )}
+                {coaching.contact.phone && (
+                  <div className="flex items-center">
+                    <Phone className="h-5 w-5 text-gray-400 mr-2" />
+                    <a href={`tel:${coaching.contact.phone}`} className="text-indigo-600 hover:text-indigo-500">
+                      {coaching.contact.phone}
+                    </a>
+                  </div>
+                )}
+                {coaching.contact.email && (
+                  <div className="flex items-center">
+                    <Mail className="h-5 w-5 text-gray-400 mr-2" />
+                    <a href={`mailto:${coaching.contact.email}`} className="text-indigo-600 hover:text-indigo-500">
+                      {coaching.contact.email}
+                    </a>
+                  </div>
+                )}
+                {coaching.contact.website && (
+                  <div className="flex items-center">
+                    <Globe className="h-5 w-5 text-gray-400 mr-2" />
+                    <a href={`https://${coaching.contact.website}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-500">
+                      {coaching.contact.website}
+                    </a>
+                  </div>
+                )}
               </div>
 
               <div className="mt-6 pt-6 border-t">

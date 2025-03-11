@@ -15,59 +15,107 @@ import {
   ChevronLeft,
   MessageCircle
 } from 'lucide-react';
-import coachingService from '../../services/coachingService';
+import { databases } from '../../config/appwrite';
+import { Query } from 'appwrite';
+import { toast } from 'react-hot-toast';
 
 const CoachingDetails = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
   const [coaching, setCoaching] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedBatch, setSelectedBatch] = useState(null);
 
   useEffect(() => {
-    const fetchCoaching = async () => {
+    const fetchCoachingDetails = async () => {
       try {
-        const data = await coachingService.getCoachingBySlug(slug);
-        setCoaching(data);
+        console.log('Fetching details for slug:', slug);
+        
+        const response = await databases.listDocuments(
+          import.meta.env.VITE_APPWRITE_DATABASE_ID,
+          import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID,
+          [
+            Query.equal('slug', [slug])
+          ]
+        );
+
+        console.log('Response:', response);
+
+        if (response.documents.length === 0) {
+          console.log('No coaching found with slug:', slug);
+          toast.error('Coaching center not found');
+          navigate('/student/dashboard');
+          return;
+        }
+
+        const doc = response.documents[0];
+        console.log('Found coaching document:', doc);
+
+        const coachingData = {
+          id: doc.$id,
+          name: doc.name,
+          slug: doc.slug,
+          description: doc.description,
+          subjects: doc.subjects || [],
+          rating: doc.rating || 4.5,
+          reviews: doc.reviews || 0,
+          students: doc.basicInfo?.totalStudents || 0,
+          image: doc.images?.coverImage,
+          location: doc.basicInfo?.address,
+          address: doc.basicInfo?.address,
+          availability: doc.basicInfo?.timings,
+          contact: {
+            phone: doc.basicInfo?.phone || '',
+            email: doc.basicInfo?.email || '',
+            website: doc.basicInfo?.website || ''
+          },
+          facilities: doc.facilities || [],
+          batches: doc.batches?.map(batch => ({
+            ...batch,
+            id: batch.id || Math.random().toString(36).substr(2, 9)
+          })) || [],
+          faculty: doc.faculty || [],
+          establishedYear: doc.basicInfo?.establishedYear,
+          price: doc.basicInfo?.fees || '₹2000'
+        };
+
+        console.log('Formatted coaching data:', coachingData);
+        setCoaching(coachingData);
       } catch (error) {
-        setError(error.message);
-        console.error('Error fetching coaching:', error);
+        console.error('Error fetching coaching details:', error);
+        toast.error('Failed to load coaching details');
+        navigate('/student/dashboard');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCoaching();
-  }, [slug]);
+    if (slug) {
+      fetchCoachingDetails();
+    }
+  }, [slug, navigate]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          className="h-12 w-12 border-t-2 border-b-2 border-indigo-600 rounded-full"
+        />
       </div>
     );
   }
 
-  if (error || !coaching) {
+  if (!coaching) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-4">
-            {error === 'Coaching not found' ? 'Coaching not found' : 'Something went wrong'}
-          </h2>
-          <p className="text-gray-600 mb-4">
-            {error === 'Coaching not found' 
-              ? "The coaching center you're looking for doesn't exist." 
-              : "We're having trouble loading this page."}
-          </p>
-          <button
-            onClick={() => navigate('/dashboard')}
-            className="text-indigo-600 hover:text-indigo-500 font-medium"
-          >
+          <h2 className="text-2xl font-bold text-gray-900">Coaching not found</h2>
+          <Link to="/student/dashboard" className="mt-4 text-indigo-600 hover:text-indigo-500">
             Return to Dashboard
-          </button>
+          </Link>
         </div>
       </div>
     );

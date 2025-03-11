@@ -10,9 +10,13 @@ import {
   BookOpen,
   ChevronDown,
   X,
-  ArrowRight
+  ArrowRight,
+  CheckCircle,
+  DollarSign
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { databases } from '../config/appwrite'; // Import Appwrite databases
+import { toast } from 'react-hot-toast';
 
 const StudentDashboard = () => {
   const [coachingCenters, setCoachingCenters] = useState([]);
@@ -27,42 +31,10 @@ const StudentDashboard = () => {
   const [showFilters, setShowFilters] = useState(false);
   const [userLocation, setUserLocation] = useState(null);
 
-  // Sample data - Replace with API call
+  // Fetch coaching centers from Appwrite
   useEffect(() => {
-    // Simulating API call
-    setTimeout(() => {
-      setCoachingCenters([
-        {
-          id: 1,
-          name: "Excellence Academy",
-          slug: "excellence-academy",
-          subjects: ["Mathematics", "Physics", "Chemistry"],
-          rating: 4.8,
-          distance: "1.2",
-          price: "₹2000",
-          students: 120,
-          image: "https://upload.wikimedia.org/wikipedia/commons/b/b0/Bennett_University_.jpg",
-          location: "Sector 18, Noida",
-          availability: "Mon-Sat, 9 AM - 7 PM"
-        },
-        {
-          id: 2,
-          name: "Science Hub",
-          slug: "science-hub",
-          subjects: ["Physics", "Chemistry", "Biology"],
-          rating: 4.6,
-          distance: "2.5",
-          price: "₹2500",
-          students: 150,
-          image: "https://upload.wikimedia.org/wikipedia/commons/b/b0/Bennett_University_.jpg",
-          location: "Sector 15, Noida",
-          availability: "Mon-Sat, 8 AM - 8 PM"
-        },
-        // Add more coaching centers...
-      ]);
-      setLoading(false);
-    }, 1000);
-
+    fetchCoachingCenters();
+    
     // Get user's location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -78,6 +50,91 @@ const StudentDashboard = () => {
       );
     }
   }, []);
+
+  const fetchCoachingCenters = async () => {
+    try {
+      const response = await databases.listDocuments(
+        import.meta.env.VITE_APPWRITE_DATABASE_ID,
+        import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID
+      );
+
+      console.log('Fetched coaching centers:', response.documents);
+
+      const formattedCenters = response.documents.map(doc => ({
+        id: doc.$id,
+        name: doc.name || 'Unnamed Center',
+        slug: doc.slug,
+        description: doc.description || '',
+        subjects: doc.subjects || [],
+        rating: doc.rating || 4.5,
+        reviews: doc.reviews || 0,
+        price: doc.basicInfo?.fees || "₹2000",
+        students: doc.basicInfo?.totalStudents || 0,
+        image: doc.images?.coverImage || "https://upload.wikimedia.org/wikipedia/commons/b/b0/Bennett_University_.jpg",
+        location: doc.basicInfo?.address || "Address not available",
+        city: doc.basicInfo?.city || "",
+        availability: doc.basicInfo?.timings || "Mon-Sat, 9 AM - 7 PM",
+        contact: {
+          phone: doc.basicInfo?.phone || "",
+          email: doc.basicInfo?.email || "",
+          website: doc.basicInfo?.website || ""
+        },
+        facilities: doc.facilities || [],
+        batches: doc.batches || [],
+        faculty: doc.faculty || [],
+        establishedYear: doc.basicInfo?.establishedYear,
+        classroomImages: doc.images?.classroomImages || []
+      }));
+
+      console.log('Formatted centers:', formattedCenters);
+      setCoachingCenters(formattedCenters);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error fetching coaching centers:', error);
+      toast.error('Failed to load coaching centers');
+      setLoading(false);
+    }
+  };
+
+  // Filter and search functionality
+  const getFilteredCenters = () => {
+    return coachingCenters.filter(center => {
+      // Search query filter
+      if (searchQuery) {
+        const searchLower = searchQuery.toLowerCase();
+        const matchName = center.name.toLowerCase().includes(searchLower);
+        const matchCity = center.city.toLowerCase().includes(searchLower);
+        const matchSubjects = center.subjects.some(subject => 
+          subject.toLowerCase().includes(searchLower)
+        );
+        if (!matchName && !matchCity && !matchSubjects) return false;
+      }
+
+      // Subject filter
+      if (filters.subject && !center.subjects.includes(filters.subject)) {
+        return false;
+      }
+
+      // Rating filter
+      if (filters.rating) {
+        const minRating = parseInt(filters.rating.split('+')[0]);
+        if (center.rating < minRating) return false;
+      }
+
+      // Price range filter
+      if (filters.priceRange) {
+        const price = parseInt(center.price.replace(/[^0-9]/g, ''));
+        const [min, max] = filters.priceRange.split('-').map(p => 
+          parseInt(p.replace(/[^0-9]/g, ''))
+        );
+        if (price < min || (max && price > max)) return false;
+      }
+
+      return true;
+    });
+  };
+
+  const filteredCenters = getFilteredCenters();
 
   const filterOptions = {
     subjects: ["Mathematics", "Physics", "Chemistry", "Biology", "English"],
@@ -259,7 +316,7 @@ const StudentDashboard = () => {
           )}
         </AnimatePresence>
 
-        {/* Enhanced Coaching Centers Grid */}
+        {/* Updated Coaching Centers Grid */}
         {loading ? (
           <div className="mt-12 flex flex-col items-center justify-center">
             <motion.div
@@ -269,9 +326,15 @@ const StudentDashboard = () => {
             />
             <p className="mt-4 text-gray-600">Loading coaching centers...</p>
           </div>
+        ) : filteredCenters.length === 0 ? (
+          <div className="mt-12 text-center">
+            <BookOpen className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-lg font-medium text-gray-900">No coaching centers found</h3>
+            <p className="mt-1 text-gray-500">Try adjusting your filters or search query</p>
+          </div>
         ) : (
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {coachingCenters.map((center, index) => (
+            {filteredCenters.map((center, index) => (
               <motion.div
                 key={center.id}
                 initial={{ opacity: 0, y: 20 }}
@@ -280,6 +343,14 @@ const StudentDashboard = () => {
                 className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300"
               >
                 <div className="relative h-48 rounded-t-xl overflow-hidden">
+                  <img 
+                    src={center.image} 
+                    alt={center.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.src = "https://upload.wikimedia.org/wikipedia/commons/b/b0/Bennett_University_.jpg";
+                    }}
+                  />
                   <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-blue-600 opacity-90 group-hover:opacity-100 transition-opacity duration-300" />
                   <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
                     <h3 className="text-lg font-semibold text-white">{center.name}</h3>
@@ -294,33 +365,48 @@ const StudentDashboard = () => {
                     <div className="flex items-center">
                       <Star className="h-5 w-5 text-yellow-400" />
                       <span className="ml-1 font-medium">{center.rating}</span>
-                      <span className="mx-2 text-gray-300">•</span>
-                      <Users className="h-5 w-5 text-gray-400" />
-                      <span className="ml-1 text-gray-600">{center.students} students</span>
+                      {center.reviews > 0 && (
+                        <>
+                          <span className="mx-2 text-gray-300">•</span>
+                          <span className="text-gray-600">{center.reviews} reviews</span>
+                        </>
+                      )}
                     </div>
+                    {center.students > 0 && (
+                      <div className="flex items-center text-gray-600">
+                        <Users className="h-5 w-5 mr-1" />
+                        <span>{center.students} students</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-2 mb-4">
-                    <div className="flex items-center text-gray-600">
-                      <MapPin className="h-4 w-4 mr-2 text-indigo-500" />
-                      <span className="text-sm">{center.location}</span>
-                    </div>
-                    <div className="flex items-center text-gray-600">
-                      <Clock className="h-4 w-4 mr-2 text-indigo-500" />
-                      <span className="text-sm">{center.availability}</span>
-                    </div>
+                    {center.location && (
+                      <div className="flex items-center text-gray-600">
+                        <MapPin className="h-4 w-4 mr-2 text-indigo-500" />
+                        <span className="text-sm">{center.location}</span>
+                      </div>
+                    )}
+                    {center.availability && (
+                      <div className="flex items-center text-gray-600">
+                        <Clock className="h-4 w-4 mr-2 text-indigo-500" />
+                        <span className="text-sm">{center.availability}</span>
+                      </div>
+                    )}
                   </div>
 
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {center.subjects.map((subject, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-medium hover:bg-indigo-100 transition-colors duration-200"
-                      >
-                        {subject}
-                      </span>
-                    ))}
-                  </div>
+                  {center.subjects.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-6">
+                      {center.subjects.map((subject, index) => (
+                        <span
+                          key={index}
+                          className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-medium hover:bg-indigo-100 transition-colors duration-200"
+                        >
+                          {subject}
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
                   <Link 
                     to={`/coaching/${center.slug}`}
