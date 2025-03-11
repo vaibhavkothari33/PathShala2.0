@@ -1,17 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import { FcGoogle } from 'react-icons/fc';
-import { ArrowRight, Mail, Lock, User, Upload, CheckCircle, School, BookOpen, Users } from 'lucide-react';
+import { ArrowRight, Mail, Lock, User, CheckCircle, School, BookOpen, Users } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const Login = () => {
   const [searchParams] = useSearchParams();
   const userType = searchParams.get('role') || 'student';
   const navigate = useNavigate();
-  const { login, register, loginWithGoogle } = useAuth();
+  const { login, register, loginWithGoogle, user } = useAuth();
   
+  const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -20,10 +21,26 @@ const Login = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      if (user.labels?.includes('coaching')) {
+        navigate('/coaching/dashboard');
+      } else {
+        navigate('/student/dashboard');
+      }
+    }
+  }, [user, navigate]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     setError(''); // Clear error when user types
+  };
+
+  const toggleMode = () => {
+    setIsLogin(!isLogin);
+    setError('');
   };
 
   const handleSubmit = async (e) => {
@@ -32,28 +49,21 @@ const Login = () => {
     setLoading(true);
 
     try {
-      if (formData.name) {
-        // This is a registration
-        const user = await register(formData.email, formData.password, formData.name);
-        console.log('Registration successful:', user);
-        
-        // Add user role label
-        try {
-          // Note: You'll need to implement this in your AuthContext
-          await user.addLabel(userType);
-          console.log(`Added ${userType} role to user`);
-        } catch (labelError) {
-          console.error('Error adding user role:', labelError);
-        }
+      // Form validation
+      if (!formData.email || !formData.password) {
+        setError('Please fill in all required fields');
+        setLoading(false);
+        return;
+      }
 
-        // Redirect based on role
-        if (userType === 'coaching') {
-          navigate('/coaching/dashboard');
-        } else {
-          navigate('/student/dashboard');
-        }
-      } else {
-        // This is a login
+      if (!isLogin && !formData.name) {
+        setError('Please enter your name to create an account');
+        setLoading(false);
+        return;
+      }
+
+      if (isLogin) {
+        // Login flow
         const user = await login(formData.email, formData.password);
         console.log('Login successful:', user);
         
@@ -63,11 +73,21 @@ const Login = () => {
         } else {
           navigate('/student/dashboard');
         }
+      } else {
+        // Registration flow
+        const user = await register(formData.email, formData.password, formData.name);
+        console.log('Registration successful:', user);
+        
+        // Redirect based on role
+        if (userType === 'coaching') {
+          navigate('/coaching/dashboard');
+        } else {
+          navigate('/student/dashboard');
+        }
       }
     } catch (error) {
       console.error('Auth error:', error);
       setError(error.message || 'Authentication failed');
-      toast.error(error.message || 'Authentication failed');
     } finally {
       setLoading(false);
     }
@@ -111,7 +131,7 @@ const Login = () => {
             transition={{ delay: 0.2 }}
             className="text-4xl font-bold mb-6"
           >
-            Join Pathshala Today
+            Welcome to Pathshala
           </motion.h1>
           <motion.p 
             initial={{ opacity: 0, y: 20 }}
@@ -180,12 +200,12 @@ const Login = () => {
         </div>
 
         <div className="text-sm text-blue-200">
-          <p>© 2024 Pathshala. All rights reserved.</p>
+          <p>© 2025 Pathshala. All rights reserved.</p>
           <p className="mt-1">Trusted by 10,000+ students and 500+ coaching institutes</p>
         </div>
       </div>
 
-      {/* Right Panel - Registration Form */}
+      {/* Right Panel - Auth Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -200,12 +220,12 @@ const Login = () => {
             </div>
 
             <h2 className="text-center text-3xl font-extrabold text-gray-900 mb-2">
-              Create your account
+              {isLogin ? 'Sign in to your account' : 'Create your account'}
             </h2>
             <p className="text-center text-sm text-gray-600 mb-8">
               Join as a {userType}{' '}
               <button 
-                onClick={() => navigate(`/Login?role=${userType === 'student' ? 'coaching' : 'student'}`)}
+                onClick={() => navigate(`/login?role=${userType === 'student' ? 'coaching' : 'student'}`)}
                 className="text-indigo-600 hover:text-indigo-500 font-medium"
               >
                 Switch to {userType === 'student' ? 'coaching' : 'student'}
@@ -224,24 +244,26 @@ const Login = () => {
 
             <form className="space-y-6" onSubmit={handleSubmit}>
               <div className="rounded-md shadow-sm space-y-4">
-                <div>
-                  <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                    Full Name
-                  </label>
-                  <div className="mt-1 relative">
-                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-                    <input
-                      id="name"
-                      name="name"
-                      type="text"
-                      required
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className="appearance-none rounded-lg relative block w-full px-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                      placeholder="John Doe"
-                    />
+                {!isLogin && (
+                  <div>
+                    <label htmlFor="name" className="block text-sm font-medium text-gray-700">
+                      Full Name
+                    </label>
+                    <div className="mt-1 relative">
+                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+                      <input
+                        id="name"
+                        name="name"
+                        type="text"
+                        required={!isLogin}
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        className="appearance-none rounded-lg relative block w-full px-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="John Doe"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700">
@@ -263,9 +285,16 @@ const Login = () => {
                 </div>
 
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                    Password
-                  </label>
+                  <div className="flex justify-between">
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                      Password
+                    </label>
+                    {isLogin && (
+                      <a href="#" className="text-sm text-indigo-600 hover:text-indigo-500">
+                        Forgot password?
+                      </a>
+                    )}
+                  </div>
                   <div className="mt-1 relative">
                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
                     <input
@@ -280,8 +309,6 @@ const Login = () => {
                     />
                   </div>
                 </div>
-
-                
               </div>
 
               <motion.button
@@ -297,11 +324,11 @@ const Login = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Creating account...
+                    {isLogin ? 'Signing in...' : 'Creating account...'}
                   </div>
                 ) : (
                   <div className="flex items-center">
-                    Create Account
+                    {isLogin ? 'Sign In' : 'Create Account'}
                     <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
                   </div>
                 )}
@@ -319,19 +346,22 @@ const Login = () => {
               <button
                 onClick={handleGoogleLogin}
                 type="button"
-                className="w-full flex justify-center items-center gap-2 bg-white text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-md border border-gray-300 transition-colors duration-200"
+                disabled={loading}
+                className="w-full flex justify-center items-center gap-2 bg-white text-gray-700 hover:bg-gray-50 px-4 py-3 rounded-lg border border-gray-300 transition-colors duration-200"
               >
                 <FcGoogle className="w-5 h-5" />
                 <span>Continue with Google</span>
               </button>
             </form>
 
-            <p className="mt-8 text-center text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
-                Sign in instead
-              </Link>
-            </p>
+            <div className="mt-8 text-center">
+              <button 
+                onClick={toggleMode}
+                className="font-medium text-indigo-600 hover:text-indigo-500 transition-colors"
+              >
+                {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
+              </button>
+            </div>
           </div>
 
           <p className="mt-4 text-center text-xs text-gray-500">

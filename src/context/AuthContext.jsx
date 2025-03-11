@@ -62,7 +62,7 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     try {
       const session = await account.createEmailSession(email, password);
-      localStorage.setItem('jwt', session.providerAccessToken);
+      localStorage.setItem('jwt', session.providerAccessToken || session.$id);
       
       const currentUser = await account.get();
       setUser(currentUser);
@@ -83,15 +83,14 @@ export function AuthProvider({ children }) {
 
   const register = async (email, password, name) => {
     try {
-      // First check if user exists
+      // First try to create the account
       try {
-        // Try to create the account
         await account.create(ID.unique(), email, password, name);
         console.log("Account created successfully");
         
         // If creation successful, proceed with login
         const session = await account.createEmailSession(email, password);
-        localStorage.setItem('jwt', session.providerAccessToken);
+        localStorage.setItem('jwt', session.providerAccessToken || session.$id);
         
         const currentUser = await account.get();
         setUser(currentUser);
@@ -100,14 +99,8 @@ export function AuthProvider({ children }) {
       } catch (error) {
         if (error.code === 409) { // User already exists
           // Try to login instead
-          console.log("User exists, attempting login...");
-          const session = await account.createEmailSession(email, password);
-          localStorage.setItem('jwt', session.providerAccessToken);
-          
-          const currentUser = await account.get();
-          setUser(currentUser);
-          toast.success('Logged in with existing account');
-          return currentUser;
+          toast.info("Account already exists, logging in...");
+          return await login(email, password);
         } else {
           throw error; // Re-throw other errors
         }
@@ -120,11 +113,36 @@ export function AuthProvider({ children }) {
         toast.error('Account already exists. Please login instead.');
       } else if (error.code === 401) {
         toast.error('Invalid credentials. Please check your email and password.');
+      } else if (error.message) {
+        toast.error(error.message);
       } else {
         toast.error('Registration failed. Please try again.');
       }
       
       throw error;
+    }
+  };
+
+  // Function to add role label to user
+  const addUserRole = async (userId, role) => {
+    try {
+      await account.updatePrefs({
+        role: role
+      });
+      
+      // Update local user object
+      setUser(prev => ({
+        ...prev,
+        prefs: {
+          ...prev.prefs,
+          role: role
+        }
+      }));
+      
+      return true;
+    } catch (error) {
+      console.error('Error setting user role:', error);
+      return false;
     }
   };
 
@@ -151,7 +169,8 @@ export function AuthProvider({ children }) {
     register,
     logout,
     loading,
-    checkUser
+    checkUser,
+    addUserRole
   };
 
   return (
