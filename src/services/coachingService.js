@@ -1,6 +1,5 @@
 import { ID, Query } from 'appwrite';
-import { defaultCoachingCenters } from '../data/sampleCoachingData';
-import { client, databases, storage, account } from '../config/appwrite';
+import { databases, storage } from '../config/appwrite';
 
 // Use environment variables for constants
 const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
@@ -18,97 +17,115 @@ const generateSlug = (name) => {
 // Initialize default coaching centers
 async function initializeDefaultCoachingCenters() {
   try {
-    // Check if coaching centers already exist
     const existing = await databases.listDocuments(
       DATABASE_ID,
       COLLECTION_ID
     );
 
     if (existing.documents.length === 0) {
-      // Add default coaching centers
-      const promises = defaultCoachingCenters.map(coaching => {
-        // Ensure the data structure matches exactly what Appwrite expects
-        const documentData = {
-          name: coaching.name,
-          description: coaching.description,
-          address: coaching.address,
-          city: coaching.city,
-          phone: coaching.phone,
-          email: coaching.email,
-          website: coaching.website || '',
-          establishedYear: coaching.establishedYear,
-          logo: coaching.logo,
-          coverImage: coaching.coverImage,
-          classroomImages: coaching.classroomImages,
-          facilities: coaching.facilities,
-          subjects: coaching.subjects,
-          batches: coaching.batches,
-          faculty: coaching.faculty,
-          slug: coaching.slug,
-          createdAt: coaching.createdAt,
-          updatedAt: coaching.updatedAt
-        };
+      const defaultCenter = {
+        // Basic Info
+        name: "Excellence Tutorial",
+        description: "Premier coaching institute for JEE and NEET preparation",
+        address: "123 Education Street",
+        city: "Mumbai",
+        phone: "1234567890",
+        email: "contact@excellence.com",
+        webiste: "www.excellence.com", // Note: matches your attribute name
+        establishedYear: "2010",
 
-        return databases.createDocument(
-          DATABASE_ID,
-          COLLECTION_ID,
-          ID.unique(),
-          documentData
-        );
-      });
+        // Images
+        images_logo: "default_logo_1",
+        images_coverImage: "default_cover_1", // Note: matches your attribute name
+        images_classroomImages: "classroom1,classroom2", // String format
 
-      await Promise.all(promises);
-      console.log('Default coaching centers initialized');
+        // Batches (as arrays)
+        batches_name: ["Morning Batch", "Evening Batch"],
+        batches_subjects: ["Physics,Chemistry", "Mathematics,Physics"],
+        batches_timing: ["8:00 AM - 11:00 AM", "4:00 PM - 7:00 PM"],
+        batches_capacity: ["50", "40"],
+        batches_availableSeats: ["20", "15"],
+        batches_monthlyFee: ["5000", "4500"],
+        batches_duration: ["3 hours", "3 hours"],
+
+        // Faculty (as arrays)
+        faculty_name: ["Dr. Sharma", "Dr. Verma"],
+        faculty_qualification: ["PhD Physics", "PhD Mathematics"],
+        faculty_experience: ["15 years", "12 years"],
+        faculty_subject: ["Physics", "Mathematics"],
+        faculty_bio: ["Expert in quantum physics", "Specializes in calculus"],
+        faculty_image: ["faculty1", "faculty2"]
+      };
+
+      await databases.createDocument(
+        DATABASE_ID,
+        COLLECTION_ID,
+        ID.unique(),
+        defaultCenter
+      );
+
+      console.log('Default coaching center initialized');
     }
   } catch (error) {
-    console.error('Error initializing default coaching centers:', error);
-    throw error; // Add this to see the full error
+    if (error.code !== 401) { // Ignore authentication errors
+      console.error('Error initializing default centers:', error);
+      throw error;
+    }
   }
 }
 
 // Helper function to format data for Appwrite
 const formatCoachingData = (data) => {
   return {
-    // Basic Info
-    basicInfo_name: data.basicInfo.name,
-    basicInfo_description: data.basicInfo.description,
-    basicInfo_address: data.basicInfo.address,
-    basicInfo_city: data.basicInfo.city,
-    basicInfo_phone: data.basicInfo.phone,
-    basicInfo_email: data.basicInfo.email,
-    basicInfo_website: data.basicInfo.website,
-    basicInfo_establishedYear: data.basicInfo.establishedYear,
+    // Basic Info - using the exact field names required by Appwrite
+    name: data.basicInfo.name,
+    description: data.basicInfo.description,
+    address: data.basicInfo.address,
+    city: data.basicInfo.city,
+    phone: data.basicInfo.phone,
+    email: data.basicInfo.email,
+    website: data.basicInfo.website || '',
+    established_year: data.basicInfo.establishedYear,
 
-    // Images
-    images_logo: data.images.logo,
-    images_coverImage: data.images.coverImage,
-    images_classroomImages: data.images.classroomImages,
+    // Images - using the exact field names required by Appwrite
+    images_logo: data.images.logo || '',
+    images_cover: data.images.coverImage || '',
+    images_classroom: data.images.classroomImages || [],
+    images_gallery: data.images.galleryImages || [],
 
     // Arrays
-    facilities: data.facilities,
-    subjects: data.subjects,
+    facilities: data.facilities || [],
+    subjects: data.subjects || [],
 
-    // Batches
-    batches_name: data.batches.map(b => b.name),
-    batches_subjects: data.batches.map(b => b.subjects).flat(),
-    batches_timing: data.batches.map(b => b.timing),
-    batches_capacity: data.batches.map(b => b.capacity),
-    batches_availableSeats: data.batches.map(b => b.availableSeats),
-    batches_monthlyFee: data.batches.map(b => b.monthlyFee),
-    batches_duration: data.batches.map(b => b.duration),
+    // Batches - store as stringified JSON
+    batches: JSON.stringify(data.batches.map(batch => ({
+      name: batch.name,
+      subjects: batch.subjects,
+      timing: batch.timing,
+      capacity: parseInt(batch.capacity) || 0,
+      available_seats: parseInt(batch.availableSeats) || 0,
+      monthly_fee: parseInt(batch.monthlyFee) || 0,
+      duration: batch.duration
+    }))),
 
-    // Faculty
-    faculty_name: data.faculty.map(f => f.name),
-    faculty_qualification: data.faculty.map(f => f.qualification),
-    faculty_experience: data.faculty.map(f => f.experience),
-    faculty_subject: data.faculty.map(f => f.subject),
-    faculty_bio: data.faculty.map(f => f.bio),
-    faculty_image: data.faculty.map(f => f.image),
+    // Faculty - store as stringified JSON
+    faculty: JSON.stringify(data.faculty.map(f => ({
+      name: f.name,
+      qualification: f.qualification,
+      experience: f.experience,
+      subject: f.subject,
+      bio: f.bio || '',
+      image: f.image || ''
+    }))),
 
     // Other fields
-    slug: data.slug,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    slug: data.basicInfo.name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/(^-|-$)/g, ''),
+    user_id: data.userId || '',
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString()
   };
 };
 
@@ -147,7 +164,7 @@ const parseCoachingData = (data) => {
     images: {
       logo: data.images_logo,
       coverImage: data.images_coverImage,
-      classroomImages: data.images_classroomImages
+      classroomImages: data.images_classroomImages.split(',').filter(Boolean)
     },
     facilities: data.facilities,
     subjects: data.subjects,
@@ -198,18 +215,19 @@ const coachingService = {
   },
 
   // Register new coaching center
-  async registerCoaching(data) {
+  async registerCoaching(coachingData) {
     try {
-      await this.checkAuth(); // Check authentication before creating document
-      
-      // Format the data using the helper function
-      const formattedData = formatCoachingData(data);
-      
+      const documentData = {
+        ...coachingData,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
       const response = await databases.createDocument(
         DATABASE_ID,
         COLLECTION_ID,
         ID.unique(),
-        formattedData
+        documentData
       );
       return response;
     } catch (error) {
@@ -224,22 +242,49 @@ const coachingService = {
       const response = await databases.listDocuments(
         DATABASE_ID,
         COLLECTION_ID,
-        [
-          Query.equal('slug', slug)
-        ]
+        [Query.equal('name', slug)]
       );
 
       if (response.documents.length === 0) {
         throw new Error('Coaching center not found');
       }
 
-      const coaching = response.documents[0];
+      const doc = response.documents[0];
 
-      // Parse JSON strings back to objects
+      // Convert the data back to the expected format
       return {
-        ...coaching,
-        batches: JSON.parse(coaching.batches),
-        faculty: JSON.parse(coaching.faculty)
+        basicInfo: {
+          name: doc.name,
+          description: doc.description,
+          address: doc.address,
+          city: doc.city,
+          phone: doc.phone,
+          email: doc.email,
+          website: doc.webiste,
+          establishedYear: doc.establishedYear
+        },
+        images: {
+          logo: doc.images_logo,
+          coverImage: doc.images_coverImage,
+          classroomImages: doc.images_classroomImages.split(',').filter(Boolean)
+        },
+        batches: doc.batches_name.map((name, index) => ({
+          name: name,
+          subjects: doc.batches_subjects[index].split(','),
+          timing: doc.batches_timing[index],
+          capacity: parseInt(doc.batches_capacity[index]),
+          availableSeats: parseInt(doc.batches_availableSeats[index]),
+          monthlyFee: parseInt(doc.batches_monthlyFee[index]),
+          duration: doc.batches_duration[index]
+        })),
+        faculty: doc.faculty_name.map((name, index) => ({
+          name: name,
+          qualification: doc.faculty_qualification[index],
+          experience: doc.faculty_experience[index],
+          subject: doc.faculty_subject[index],
+          bio: doc.faculty_bio[index],
+          image: doc.faculty_image[index]
+        }))
       };
     } catch (error) {
       console.error('Error fetching coaching:', error);
@@ -256,7 +301,7 @@ const coachingService = {
         id,
         {
           ...updateData,
-          updatedAt: new Date().toISOString()
+          updated_at: new Date().toISOString()
         }
       );
       return response;

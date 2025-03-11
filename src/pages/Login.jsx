@@ -21,12 +21,9 @@ const Login = () => {
   const [loading, setLoading] = useState(false);
 
   const handleInputChange = (e) => {
-    const { name, value, files } = e.target;
-    if (name === 'profilePicture' && files[0]) {
-      setFormData(prev => ({ ...prev, profilePicture: files[0] }));
-    } else {
-      setFormData(prev => ({ ...prev, [name]: value }));
-    }
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    setError(''); // Clear error when user types
   };
 
   const handleSubmit = async (e) => {
@@ -37,27 +34,39 @@ const Login = () => {
     try {
       if (formData.name) {
         // This is a registration
-        await register(
-          formData.email,
-          formData.password,
-          formData.name
-        );
-        toast.success('Account created successfully!');
+        const user = await register(formData.email, formData.password, formData.name);
+        console.log('Registration successful:', user);
+        
+        // Add user role label
+        try {
+          // Note: You'll need to implement this in your AuthContext
+          await user.addLabel(userType);
+          console.log(`Added ${userType} role to user`);
+        } catch (labelError) {
+          console.error('Error adding user role:', labelError);
+        }
+
+        // Redirect based on role
+        if (userType === 'coaching') {
+          navigate('/coaching/dashboard');
+        } else {
+          navigate('/student/dashboard');
+        }
       } else {
         // This is a login
-        await login(formData.email, formData.password);
-        toast.success('Logged in successfully!');
-      }
-
-      // Navigate based on user type
-      if (userType === 'coaching') {
-        navigate('/coaching/registration');
-      } else {
-        navigate('/student/dashboard');
+        const user = await login(formData.email, formData.password);
+        console.log('Login successful:', user);
+        
+        // Redirect based on user role
+        if (user?.labels?.includes('coaching')) {
+          navigate('/coaching/dashboard');
+        } else {
+          navigate('/student/dashboard');
+        }
       }
     } catch (error) {
       console.error('Auth error:', error);
-      setError(error.message);
+      setError(error.message || 'Authentication failed');
       toast.error(error.message || 'Authentication failed');
     } finally {
       setLoading(false);
@@ -68,12 +77,12 @@ const Login = () => {
     e.preventDefault();
     try {
       setLoading(true);
+      console.log("Initiating Google login...");
       await loginWithGoogle();
-      // No need to navigate here as OAuth2 will handle redirect
+      // Note: Redirect will happen automatically
     } catch (error) {
       console.error('Google login error:', error);
-      toast.error('Failed to login with Google');
-    } finally {
+      toast.error('Failed to initiate Google login');
       setLoading(false);
     }
   };

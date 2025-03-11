@@ -14,6 +14,7 @@ import { useEffect } from 'react';
 import coachingService from './services/coachingService';
 import { Toaster } from 'react-hot-toast';
 import AuthCallback from './pages/AuthCallback';
+import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   useEffect(() => {
@@ -22,46 +23,65 @@ function App() {
   }, []);
 
   return (
-    <AuthProvider>
-      <Toaster position="top-right" />
-      <Router>
-        <div className="min-h-screen bg-gray-50">
-          <Navbar />
-          <Routes>
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route 
-              path="/student/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <StudentDashboard />
-                </ProtectedRoute>
-              } 
-            />
-            <Route 
-              path="/coaching/dashboard" 
-              element={
-                <ProtectedRoute>
-                  <CoachingDashboard />
-                </ProtectedRoute>
-              }   
-            />
-            <Route 
-              path="/coaching/registration" 
-              element={
-                <ProtectedRoute>
-                  <CoachingRegistration />
-                </ProtectedRoute>
-              } 
-            />
-            <Route path="/coaching/:slug" element={<CoachingDetails />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </div>
-      </Router>
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <Toaster 
+          position="top-right"
+          toastOptions={{
+            duration: 5000,
+            success: {
+              style: {
+                background: 'green',
+                color: 'white',
+              },
+            },
+            error: {
+              style: {
+                background: 'red',
+                color: 'white',
+              },
+            },
+          }}
+        />
+        <Router>
+          <div className="min-h-screen bg-gray-50">
+            <Navbar />
+            <Routes>
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/auth/callback" element={<AuthCallback />} />
+              <Route 
+                path="/student/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <StudentDashboard />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/coaching/dashboard" 
+                element={
+                  <ProtectedRoute>
+                    <CoachingDashboard />
+                  </ProtectedRoute>
+                }   
+              />
+              <Route 
+                path="/coaching/registration" 
+                element={
+                  <ProtectedRoute>
+                    <CoachingRegistration />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route path="/coaching/:slug" element={<CoachingDetails />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
+        </Router>
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }
 

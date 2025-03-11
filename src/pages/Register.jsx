@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { FcGoogle } from 'react-icons/fc';
 import { ArrowRight, Mail, Lock, User, Upload, CheckCircle, School, BookOpen, Users } from 'lucide-react';
 import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { toast } from 'react-hot-toast';
 
 const Register = () => {
   const [searchParams] = useSearchParams();
@@ -36,7 +37,8 @@ const Register = () => {
     setLoading(true);
 
     try {
-      await register(formData.email, formData.password, formData.name, navigate);
+      const user = await register(formData.email, formData.password, formData.name);
+      console.log('Registration/Login successful:', user);
       
       // Update profile
       await user.updateProfile({
@@ -56,12 +58,13 @@ const Register = () => {
       await user.sendEmailVerification();
       
       // Redirect to coaching registration if user type is coaching
-      if (userType === 'coaching') {
-        navigate('/coaching/registration');
+      if (user.labels?.includes('coaching')) {
+        navigate('/coaching/dashboard');
       } else {
-        navigate('/login?type=' + userType);
+        navigate('/student/dashboard');
       }
     } catch (error) {
+      console.error('Registration error:', error);
       setError(error.message);
     } finally {
       setLoading(false);
