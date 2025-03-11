@@ -1,0 +1,35 @@
+
+*"Create a fully functional web application named 'Pathshala' using the MERN stack for the frontend (Vite + React) and FastAPI with Uvicorn for the backend. Use Appwrite as the database. The web app connects students with local coaching/tutoring centers using GPS-based location services. The app has two user roles: Students and Coaching Centers."*  
+
+### **Features & Flow:**  
+1. **Landing Page (Common for Both Users)**  
+   - Introduces Pathshala to students and coaching owners.  
+   - Provides login/sign-up options for both roles.  
+
+2. **Student Flow:**  
+   - Login/signup with email-password or Google (Firebase Authentication).  
+   - Upon login, students can browse available coaching centers based on location.  
+   - Option to filter, search, and view coaching details.  
+   - Booking/contact feature for coaching centers.  
+
+3. **Coaching Center Flow:**  
+   - Login/signup with email-password or Google.  
+   - Upon login, coaching owners must provide details:  
+     - Name, Description, Photos, Courses Offered, Location (Google Maps Integration).  
+     - Payment of ₹500 for registration (Stripe Integration).  
+   - After registration, the coaching center appears on the student’s interface.  
+
+### **Tech Stack:**  
+- **Frontend:** Vite + React.js (Tailwind CSS for styling)  
+- **Backend:** FastAPI with Uvicorn  
+- **Database:** Appwrite  
+- **Authentication:** Firebase (for Students & Coaching Centers)  
+- **Payments:** Stripe for coaching registration  
+- **Location Services:** GPS-based location mapping (Google Maps API or OpenStreetMap)  
+
+### **Expected Code Quality:**  
+- **Proper folder structure** (frontend & backend separation).  
+- **Reusability:** Modular React components & reusable API services.  
+- **Security:** Secure authentication, data validation, and error handling.  
+- **Performance Optimization:** Lazy loading, caching, and backend efficiency.  
+
