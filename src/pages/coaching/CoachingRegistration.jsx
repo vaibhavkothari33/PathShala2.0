@@ -85,6 +85,8 @@ const CoachingRegistration = () => {
   ];
 
   const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -93,6 +95,22 @@ const CoachingRegistration = () => {
       navigate('/login');
     }
   }, [user, navigate]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        // Your API call here
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        setError(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   const handleBasicInfoChange = (e) => {
     const { name, value } = e.target;
@@ -211,213 +229,115 @@ const CoachingRegistration = () => {
     setFormData(prev => ({ ...prev, faculty: newFaculty }));
   };
 
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   setLoading(true);
-  
-  //   try {
-  //     await coachingService.checkAuth();
-  
-  //     const imageIds = {
-  //       logo: null,
-  //       coverImage: null,
-  //       classroomImages: []
-  //     };
-  
-  //     if (formData.images.logo) {
-  //       imageIds.logo = await coachingService.uploadImage(formData.images.logo);
-  //     } else {
-  //       toast.error("Logo image is required!");
-  //       return;
-  //     }
-  
-  //     if (formData.images.coverImage) {
-  //       imageIds.coverImage = await coachingService.uploadImage(formData.images.coverImage);
-  //     }
-  
-  //     if (formData.images.classroomImages.length > 0) {
-  //       imageIds.classroomImages = await Promise.all(
-  //         formData.images.classroomImages.map(img => coachingService.uploadImage(img))
-  //       );
-  //     }
-  
-  //     const updatedFaculty = await Promise.all(
-  //       formData.faculty.map(async (faculty) => {
-  //         if (faculty.image) {
-  //           const imageId = await coachingService.uploadImage(faculty.image);
-  //           return { ...faculty, image: imageId };
-  //         }
-  //         return faculty;
-  //       })
-  //     );
-  
-  //     // ✅ Validate required fields
-  //     if (!formData.basicInfo.description) {
-  //       toast.error("Description is required!");
-  //       return;
-  //     }
-  
-  //     const generateSlug = (name) => {
-  //       return name
-  //         .toLowerCase()           // Convert to lowercase
-  //         .replace(/\s+/g, "-")    // Replace spaces with hyphens
-  //         .replace(/[^a-z0-9-]/g, ""); // Remove special characters
-  //     };
-      
-  //     const submissionData = {
-  //       name: formData.basicInfo.name,
-  //       slug: generateSlug(formData.basicInfo.name), // ✅ Add this line
-  //       description: formData.basicInfo.description,
-  //       address: formData.basicInfo.address,
-  //       city: formData.basicInfo.city,
-  //       phone: formData.basicInfo.phone,
-  //       email: formData.basicInfo.email,
-  //       website: formData.basicInfo.website,
-  //       establishedYear: formData.basicInfo.establishedYear,
-      
-  //       images_logo: imageIds.logo,
-  //       images_coverImage: imageIds.coverImage,
-  //       images_classroomImages: imageIds.classroomImages,
-      
-  //       batches_name: formData.batches.map(batch => batch.name),
-  //       batches_subjects: formData.batches.flatMap(batch => batch.subjects), // Flatten nested arrays
-  //       batches_timing: formData.batches.map(batch => batch.timing),
-  //       batches_capacity: formData.batches.map(batch => batch.capacity),
-  //       batches_availableSeats: formData.batches.map(batch => batch.availableSeats),
-  //       batches_monthlyFee: formData.batches.map(batch => batch.monthlyFee),
-  //       batches_duration: formData.batches.map(batch => batch.duration),
-      
-  //       faculty_name: updatedFaculty.map(faculty => faculty.name),
-  //       faculty_qualification: updatedFaculty.map(faculty => faculty.qualification),
-  //       faculty_experience: updatedFaculty.map(faculty => faculty.experience),
-  //       faculty_subject: updatedFaculty.map(faculty => faculty.subject),
-  //       faculty_bio: updatedFaculty.map(faculty => faculty.bio),
-  //       faculty_image: updatedFaculty.map(faculty => faculty.image)
-  //     };
-      
-  //     console.log("Final Submission Data:", JSON.stringify(submissionData, null, 2));
-  
-     
-      
-  //     await coachingService.registerCoaching(submissionData);
-  //     toast.success("Coaching center registered successfully!");
-  //     navigate("/coaching/dashboard");
-  //   } catch (error) {
-  //     console.error("Registration error:", error);
-  //     toast.error(error.message || "Failed to register coaching center");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
-  
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
 
-  // Update the handleSubmit function in CoachingRegistration.jsx
+    try {
+      await coachingService.checkAuth();
 
-const handleSubmit = async (e) => {
-  e.preventDefault();
-  setLoading(true);
+      const imageIds = {
+        logo: null,
+        coverImage: null,
+        classroomImages: []
+      };
 
-  try {
-    await coachingService.checkAuth();
+      if (formData.images.logo) {
+        imageIds.logo = await coachingService.uploadImage(formData.images.logo);
+      } else {
+        toast.error("Logo image is required!");
+        setLoading(false);
+        return;
+      }
 
-    const imageIds = {
-      logo: null,
-      coverImage: null,
-      classroomImages: []
-    };
+      if (formData.images.coverImage) {
+        imageIds.coverImage = await coachingService.uploadImage(formData.images.coverImage);
+      }
 
-    if (formData.images.logo) {
-      imageIds.logo = await coachingService.uploadImage(formData.images.logo);
-    } else {
-      toast.error("Logo image is required!");
-      setLoading(false);
-      return;
-    }
+      if (formData.images.classroomImages.length > 0) {
+        imageIds.classroomImages = await Promise.all(
+          formData.images.classroomImages.map(img => coachingService.uploadImage(img))
+        );
+      }
 
-    if (formData.images.coverImage) {
-      imageIds.coverImage = await coachingService.uploadImage(formData.images.coverImage);
-    }
-
-    if (formData.images.classroomImages.length > 0) {
-      imageIds.classroomImages = await Promise.all(
-        formData.images.classroomImages.map(img => coachingService.uploadImage(img))
+      const updatedFaculty = await Promise.all(
+        formData.faculty.map(async (faculty) => {
+          if (faculty.image) {
+            const imageId = await coachingService.uploadImage(faculty.image);
+            return { ...faculty, image: imageId };
+          }
+          return faculty;
+        })
       );
-    }
 
-    const updatedFaculty = await Promise.all(
-      formData.faculty.map(async (faculty) => {
-        if (faculty.image) {
-          const imageId = await coachingService.uploadImage(faculty.image);
-          return { ...faculty, image: imageId };
-        }
-        return faculty;
-      })
-    );
+      // Validate required fields
+      if (!formData.basicInfo.description) {
+        toast.error("Description is required!");
+        setLoading(false);
+        return;
+      }
 
-    // Validate required fields
-    if (!formData.basicInfo.description) {
-      toast.error("Description is required!");
+      const generateSlug = (name) => {
+        return name
+          .toLowerCase()
+          .replace(/\s+/g, "-")
+          .replace(/[^a-z0-9-]/g, "");
+      };
+      
+      const submissionData = {
+        name: formData.basicInfo.name,
+        slug: generateSlug(formData.basicInfo.name),
+        description: formData.basicInfo.description,
+        address: formData.basicInfo.address,
+        city: formData.basicInfo.city,
+        phone: formData.basicInfo.phone,
+        email: formData.basicInfo.email,
+        website: formData.basicInfo.website,
+        establishedYear: formData.basicInfo.establishedYear,
+        
+        images_logo: imageIds.logo,
+        images_coverImage: imageIds.coverImage,
+        images_classroomImages: imageIds.classroomImages,
+        
+        batches_name: formData.batches.map(batch => batch.name),
+        batches_subjects: formData.batches.flatMap(batch => batch.subjects),
+        batches_timing: formData.batches.map(batch => batch.timing),
+        batches_capacity: formData.batches.map(batch => batch.capacity),
+        batches_availableSeats: formData.batches.map(batch => batch.availableSeats),
+        batches_monthlyFee: formData.batches.map(batch => batch.monthlyFee),
+        batches_duration: formData.batches.map(batch => batch.duration),
+        
+        faculty_name: updatedFaculty.map(faculty => faculty.name),
+        faculty_qualification: updatedFaculty.map(faculty => faculty.qualification),
+        faculty_experience: updatedFaculty.map(faculty => faculty.experience),
+        faculty_subject: updatedFaculty.map(faculty => faculty.subject),
+        faculty_bio: updatedFaculty.map(faculty => faculty.bio),
+        faculty_image: updatedFaculty.map(faculty => faculty.image),
+        
+        // Add facilities and subjects
+        facilities: formData.facilities,
+        subjects: formData.subjects,
+        
+        // Add owner info
+        owner_id: user.$id
+      };
+      
+      await coachingService.registerCoaching(submissionData);
+      toast.success("Coaching center registered successfully!");
+      
+      // Important: Redirect to dashboard after successful registration
+      navigate("/coaching/dashboard");
+    } catch (error) {
+      console.error("Registration error:", error);
+      toast.error(error.message || "Failed to register coaching center");
+    } finally {
       setLoading(false);
-      return;
     }
+  };
 
-    const generateSlug = (name) => {
-      return name
-        .toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-]/g, "");
-    };
-    
-    const submissionData = {
-      name: formData.basicInfo.name,
-      slug: generateSlug(formData.basicInfo.name),
-      description: formData.basicInfo.description,
-      address: formData.basicInfo.address,
-      city: formData.basicInfo.city,
-      phone: formData.basicInfo.phone,
-      email: formData.basicInfo.email,
-      website: formData.basicInfo.website,
-      establishedYear: formData.basicInfo.establishedYear,
-      
-      images_logo: imageIds.logo,
-      images_coverImage: imageIds.coverImage,
-      images_classroomImages: imageIds.classroomImages,
-      
-      batches_name: formData.batches.map(batch => batch.name),
-      batches_subjects: formData.batches.flatMap(batch => batch.subjects),
-      batches_timing: formData.batches.map(batch => batch.timing),
-      batches_capacity: formData.batches.map(batch => batch.capacity),
-      batches_availableSeats: formData.batches.map(batch => batch.availableSeats),
-      batches_monthlyFee: formData.batches.map(batch => batch.monthlyFee),
-      batches_duration: formData.batches.map(batch => batch.duration),
-      
-      faculty_name: updatedFaculty.map(faculty => faculty.name),
-      faculty_qualification: updatedFaculty.map(faculty => faculty.qualification),
-      faculty_experience: updatedFaculty.map(faculty => faculty.experience),
-      faculty_subject: updatedFaculty.map(faculty => faculty.subject),
-      faculty_bio: updatedFaculty.map(faculty => faculty.bio),
-      faculty_image: updatedFaculty.map(faculty => faculty.image),
-      
-      // Add facilities and subjects
-      facilities: formData.facilities,
-      subjects: formData.subjects,
-      
-      // Add owner info
-      owner_id: user.$id
-    };
-    
-    await coachingService.registerCoaching(submissionData);
-    toast.success("Coaching center registered successfully!");
-    
-    // Important: Redirect to dashboard after successful registration
-    navigate("/coaching/dashboard");
-  } catch (error) {
-    console.error("Registration error:", error);
-    toast.error(error.message || "Failed to register coaching center");
-  } finally {
-    setLoading(false);
-  }
-};
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
   return (
     <form onSubmit={handleSubmit} className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

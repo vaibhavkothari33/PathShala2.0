@@ -9,6 +9,12 @@ export const account = new Account(client);
 export const databases = new Databases(client);
 export const storage = new Storage(client);
 
+// Add this for debugging
+console.log('Appwrite Configuration:', {
+    endpoint: import.meta.env.VITE_APPWRITE_ENDPOINT,
+    projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID
+});
+
 // Export the client as both default and named export
 export { client };
 export default client;
