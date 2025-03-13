@@ -257,8 +257,16 @@ const CoachingRegistration = () => {
         return;
       }
   
+      const generateSlug = (name) => {
+        return name
+          .toLowerCase()           // Convert to lowercase
+          .replace(/\s+/g, "-")    // Replace spaces with hyphens
+          .replace(/[^a-z0-9-]/g, ""); // Remove special characters
+      };
+      
       const submissionData = {
         name: formData.basicInfo.name,
+        slug: generateSlug(formData.basicInfo.name), // ✅ Add this line
         description: formData.basicInfo.description,
         address: formData.basicInfo.address,
         city: formData.basicInfo.city,
@@ -266,19 +274,19 @@ const CoachingRegistration = () => {
         email: formData.basicInfo.email,
         website: formData.basicInfo.website,
         establishedYear: formData.basicInfo.establishedYear,
-  
+      
         images_logo: imageIds.logo,
         images_coverImage: imageIds.coverImage,
         images_classroomImages: imageIds.classroomImages,
-  
+      
         batches_name: formData.batches.map(batch => batch.name),
-        batches_subjects: formData.batches.map(batch => batch.subjects),
+        batches_subjects: formData.batches.flatMap(batch => batch.subjects), // Flatten nested arrays
         batches_timing: formData.batches.map(batch => batch.timing),
         batches_capacity: formData.batches.map(batch => batch.capacity),
         batches_availableSeats: formData.batches.map(batch => batch.availableSeats),
         batches_monthlyFee: formData.batches.map(batch => batch.monthlyFee),
         batches_duration: formData.batches.map(batch => batch.duration),
-  
+      
         faculty_name: updatedFaculty.map(faculty => faculty.name),
         faculty_qualification: updatedFaculty.map(faculty => faculty.qualification),
         faculty_experience: updatedFaculty.map(faculty => faculty.experience),
@@ -286,7 +294,7 @@ const CoachingRegistration = () => {
         faculty_bio: updatedFaculty.map(faculty => faculty.bio),
         faculty_image: updatedFaculty.map(faculty => faculty.image)
       };
-  
+      
       console.log("Final Submission Data:", JSON.stringify(submissionData, null, 2));
   
      

@@ -63,7 +63,6 @@ const StudentDashboard = () => {
       const formattedCenters = response.documents.map(doc => ({
         id: doc.$id,
         name: doc.name || 'Unnamed Center',
-        slug: doc.slug,
         description: doc.description || '',
         subjects: doc.subjects || [],
         rating: doc.rating || 4.5,
@@ -83,8 +82,10 @@ const StudentDashboard = () => {
         batches: doc.batches || [],
         faculty: doc.faculty || [],
         establishedYear: doc.basicInfo?.establishedYear,
-        classroomImages: doc.images?.classroomImages || []
+        classroomImages: doc.images?.classroomImages || [],
+        slug: doc.slug || doc.name?.toLowerCase().replace(/\s+/g, '-') || doc.$id
       }));
+      
 
       console.log('Formatted centers:', formattedCenters);
       setCoachingCenters(formattedCenters);

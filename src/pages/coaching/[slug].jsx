@@ -28,29 +28,34 @@ const CoachingDetails = () => {
   const [selectedBatch, setSelectedBatch] = useState(null);
 
   useEffect(() => {
+    if (!slug) {
+      console.error("Slug is undefined.");
+      toast.error("Invalid request: Missing coaching slug.");
+      navigate("/student/dashboard");
+      return;
+    }
+
     const fetchCoachingDetails = async () => {
       try {
-        console.log('Fetching details for slug:', slug);
-        
+        console.log("Fetching details for slug:", slug);
+
         const response = await databases.listDocuments(
           import.meta.env.VITE_APPWRITE_DATABASE_ID,
           import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID,
-          [
-            Query.equal('slug', [slug])
-          ]
+          [Query.equal("slug", slug)] // Ensure correct query syntax
         );
 
-        console.log('Response:', response);
+        console.log("Response:", response);
 
-        if (response.documents.length === 0) {
-          console.log('No coaching found with slug:', slug);
-          toast.error('Coaching center not found');
-          navigate('/student/dashboard');
+        if (!response.documents || response.documents.length === 0) {
+          console.warn(`No coaching found with slug: ${slug}`);
+          toast.error("Coaching center not found.");
+          navigate("/student/dashboard");
           return;
         }
 
         const doc = response.documents[0];
-        console.log('Found coaching document:', doc);
+        console.log("Found coaching document:", doc);
 
         const coachingData = {
           id: doc.$id,
@@ -61,41 +66,40 @@ const CoachingDetails = () => {
           rating: doc.rating || 4.5,
           reviews: doc.reviews || 0,
           students: doc.basicInfo?.totalStudents || 0,
-          image: doc.images?.coverImage,
-          location: doc.basicInfo?.address,
-          address: doc.basicInfo?.address,
-          availability: doc.basicInfo?.timings,
+          image: doc.images?.coverImage || "/default-image.jpg",
+          location: doc.basicInfo?.address || "Not provided",
+          address: doc.basicInfo?.address || "Not provided",
+          availability: doc.basicInfo?.timings || "Not provided",
           contact: {
-            phone: doc.basicInfo?.phone || '',
-            email: doc.basicInfo?.email || '',
-            website: doc.basicInfo?.website || ''
+            phone: doc.basicInfo?.phone || "N/A",
+            email: doc.basicInfo?.email || "N/A",
+            website: doc.basicInfo?.website || "N/A",
           },
           facilities: doc.facilities || [],
-          batches: doc.batches?.map(batch => ({
+          batches: doc.batches?.map((batch) => ({
             ...batch,
-            id: batch.id || Math.random().toString(36).substr(2, 9)
+            id: batch.id || Math.random().toString(36).substr(2, 9),
           })) || [],
           faculty: doc.faculty || [],
-          establishedYear: doc.basicInfo?.establishedYear,
-          price: doc.basicInfo?.fees || '₹2000'
+          establishedYear: doc.basicInfo?.establishedYear || "N/A",
+          price: doc.basicInfo?.fees || "₹2000",
         };
 
-        console.log('Formatted coaching data:', coachingData);
+        console.log("Formatted coaching data:", coachingData);
         setCoaching(coachingData);
       } catch (error) {
-        console.error('Error fetching coaching details:', error);
-        toast.error('Failed to load coaching details');
-        navigate('/student/dashboard');
+        console.error("Error fetching coaching details:", error);
+        toast.error("Failed to load coaching details.");
+        navigate("/student/dashboard");
       } finally {
         setLoading(false);
       }
     };
 
-    if (slug) {
-      fetchCoachingDetails();
-    }
+    fetchCoachingDetails();
   }, [slug, navigate]);
 
+  
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -127,14 +131,14 @@ const CoachingDetails = () => {
       <div className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <Link 
-            to="/dashboard" 
+            to="/student/dashboard" 
             className="flex items-center text-gray-600 hover:text-gray-900 mb-4"
           >
             <ChevronLeft className="h-5 w-5 mr-1" />
             Back to Dashboard
           </Link>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <h1 className="text-3xl font-bold text-gray-900">{coaching.basicInfo.name}</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{coaching.name}</h1>
             <div className="mt-4 md:mt-0 flex items-center space-x-4">
               <div className="flex items-center">
                 <Star className="h-5 w-5 text-yellow-400" />
@@ -179,7 +183,7 @@ const CoachingDetails = () => {
                   <div className="space-y-6">
                     <div>
                       <h3 className="text-lg font-semibold mb-2">About</h3>
-                      <p className="text-gray-600">{coaching.basicInfo.description}</p>
+                      <p className="text-gray-600">{coaching.description}</p>
                     </div>
 
                     <div>
@@ -279,24 +283,24 @@ const CoachingDetails = () => {
               <div className="space-y-4">
                 <div className="flex items-center">
                   <MapPin className="h-5 w-5 text-gray-400 mr-2" />
-                  <span className="text-gray-600">{coaching.basicInfo.address}</span>
+                  <span className="text-gray-600">{coaching.address}</span>
                 </div>
                 <div className="flex items-center">
                   <Phone className="h-5 w-5 text-gray-400 mr-2" />
-                  <a href={`tel:${coaching.basicInfo.phone}`} className="text-indigo-600 hover:text-indigo-500">
-                    {coaching.basicInfo.phone}
+                  <a href={`tel:${coaching.phone}`} className="text-indigo-600 hover:text-indigo-500">
+                    {coaching.phone}
                   </a>
                 </div>
                 <div className="flex items-center">
                   <Mail className="h-5 w-5 text-gray-400 mr-2" />
-                  <a href={`mailto:${coaching.basicInfo.email}`} className="text-indigo-600 hover:text-indigo-500">
-                    {coaching.basicInfo.email}
+                  <a href={`mailto:${coaching.email}`} className="text-indigo-600 hover:text-indigo-500">
+                    {coaching.email}
                   </a>
                 </div>
                 <div className="flex items-center">
                   <Globe className="h-5 w-5 text-gray-400 mr-2" />
-                  <a href={`https://${coaching.basicInfo.website}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-500">
-                    {coaching.basicInfo.website}
+                  <a href={`https://${coaching.website}`} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-500">
+                    {coaching.website}
                   </a>
                 </div>
               </div>
