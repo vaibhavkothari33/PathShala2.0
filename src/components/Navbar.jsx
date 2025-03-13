@@ -46,6 +46,7 @@ const Navbar = () => {
                     </div>
                   )}
                   <span className="ml-2 text-gray-700">{user.displayName || user.email}</span>
+                  <span className="ml-2 text-gray-700">{user.displayName}</span>
                 </Menu.Button>
 
                 <Menu.Items className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">

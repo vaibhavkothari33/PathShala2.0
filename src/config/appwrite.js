@@ -1,9 +1,8 @@
 import { Client, Account, Databases, Storage } from 'appwrite';
 
 const client = new Client()
-    .setEndpoint('https://cloud.appwrite.io/v1') // Appwrite cloud endpoint
-    .setProject(import.meta.env.VITE_APPWRITE_PROJECT_ID) // Set project ID
-    // .setSelfSigned(true); // Enable self-signed certificate
+    .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT)
+    .setProject(import.meta.env.VITE_APPWRITE_PROJECT_ID);
 
 // Initialize services
 export const account = new Account(client);
