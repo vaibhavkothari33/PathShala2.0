@@ -1,20 +1,6 @@
 import { useState, useEffect } from 'react';
-import {motion, AnimatePresence } from 'framer-motion';
-
-import {
-  Search,
-  MapPin,
-  Filter,
-  Star,
-  Clock,
-  Users,
-  BookOpen,
-  ChevronDown,
-  X,
-  ArrowRight,
-  CheckCircle,
-  DollarSign
-} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, MapPin, Filter, Star, Clock, Users, BookOpen, ChevronDown, X, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { databases } from '../config/appwrite'; // Import Appwrite databases
 import { toast } from 'react-hot-toast';
@@ -53,84 +39,89 @@ const StudentDashboard = () => {
   }, []);
 
   const fetchCoachingCenters = async () => {
+    setLoading(true); // Set loading state before fetching
+  
     try {
       const response = await databases.listDocuments(
         import.meta.env.VITE_APPWRITE_DATABASE_ID,
         import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID
       );
-
+  
       console.log('Fetched coaching centers:', response.documents);
-
+  
       const formattedCenters = response.documents.map((doc) => ({
-
-
         id: doc.$id,
         name: doc.name || 'Unnamed Center',
         description: doc.description || '',
-        subjects: Array.isArray(doc.subjects) ? doc.subjects :
-          Array.isArray(doc.batches_subjects) ? [...new Set(doc.batches_subjects)] : [],
+        subjects: doc.subjects && Array.isArray(doc.subjects)
+          ? doc.subjects
+          : doc.batches_subjects && Array.isArray(doc.batches_subjects)
+            ? [...new Set(doc.batches_subjects.flat())]
+            : [],
         rating: doc.rating || 4.5,
         reviews: doc.reviews || 0,
-        price: doc.batches_monthlyFee && Array.isArray(doc.batches_monthlyFee) ? `₹${doc.batches_monthlyFee[0]}` : "₹2000",
-
+        price: doc.batches_monthlyFee && Array.isArray(doc.batches_monthlyFee)
+          ? `₹${doc.batches_monthlyFee[0]}`
+          : "₹2000",
         students: doc.totalStudents || 0,
-        image: doc.images_coverImage ?
-          `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${doc.images_coverImage}` :
-          "https://upload.wikimedia.org/wikipedia/commons/b/b0/Bennett_University_.jpg",
+        image: doc.images_coverImage
+          ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${doc.images_coverImage}`
+          : "https://upload.wikimedia.org/wikipedia/commons/b/b0/Bennett_University_.jpg",
         location: doc.address || "Address not available",
         city: doc.city || "",
-        availability: doc.batches_timing && doc.batches_timing.length > 0 ?
-          doc.batches_timing[0] : "Mon-Sat, 9 AM - 7 PM",
+        availability: doc.batches_timing?.length
+          ? doc.batches_timing[0]
+          : "Mon-Sat, 9 AM - 7 PM",
         contact: {
           phone: doc.phone || "",
           email: doc.email || "",
           website: doc.website || ""
         },
         facilities: doc.facilities || [],
-        batches: doc.batches_name ?
-          doc.batches_name.map((name, i) => ({
-            name,
-            subjects: doc.batches_subjects ?
-              doc.batches_subjects.filter((_, idx) => idx % doc.batches_name.length === i) :
-              [],
-            timing: doc.batches_timing ? doc.batches_timing[i] : '',
-            capacity: doc.batches_capacity ? doc.batches_capacity[i] : '',
-            availableSeats: doc.batches_availableSeats ? doc.batches_availableSeats[i] : '',
-            monthlyFee: doc.batches_monthlyFee ? doc.batches_monthlyFee[i] : '',
-            duration: doc.batches_duration ? doc.batches_duration[i] : '',
-          })) :
-          [],
-        faculty: doc.faculty_name ?
-          doc.faculty_name.map((name, i) => ({
-            name,
-            qualification: doc.faculty_qualification ? doc.faculty_qualification[i] : '',
-            experience: doc.faculty_experience ? doc.faculty_experience[i] : '',
-            subject: doc.faculty_subject ? doc.faculty_subject[i] : '',
-            bio: doc.faculty_bio ? doc.faculty_bio[i] : '',
-            image: doc.faculty_image ?
-              `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${doc.faculty_image[i]}` :
-              null,
-          })) :
-          [],
+        batches: Array.isArray(doc.batches_name)
+          ? doc.batches_name.map((name, i) => ({
+              name,
+              subjects: doc.batches_subjects && Array.isArray(doc.batches_subjects)
+                ? doc.batches_subjects[i] || []
+                : [],
+              timing: doc.batches_timing?.[i] || '',
+              capacity: doc.batches_capacity?.[i] || '',
+              availableSeats: doc.batches_availableSeats?.[i] || '',
+              monthlyFee: doc.batches_monthlyFee?.[i] || '',
+              duration: doc.batches_duration?.[i] || '',
+            }))
+          : [],
+        faculty: Array.isArray(doc.faculty_name)
+          ? doc.faculty_name.map((name, i) => ({
+              name,
+              qualification: doc.faculty_qualification?.[i] || '',
+              experience: doc.faculty_experience?.[i] || '',
+              subject: doc.faculty_subject?.[i] || '',
+              bio: doc.faculty_bio?.[i] || '',
+              image: Array.isArray(doc.faculty_image)
+                ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${doc.faculty_image[i]}`
+                : null,
+            }))
+          : [],
         establishedYear: doc.establishedYear || '',
-        classroomImages: doc.images_classroomImages ?
-          doc.images_classroomImages.map(imgId =>
-            `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${imgId}`) :
-          [],
+        classroomImages: Array.isArray(doc.images_classroomImages)
+          ? doc.images_classroomImages.map(imgId =>
+              `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${imgId}`
+            )
+          : [],
         slug: doc.slug || doc.name?.toLowerCase().replace(/\s+/g, '-') || doc.$id
       }));
-
-
+  
       console.log('Formatted centers:', formattedCenters);
       setCoachingCenters(formattedCenters);
-      setLoading(false);
     } catch (error) {
       console.error('Error fetching coaching centers:', error);
       toast.error('Failed to load coaching centers');
-      setLoading(false);
+    } finally {
+      setLoading(false); // Ensure loading state is cleared
     }
   };
-
+  
   // Filter and search functionality
   const getFilteredCenters = () => {
     return coachingCenters.filter(center => {
@@ -379,14 +370,14 @@ const StudentDashboard = () => {
               >
                 <div className="relative h-48 rounded-t-xl overflow-hidden">
                   <img
-                    src={center.image}
+                   src={center.image}
                     alt={center.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.target.src = "https://upload.wikimedia.org/wikipedia/commons/b/b0/Bennett_University_.jpg";
                     }}
                   />
-                  <div className="absolute inset-0 bg-gradient-to-br from-indigo-600 to-blue-600 opacity-90 group-hover:opacity-100 transition-opacity duration-300" />
+                  <div className="absolute inset-0 duration-300" />
                   <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
                     <h3 className="text-lg font-semibold text-white">{center.name}</h3>
                     <div className="px-3 py-1 bg-white rounded-full text-indigo-600 font-medium text-sm">

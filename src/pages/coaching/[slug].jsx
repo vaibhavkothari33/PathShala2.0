@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import {
   MapPin, Star, Clock, Users, Phone, Mail, Globe, Home,
   BookOpen, Award, CheckCircle, ChevronLeft, Calendar, Camera,
-  MessageCircle, DollarSign, Info, Briefcase, GraduationCap
+  Info, Briefcase, GraduationCap
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import coachingService from '../../services/coachingService';
