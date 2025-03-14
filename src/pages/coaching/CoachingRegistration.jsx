@@ -283,7 +283,7 @@ const CoachingRegistration = () => {
           .replace(/\s+/g, "-")
           .replace(/[^a-z0-9-]/g, "");
       };
-      
+
       const submissionData = {
         name: formData.basicInfo.name,
         slug: generateSlug(formData.basicInfo.name),
@@ -294,11 +294,11 @@ const CoachingRegistration = () => {
         email: formData.basicInfo.email,
         website: formData.basicInfo.website,
         establishedYear: formData.basicInfo.establishedYear,
-        
+
         images_logo: imageIds.logo,
         images_coverImage: imageIds.coverImage,
         images_classroomImages: imageIds.classroomImages,
-        
+
         batches_name: formData.batches.map(batch => batch.name),
         batches_subjects: formData.batches.flatMap(batch => batch.subjects),
         batches_timing: formData.batches.map(batch => batch.timing),
@@ -306,25 +306,25 @@ const CoachingRegistration = () => {
         batches_availableSeats: formData.batches.map(batch => batch.availableSeats),
         batches_monthlyFee: formData.batches.map(batch => batch.monthlyFee),
         batches_duration: formData.batches.map(batch => batch.duration),
-        
+
         faculty_name: updatedFaculty.map(faculty => faculty.name),
         faculty_qualification: updatedFaculty.map(faculty => faculty.qualification),
         faculty_experience: updatedFaculty.map(faculty => faculty.experience),
         faculty_subject: updatedFaculty.map(faculty => faculty.subject),
         faculty_bio: updatedFaculty.map(faculty => faculty.bio),
         faculty_image: updatedFaculty.map(faculty => faculty.image),
-        
+
         // Add facilities and subjects
         facilities: formData.facilities,
         subjects: formData.subjects,
-        
+
         // Add owner info
         owner_id: user.$id
       };
-      
+
       await coachingService.registerCoaching(submissionData);
       toast.success("Coaching center registered successfully!");
-      
+
       // Important: Redirect to dashboard after successful registration
       navigate("/coaching/dashboard");
     } catch (error) {
@@ -628,38 +628,126 @@ const CoachingRegistration = () => {
 
           {/* Batches */}
           <section className="mb-12">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-semibold text-gray-900">Batches</h2>
-              <button
-                type="button"
-                onClick={addBatch}
-                className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Add Batch
-              </button>
-            </div>
+  <div className="flex justify-between items-center mb-6">
+    <h2 className="text-xl font-semibold text-gray-900">Batches</h2>
+    <button
+      type="button"
+      onClick={addBatch}
+      className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+    >
+      <Plus className="h-4 w-4 mr-2" />
+      Add Batch
+    </button>
+  </div>
 
-            {formData.batches.map((batch, index) => (
-              <div key={index} className="bg-gray-50 rounded-lg p-6 mb-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Batch Name
-                    </label>
-                    <input
-                      type="text"
-                      value={batch.name}
-                      onChange={(e) => handleBatchChange(index, 'name', e.target.value)}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
-                      placeholder="e.g., Morning Batch"
-                    />
-                  </div>
-                  {/* Add more batch fields */}
-                </div>
-              </div>
-            ))}
-          </section>
+  {formData.batches.map((batch, index) => (
+    <div key={index} className="bg-gray-50 rounded-lg p-6 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        {/* Batch Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Batch Name
+          </label>
+          <input
+            type="text"
+            value={batch.name}
+            onChange={(e) => handleBatchChange(index, "name", e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            placeholder="e.g., Morning Batch"
+          />
+        </div>
+
+        {/* Subjects */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Subjects
+          </label>
+          <input
+            type="text"
+            value={batch.subjects}
+            onChange={(e) => handleBatchChange(index, "subjects", e.target.value.split(","))}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            placeholder="e.g., Math, Physics"
+          />
+        </div>
+
+        {/* Batch Timing */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Batch Timing
+          </label>
+          <input
+            type="text"
+            value={batch.timing}
+            onChange={(e) => handleBatchChange(index, "timing", e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            placeholder="e.g., 10:00 AM - 12:00 PM"
+          />
+        </div>
+
+        {/* Capacity */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Capacity
+          </label>
+          <input
+            type="number"
+            value={batch.capacity}
+            onChange={(e) => handleBatchChange(index, "capacity", e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            placeholder="e.g., 30"
+          />
+        </div>
+
+        {/* Available Seats */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Available Seats
+          </label>
+          <input
+            type="number"
+            value={batch.availableSeats}
+            onChange={(e) => handleBatchChange(index, "availableSeats", e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            placeholder="e.g., 10"
+          />
+        </div>
+
+        {/* Monthly Fee */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Monthly Fee (₹)
+          </label>
+          <input
+            type="number"
+            value={batch.monthlyFee}
+            onChange={(e) => handleBatchChange(index, "monthlyFee", e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            placeholder="e.g., 2000"
+          />
+        </div>
+
+        {/* Duration */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Duration (Months)
+          </label>
+          <input
+            type="number"
+            value={batch.duration}
+            onChange={(e) => handleBatchChange(index, "duration", e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            placeholder="e.g., 6"
+          />
+        </div>
+
+      </div>
+    </div>
+  ))}
+</section>
+
+
 
           {/* Faculty */}
           <section className="mb-12">

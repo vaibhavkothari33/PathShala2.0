@@ -26,12 +26,20 @@ const CoachingDashboard = () => {
   useEffect(() => {
     const fetchCoachingData = async () => {
       try {
-        if (!user) return;
+        // More explicit check for user data
+        if (!user || !user.$id) {
+          console.log('No valid user data available');
+          setLoading(false);
+          return;
+        }
+        
+        console.log('Fetching coaching data for user:', user.$id);
         
         const coachingData = await coachingService.getUserCoaching(user.$id);
+        console.log('Coaching data response:', coachingData);
         
         if (!coachingData) {
-          // If no coaching center is found, redirect to registration
+          console.log('No coaching data found');
           toast.error('Please register your coaching center first');
           navigate('/coaching/register');
           return;
@@ -40,14 +48,25 @@ const CoachingDashboard = () => {
         setCoaching(coachingData);
       } catch (error) {
         console.error('Error fetching coaching data:', error);
-        toast.error('Failed to load your coaching center data');
+        
+        // More detailed error handling
+        if (error.code === 401) {
+          toast.error('Authentication error. Please log in again.');
+          // Maybe redirect to login page
+        } else if (error.code === 404) {
+          toast.error('No coaching center found. Please register one.');
+          navigate('/coaching/register');
+        } else {
+          toast.error(`Failed to load your coaching center data: ${error.message}`);
+        }
       } finally {
         setLoading(false);
       }
     };
-
+    
     fetchCoachingData();
   }, [user, navigate]);
+  
 
   if (loading) {
     return (

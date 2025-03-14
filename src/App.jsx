@@ -18,53 +18,57 @@ import ErrorBoundary from './components/ErrorBoundary';
 
 function App() {
   useEffect(() => {
-    // Initialize default coaching centers when app starts
-    coachingService.initializeDefaultCoachingCenters();
+    if (typeof coachingService.initializeDefaultCoachingCenters === 'function') {
+      coachingService.initializeDefaultCoachingCenters();
+    } else {
+      console.error("initializeDefaultCoachingCenters is not defined in coachingService.");
+    }
   }, []);
-
-  const ProtectedRoute = ({ children }) => {
-    const { user, loading } = useAuth();
-    
-    if (loading) return <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-    </div>;
-    
-    if (!user) return <Navigate to="/login" />;
-    
-    return children;
-  };
   
-  // Create a component to check if the user has a coaching center
-  const CoachingRedirect = () => {
-    const { user } = useAuth();
-    const [loading, setLoading] = useState(true);
-    const [hasCoaching, setHasCoaching] = useState(false);
+
+  // const ProtectedRoute = ({ children }) => {
+  //   const { user, loading } = useAuth();
     
-    useEffect(() => {
-      const checkUserCoaching = async () => {
-        try {
-          // Check if this user has already registered a coaching center
-          const coachingData = await coachingService.getUserCoaching(user.id);
-          setHasCoaching(coachingData !== null);
-        } catch (error) {
-          console.error("Error checking user coaching:", error);
-        } finally {
-          setLoading(false);
-        }
-      };
+  //   if (loading) return <div className="min-h-screen flex items-center justify-center">
+  //     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+  //   </div>;
+    
+  //   if (!user) return <Navigate to="/login" />;
+    
+  //   return children;
+  // };
+  
+  // // Create a component to check if the user has a coaching center
+  // const CoachingRedirect = () => {
+  //   const { user } = useAuth();
+  //   const [loading, setLoading] = useState(true);
+  //   const [hasCoaching, setHasCoaching] = useState(false);
+    
+  //   useEffect(() => {
+  //     const checkUserCoaching = async () => {
+  //       try {
+  //         // Check if this user has already registered a coaching center
+  //         const coachingData = await coachingService.getUserCoaching(user.id);
+  //         setHasCoaching(coachingData !== null);
+  //       } catch (error) {
+  //         console.error("Error checking user coaching:", error);
+  //       } finally {
+  //         setLoading(false);
+  //       }
+  //     };
       
-      checkUserCoaching();
-    }, [user]);
+  //     checkUserCoaching();
+  //   }, [user]);
     
-    if (loading) return <div className="min-h-screen flex items-center justify-center">
-      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
-    </div>;
+  //   if (loading) return <div className="min-h-screen flex items-center justify-center">
+  //     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+  //   </div>;
     
-    // If user has coaching, redirect to dashboard, otherwise to registration
-    return hasCoaching ? 
-      <Navigate to="/coaching/dashboard" /> : 
-      <Navigate to="/coaching/registration" />;
-  };
+  //   // If user has coaching, redirect to dashboard, otherwise to registration
+  //   return hasCoaching ? 
+  //     <Navigate to="/coaching/dashboard" /> : 
+  //     <Navigate to="/coaching/registration" />;
+  // };
 
   
   return (

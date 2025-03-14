@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Search, 
-  MapPin, 
-  Filter, 
-  Star, 
-  Clock, 
-  Users, 
+import {motion, AnimatePresence } from 'framer-motion';
+
+import {
+  Search,
+  MapPin,
+  Filter,
+  Star,
+  Clock,
+  Users,
   BookOpen,
   ChevronDown,
   X,
@@ -34,7 +35,7 @@ const StudentDashboard = () => {
   // Fetch coaching centers from Appwrite
   useEffect(() => {
     fetchCoachingCenters();
-    
+
     // Get user's location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -60,32 +61,65 @@ const StudentDashboard = () => {
 
       console.log('Fetched coaching centers:', response.documents);
 
-      const formattedCenters = response.documents.map(doc => ({
+      const formattedCenters = response.documents.map((doc) => ({
+
+
         id: doc.$id,
         name: doc.name || 'Unnamed Center',
         description: doc.description || '',
-        subjects: doc.subjects || [],
+        subjects: Array.isArray(doc.subjects) ? doc.subjects :
+          Array.isArray(doc.batches_subjects) ? [...new Set(doc.batches_subjects)] : [],
         rating: doc.rating || 4.5,
         reviews: doc.reviews || 0,
-        price: doc.basicInfo?.fees || "₹2000",
-        students: doc.basicInfo?.totalStudents || 0,
-        image: doc.images?.coverImage || "https://upload.wikimedia.org/wikipedia/commons/b/b0/Bennett_University_.jpg",
-        location: doc.basicInfo?.address || "Address not available",
-        city: doc.basicInfo?.city || "",
-        availability: doc.basicInfo?.timings || "Mon-Sat, 9 AM - 7 PM",
+        price: doc.batches_monthlyFee && Array.isArray(doc.batches_monthlyFee) ? `₹${doc.batches_monthlyFee[0]}` : "₹2000",
+
+        students: doc.totalStudents || 0,
+        image: doc.images_coverImage ?
+          `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${doc.images_coverImage}` :
+          "https://upload.wikimedia.org/wikipedia/commons/b/b0/Bennett_University_.jpg",
+        location: doc.address || "Address not available",
+        city: doc.city || "",
+        availability: doc.batches_timing && doc.batches_timing.length > 0 ?
+          doc.batches_timing[0] : "Mon-Sat, 9 AM - 7 PM",
         contact: {
-          phone: doc.basicInfo?.phone || "",
-          email: doc.basicInfo?.email || "",
-          website: doc.basicInfo?.website || ""
+          phone: doc.phone || "",
+          email: doc.email || "",
+          website: doc.website || ""
         },
         facilities: doc.facilities || [],
-        batches: doc.batches || [],
-        faculty: doc.faculty || [],
-        establishedYear: doc.basicInfo?.establishedYear,
-        classroomImages: doc.images?.classroomImages || [],
+        batches: doc.batches_name ?
+          doc.batches_name.map((name, i) => ({
+            name,
+            subjects: doc.batches_subjects ?
+              doc.batches_subjects.filter((_, idx) => idx % doc.batches_name.length === i) :
+              [],
+            timing: doc.batches_timing ? doc.batches_timing[i] : '',
+            capacity: doc.batches_capacity ? doc.batches_capacity[i] : '',
+            availableSeats: doc.batches_availableSeats ? doc.batches_availableSeats[i] : '',
+            monthlyFee: doc.batches_monthlyFee ? doc.batches_monthlyFee[i] : '',
+            duration: doc.batches_duration ? doc.batches_duration[i] : '',
+          })) :
+          [],
+        faculty: doc.faculty_name ?
+          doc.faculty_name.map((name, i) => ({
+            name,
+            qualification: doc.faculty_qualification ? doc.faculty_qualification[i] : '',
+            experience: doc.faculty_experience ? doc.faculty_experience[i] : '',
+            subject: doc.faculty_subject ? doc.faculty_subject[i] : '',
+            bio: doc.faculty_bio ? doc.faculty_bio[i] : '',
+            image: doc.faculty_image ?
+              `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${doc.faculty_image[i]}` :
+              null,
+          })) :
+          [],
+        establishedYear: doc.establishedYear || '',
+        classroomImages: doc.images_classroomImages ?
+          doc.images_classroomImages.map(imgId =>
+            `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${imgId}`) :
+          [],
         slug: doc.slug || doc.name?.toLowerCase().replace(/\s+/g, '-') || doc.$id
       }));
-      
+
 
       console.log('Formatted centers:', formattedCenters);
       setCoachingCenters(formattedCenters);
@@ -105,7 +139,7 @@ const StudentDashboard = () => {
         const searchLower = searchQuery.toLowerCase();
         const matchName = center.name.toLowerCase().includes(searchLower);
         const matchCity = center.city.toLowerCase().includes(searchLower);
-        const matchSubjects = center.subjects.some(subject => 
+        const matchSubjects = center.subjects.some(subject =>
           subject.toLowerCase().includes(searchLower)
         );
         if (!matchName && !matchCity && !matchSubjects) return false;
@@ -125,7 +159,7 @@ const StudentDashboard = () => {
       // Price range filter
       if (filters.priceRange) {
         const price = parseInt(center.price.replace(/[^0-9]/g, ''));
-        const [min, max] = filters.priceRange.split('-').map(p => 
+        const [min, max] = filters.priceRange.split('-').map(p =>
           parseInt(p.replace(/[^0-9]/g, ''))
         );
         if (price < min || (max && price > max)) return false;
@@ -164,7 +198,7 @@ const StudentDashboard = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between">
             <div className="flex items-center space-x-4">
-              <motion.h1 
+              <motion.h1
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent"
@@ -172,7 +206,7 @@ const StudentDashboard = () => {
                 Find Coaching Centers
               </motion.h1>
               {userLocation && (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
                   className="flex items-center px-3 py-1 bg-blue-50 rounded-full text-blue-600"
@@ -344,8 +378,8 @@ const StudentDashboard = () => {
                 className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300"
               >
                 <div className="relative h-48 rounded-t-xl overflow-hidden">
-                  <img 
-                    src={center.image} 
+                  <img
+                    src={center.image}
                     alt={center.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
@@ -360,7 +394,7 @@ const StudentDashboard = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center">
@@ -409,7 +443,7 @@ const StudentDashboard = () => {
                     </div>
                   )}
 
-                  <Link 
+                  <Link
                     to={`/coaching/${center.slug}`}
                     className="block"
                   >

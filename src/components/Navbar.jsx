@@ -45,8 +45,8 @@ const Navbar = () => {
                       {user.email?.[0].toUpperCase()}
                     </div>
                   )}
-                  <span className="ml-2 text-gray-700">{user.displayName || user.email}</span>
-                  <span className="ml-2 text-gray-700">{user.displayName}</span>
+                  <span className="ml-2 text-gray-700">{user.name}</span>
+                  {/* <span className="ml-2 text-gray-700">{user.displayName}</span> */}
                 </Menu.Button>
 
                 <Menu.Items className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
@@ -56,7 +56,7 @@ const Navbar = () => {
                         to="/profile"
                         className={`${
                           active ? 'bg-gray-100' : ''
-                        } block px-4 py-2 text-sm text-gray-700 flex items-center`}
+                        }  px-4 py-2 text-sm text-gray-700 flex items-center`}
                       >
                         <User className="w-4 h-4 mr-2" />
                         Profile
