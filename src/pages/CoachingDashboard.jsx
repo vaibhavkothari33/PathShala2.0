@@ -18,6 +18,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 import coachingService from '../services/coachingService';
 import { toast } from 'react-hot-toast';
+import { ID } from 'appwrite';
 
 const CoachingDashboard = () => {
   const { user } = useAuth();
@@ -99,11 +100,45 @@ const CoachingDashboard = () => {
   // Add these functions to handle requests
   const handleRequest = async (requestId, status) => {
     try {
+      // Create a unique document ID
+      const documentId = ID.unique();
+
+      await databases.createDocument(
+        import.meta.env.VITE_APPWRITE_DATABASE_ID,
+        import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID,
+        documentId, // Use the generated unique ID
+        {
+          coachingId: coaching.$id,
+          studentId: user.$id,
+          studentName: user.name,
+          studentEmail: user.email,
+          studentPhone: user.phone || '',
+          type: 'batch',
+          batchId: batchId,
+          batchName: batchName,
+          status: 'pending',
+          message: '', // Optional message from student
+          createdAt: new Date().toISOString(),
+        }
+      );
+
+      toast.success('Request sent successfully');
+    } catch (error) {
+      console.error('Error sending request:', error);
+      toast.error('Failed to send request');
+    }
+  };
+
+  const updateRequestStatus = async (requestId, status) => {
+    try {
       await databases.updateDocument(
         import.meta.env.VITE_APPWRITE_DATABASE_ID,
         import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID,
-        requestId,
-        { status }
+        requestId, // This is the document ID
+        { 
+          status,
+          updatedAt: new Date().toISOString()
+        }
       );
       
       // Update local state
@@ -113,8 +148,8 @@ const CoachingDashboard = () => {
 
       toast.success(`Request ${status === 'accepted' ? 'accepted' : 'rejected'} successfully`);
     } catch (error) {
-      console.error('Error handling request:', error);
-      toast.error('Failed to process request');
+      console.error('Error updating request:', error);
+      toast.error('Failed to update request');
     }
   };
 
