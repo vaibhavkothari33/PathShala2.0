@@ -52,42 +52,36 @@ const CoachingDetails = () => {
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
   const [isBookingDemo, setIsBookingDemo] = useState(false);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchCoachingDetails = async () => {
       try {
         setLoading(true);
-        console.log('Environment variables:', {
-          databaseId: import.meta.env.VITE_APPWRITE_DATABASE_ID,
-          projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID,
-          bucketId: import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID,
-          collectionId: import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID
-        });
+        
+        // Check if we have all required environment variables
+        const databaseId = import.meta.env.VITE_APPWRITE_DATABASE_ID;
+        const collectionId = import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID;
+        
+        if (!databaseId || !collectionId) {
+          throw new Error('Missing required environment variables');
+        }
 
         console.log('Fetching details for slug:', slug);
 
+        // Fetch coaching data
         const response = await databases.listDocuments(
-          import.meta.env.VITE_APPWRITE_DATABASE_ID,
-          import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID,
+          databaseId,
+          collectionId,
           [Query.equal('slug', slug)]
         );
 
-        console.log('Raw coaching response:', response);
-
         if (!response?.documents?.length) {
-          toast.error('Coaching center not found');
-          navigate('/student/dashboard');
-          return;
+          throw new Error('Coaching center not found');
         }
 
         const coachingData = response.documents[0];
-        
-        // Log image IDs
-        console.log('Image IDs:', {
-          logo: coachingData.images_logo,
-          cover: coachingData.images_coverImage,
-          classroom: coachingData.classroom_images
-        });
+        console.log('Raw coaching data:', coachingData);
 
         // Format the coaching data
         const formattedCoaching = {
@@ -107,38 +101,30 @@ const CoachingDetails = () => {
             website: coachingData.website || 'N/A'
           },
           address: coachingData.address || 'N/A',
-          city: coachingData.city || 'N/A'
+          city: coachingData.city || 'N/A',
+          rating: coachingData.rating || 0,
+          reviews: coachingData.reviews || 0,
+          students: coachingData.students || 0,
+          description: coachingData.description || '',
+          facilities: Array.isArray(coachingData.facilities) ? coachingData.facilities : [],
+          subjects: Array.isArray(coachingData.subjects) ? coachingData.subjects : []
         };
 
         console.log('Formatted coaching data:', formattedCoaching);
         setCoaching(formattedCoaching);
 
-        // Add this after fetching the coaching data
-        useEffect(() => {
-          if (coaching) {
-            console.log('Contact Information:', {
-              phone: coaching.contact.phone,
-              email: coaching.contact.email,
-              website: coaching.contact.website,
-              address: coaching.address,
-              city: coaching.city
-            });
-            
-            console.log('Gallery Images:', {
-              count: coaching.classroomImages?.length || 0,
-              urls: coaching.classroomImages
-            });
-          }
-        }, [coaching]);
       } catch (error) {
         console.error('Error fetching coaching details:', error);
-        toast.error('Failed to load coaching details');
+        toast.error(error.message || 'Failed to load coaching details');
+        navigate('/student/dashboard');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchCoachingDetails();
+    if (slug) {
+      fetchCoachingDetails();
+    }
   }, [slug, navigate]);
 
   const getImageUrl = (fileId) => {
@@ -321,6 +307,23 @@ const CoachingDetails = () => {
       </div>
     </div>
   );
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Error Loading Coaching</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => navigate('/student/dashboard')}
+            className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+          >
+            Return to Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
