@@ -34,6 +34,14 @@ const sectionHeaderStyles = `
 
 const CoachingRegistration = () => {
   const { user } = useAuth();
+  const [currentStep, setCurrentStep] = useState(1);
+  const totalSteps = 5;
+  const [loading, setLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const navigate = useNavigate();
+
+  // Form state
   const [formData, setFormData] = useState({
     basicInfo: {
       name: '',
@@ -76,7 +84,7 @@ const CoachingRegistration = () => {
     ]
   });
 
-  // Add preview URLs state for images
+  // Image previews state
   const [imagePreviews, setImagePreviews] = useState({
     logo: null,
     coverImage: null,
@@ -109,11 +117,6 @@ const CoachingRegistration = () => {
     'Economics',
     'Accountancy'
   ];
-
-  const [loading, setLoading] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) {
