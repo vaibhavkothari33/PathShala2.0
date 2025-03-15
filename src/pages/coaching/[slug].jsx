@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Star, Clock, Users, Phone, Mail, Globe, Home,
   BookOpen, Award, CheckCircle, ChevronLeft, Calendar, Camera,
-  Info, Briefcase, GraduationCap, X
+  Info, Briefcase, GraduationCap, X, ZoomIn, ArrowLeft, ArrowRight
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { X, Camera } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import coachingService from '../../services/coachingService';
 
@@ -49,33 +46,56 @@ const CoachingDetails = () => {
     fetchCoachingDetails();
   }, [slug, navigate]);
 
-  const ImageModal = ({ image, onClose }) => (
+  const ImageModal = ({ images, currentImage, onClose, onNext, onPrevious }) => (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
-      onClick={onClose}
+      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm"
     >
-      <motion.div
-        initial={{ scale: 0.9 }}
-        animate={{ scale: 1 }}
-        exit={{ scale: 0.9 }}
-        className="relative max-w-7xl w-full max-h-[90vh] rounded-lg overflow-hidden"
-        onClick={e => e.stopPropagation()}
-      >
-        <img
-          src={image}
-          alt="Classroom view"
-          className="w-full h-full object-contain"
-        />
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
-        >
-          <X className="h-6 w-6" />
-        </button>
-      </motion.div>
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="relative w-full h-full flex items-center justify-center">
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+          >
+            <X className="h-6 w-6 text-white" />
+          </button>
+
+          {/* Navigation buttons */}
+          <button
+            onClick={onPrevious}
+            className="absolute left-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+          >
+            <ArrowLeft className="h-6 w-6 text-white" />
+          </button>
+          <button
+            onClick={onNext}
+            className="absolute right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+          >
+            <ArrowRight className="h-6 w-6 text-white" />
+          </button>
+
+          {/* Main image */}
+          <motion.img
+            key={currentImage}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            src={currentImage}
+            alt="Classroom view"
+            className="max-w-[90vw] max-h-[90vh] object-contain"
+          />
+
+          {/* Image counter */}
+          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 px-4 py-2 rounded-full">
+            <p className="text-white text-sm">
+              {images.indexOf(currentImage) + 1} / {images.length}
+            </p>
+          </div>
+        </div>
+      </div>
     </motion.div>
   );
 
@@ -330,12 +350,13 @@ const CoachingDetails = () => {
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
+                    className="space-y-6"
                   >
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {coaching.classroomImages && coaching.classroomImages.map((image, index) => (
                         <motion.div
                           key={index}
-                          className="relative aspect-video rounded-lg overflow-hidden shadow-sm cursor-pointer group"
+                          className="group relative aspect-[4/3] rounded-xl overflow-hidden shadow-lg cursor-pointer"
                           onClick={() => setSelectedImage(image)}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
@@ -343,17 +364,19 @@ const CoachingDetails = () => {
                           <img
                             src={image}
                             alt={`Classroom ${index + 1}`}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
-                            <div className="p-3 text-white text-sm w-full flex justify-between items-center">
-                              <span className="font-medium">Classroom {index + 1}</span>
-                              <motion.button
-                                className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
-                                whileHover={{ scale: 1.1 }}
-                              >
-                                <Camera className="h-4 w-4 text-white" />
-                              </motion.button>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                            <div className="absolute bottom-0 left-0 right-0 p-4">
+                              <div className="flex items-center justify-between">
+                                <p className="text-white font-medium">Classroom {index + 1}</p>
+                                <motion.div
+                                  whileHover={{ scale: 1.1 }}
+                                  className="bg-white/20 p-2 rounded-full"
+                                >
+                                  <ZoomIn className="h-5 w-5 text-white" />
+                                </motion.div>
+                              </div>
                             </div>
                           </div>
                         </motion.div>
@@ -364,8 +387,19 @@ const CoachingDetails = () => {
                     <AnimatePresence>
                       {selectedImage && (
                         <ImageModal
-                          image={selectedImage}
+                          images={coaching.classroomImages}
+                          currentImage={selectedImage}
                           onClose={() => setSelectedImage(null)}
+                          onNext={() => {
+                            const currentIndex = coaching.classroomImages.indexOf(selectedImage);
+                            const nextIndex = (currentIndex + 1) % coaching.classroomImages.length;
+                            setSelectedImage(coaching.classroomImages[nextIndex]);
+                          }}
+                          onPrevious={() => {
+                            const currentIndex = coaching.classroomImages.indexOf(selectedImage);
+                            const previousIndex = currentIndex === 0 ? coaching.classroomImages.length - 1 : currentIndex - 1;
+                            setSelectedImage(coaching.classroomImages[previousIndex]);
+                          }}
                         />
                       )}
                     </AnimatePresence>
