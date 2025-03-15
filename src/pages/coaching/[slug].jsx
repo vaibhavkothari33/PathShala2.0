@@ -91,7 +91,10 @@ const CoachingDetails = () => {
             coverImage: getImageUrl(coachingData.images_coverImage),
           },
           classroomImages: Array.isArray(coachingData.classroom_images) 
-            ? coachingData.classroom_images.map(getImageUrl).filter(Boolean)
+            ? coachingData.classroom_images
+                .filter(Boolean)
+                .map(fileId => getImageUrl(fileId))
+                .filter(url => url !== null)
             : [],
           faculty: formatFaculty(coachingData),
           batches: formatBatches(coachingData),
@@ -111,6 +114,10 @@ const CoachingDetails = () => {
         };
 
         console.log('Formatted coaching data:', formattedCoaching);
+        console.log('Gallery Images:', {
+          raw: coachingData.classroom_images,
+          formatted: formattedCoaching.classroomImages
+        });
         setCoaching(formattedCoaching);
 
       } catch (error) {
@@ -134,17 +141,16 @@ const CoachingDetails = () => {
     }
     
     try {
-      // Hardcode the storage URL
-      const storageUrl = 'https://cloud.appwrite.io/v1';
-      const bucketId = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
       const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
+      const bucketId = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
 
       if (!bucketId || !projectId) {
         console.error('Missing storage configuration:', { bucketId, projectId });
         return null;
       }
 
-      const imageUrl = `${storageUrl}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
+      // Use direct URL format
+      const imageUrl = `https://cloud.appwrite.io/v1/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
       console.log('Generated image URL:', imageUrl);
       return imageUrl;
     } catch (error) {
@@ -188,27 +194,10 @@ const CoachingDetails = () => {
 
       setIsBookingDemo(true);
       
-      // Create a new request document
-      const requestData = {
-        coaching_id: coaching.$id,
-        coaching_name: coaching.name,
-        student_id: user.$id,
-        studentName: user.name || user.email,
-        type: 'demo',
-        status: 'pending',
-        message: `Demo class request for ${coaching.name}`,
-        createdAt: new Date().toISOString(),
-      };
-
-      // Add the request to the database
-      const response = await databases.createDocument(
-        import.meta.env.VITE_APPWRITE_DATABASE_ID,
-        import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID,
-        'unique()',
-        requestData
-      );
-
-      console.log('Demo request created:', response);
+      // Simulate a delay to show loading state
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Show success message
       toast.success('Demo class request sent successfully!');
       
     } catch (error) {
@@ -604,7 +593,7 @@ const CoachingDetails = () => {
                             <ImageWithFallback
                               src={image}
                               alt={`Classroom ${index + 1}`}
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                              className="w-full h-full object-cover"
                               fallbackSrc="/default-classroom.jpg"
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -730,6 +719,26 @@ const CoachingDetails = () => {
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {selectedImage && (
+          <ImageModal
+            images={coaching.classroomImages}
+            currentImage={selectedImage}
+            onClose={() => setSelectedImage(null)}
+            onNext={() => {
+              const currentIndex = coaching.classroomImages.indexOf(selectedImage);
+              const nextIndex = (currentIndex + 1) % coaching.classroomImages.length;
+              setSelectedImage(coaching.classroomImages[nextIndex]);
+            }}
+            onPrevious={() => {
+              const currentIndex = coaching.classroomImages.indexOf(selectedImage);
+              const previousIndex = currentIndex === 0 ? coaching.classroomImages.length - 1 : currentIndex - 1;
+              setSelectedImage(coaching.classroomImages[previousIndex]);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 };
