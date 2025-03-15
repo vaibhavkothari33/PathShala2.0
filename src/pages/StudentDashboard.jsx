@@ -72,9 +72,9 @@ const StudentDashboard = () => {
         students: coaching.totalStudents || 0,
 
         image: coaching.images_coverImage 
-          ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.images_coverImage}`
+          ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.images_coverImage}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`
           : coaching.images_logo 
-            ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.images_logo}`
+            ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.images_logo}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`
             : "/placeholder-coaching.jpg",
 
         location: coaching.address || "Address not available",
@@ -109,14 +109,14 @@ const StudentDashboard = () => {
             subject: coaching.faculty_subject?.[i] || '',
             bio: coaching.faculty_bio?.[i] || '',
             image: coaching.faculty_image?.[i]
-              ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.faculty_image[i]}`
+              ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.faculty_image[i]}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`
               : null,
           }))
           : [],
         establishedYear: coaching.establishedYear || '',
         classroomImages: Array.isArray(coaching.images_classroomImages)
           ? coaching.images_classroomImages.map(imgId =>
-            `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${imgId}`
+            `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${imgId}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`
           )
           : [],
         slug: coaching.slug || coaching.name?.toLowerCase().replace(/\s+/g, '-') || coaching.$id
@@ -205,6 +205,16 @@ const StudentDashboard = () => {
         name: coachingCenters[0].name,
         coverImage: coachingCenters[0].image,
         logo: coachingCenters[0].images_logo,
+      });
+    }
+  }, [coachingCenters]);
+
+  useEffect(() => {
+    if (coachingCenters.length > 0) {
+      console.log('Image URLs:', {
+        coverImage: coachingCenters[0].image,
+        classroomImages: coachingCenters[0].classroomImages,
+        facultyImages: coachingCenters[0].faculty.map(f => f.image),
       });
     }
   }, [coachingCenters]);
@@ -401,7 +411,7 @@ const StudentDashboard = () => {
                       console.error(`Failed to load image for ${coaching.name}:`, e);
                       if (!e.target.src.includes('images_logo')) {
                         const logoUrl = coaching.images_logo 
-                          ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.images_logo}`
+                          ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.images_logo}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`
                           : "/placeholder-coaching.jpg";
                         e.target.src = logoUrl;
                       } else {
