@@ -20,6 +20,8 @@ const ImageWithFallback = ({ src, alt, className, fallbackSrc }) => {
     setLoaded(false);
   }, [src]);
 
+  console.log(`Loading image for ${alt}:`, src);
+
   return (
     <>
       {!loaded && !error && (
@@ -36,7 +38,10 @@ const ImageWithFallback = ({ src, alt, className, fallbackSrc }) => {
           setError(true);
           setLoaded(true);
         }}
-        onLoad={() => setLoaded(true)}
+        onLoad={() => {
+          console.log(`Image loaded successfully for ${alt}`);
+          setLoaded(true);
+        }}
       />
     </>
   );
@@ -87,8 +92,8 @@ const CoachingDetails = () => {
         const formattedCoaching = {
           ...coachingData,
           images: {
-            logo: getImageUrl(coachingData.images_logo),
-            coverImage: getImageUrl(coachingData.images_coverImage),
+            logo: getImageUrl(coachingData.logo) || getImageUrl(coachingData.images_logo),
+            coverImage: getImageUrl(coachingData.coverImage) || getImageUrl(coachingData.images_coverImage),
           },
           classroomImages: Array.isArray(coachingData.classroom_images) 
             ? coachingData.classroom_images
@@ -113,10 +118,12 @@ const CoachingDetails = () => {
           subjects: Array.isArray(coachingData.subjects) ? coachingData.subjects : []
         };
 
-        console.log('Formatted coaching data:', formattedCoaching);
-        console.log('Gallery Images:', {
-          raw: coachingData.classroom_images,
-          formatted: formattedCoaching.classroomImages
+        console.log('Raw classroom images:', coachingData.classroom_images);
+        console.log('Formatted classroom images:', formattedCoaching.classroomImages);
+        console.log('Image URLs:', {
+          logo: formattedCoaching.images.logo,
+          cover: formattedCoaching.images.coverImage,
+          classroom: formattedCoaching.classroomImages
         });
         setCoaching(formattedCoaching);
 
@@ -134,6 +141,12 @@ const CoachingDetails = () => {
     }
   }, [slug, navigate]);
 
+  useEffect(() => {
+    if (coaching?.classroomImages) {
+      console.log('Current classroom images:', coaching.classroomImages);
+    }
+  }, [coaching]);
+
   const getImageUrl = (fileId) => {
     if (!fileId) {
       console.log('No fileId provided for image');
@@ -141,6 +154,7 @@ const CoachingDetails = () => {
     }
     
     try {
+      // Use environment variables
       const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
       const bucketId = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
 
@@ -149,8 +163,8 @@ const CoachingDetails = () => {
         return null;
       }
 
-      // Use direct URL format
-      const imageUrl = `https://cloud.appwrite.io/v1/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
+      // Updated URL format
+      const imageUrl = `${import.meta.env.VITE_APPWRITE_ENDPOINT}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
       console.log('Generated image URL:', imageUrl);
       return imageUrl;
     } catch (error) {
@@ -582,16 +596,19 @@ const CoachingDetails = () => {
                   >
                     {coaching.classroomImages && coaching.classroomImages.length > 0 ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {coaching.classroomImages.map((image, index) => (
+                        {coaching.classroomImages.map((imageUrl, index) => (
                           <motion.div
                             key={index}
                             className="group relative aspect-[4/3] rounded-xl overflow-hidden shadow-lg cursor-pointer"
-                            onClick={() => setSelectedImage(image)}
+                            onClick={() => {
+                              console.log('Clicked image:', imageUrl);
+                              setSelectedImage(imageUrl);
+                            }}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                           >
                             <ImageWithFallback
-                              src={coaching.classroomImages}
+                              src={imageUrl}
                               alt={`Classroom ${index + 1}`}
                               className="w-full h-full object-cover"
                               fallbackSrc="/default-classroom.jpg"
