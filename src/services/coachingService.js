@@ -58,39 +58,26 @@ const coachingService = {
   },
 
   // Get coaching by user ID
-  // async getUserCoaching(userId) {
-  //   try {
-  //     if (!userId) {
-  //       throw new Error('User ID is required');
-  //     }
-
-  //     // Query for coaching centers where owner_id equals the userId
-  //     const response = await databases.listDocuments(
-  //       DATABASE_ID,
-  //       COLLECTION_ID,
-  //       [Query.equal('owner_id', userId)] // Ensure this field exists in your database
-  //     );
-
-  //     if (response.documents.length === 0) {
-  //       return null; // No coaching center found
-  //     }
-
-  //     return response.documents[0];
-  //   } catch (error) {
-  //     console.error('Error fetching user coaching:', error);
-  //     throw error;
-  //   }
-  // },
   async getUserCoaching(userId) {
     try {
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
+      // Query for coaching centers where owner_id equals the userId
       const response = await databases.listDocuments(
-        import.meta.env.VITE_APPWRITE_DATABASE_ID,
-        import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID,
-        [Query.equal('owner_id', userId)]
+        DATABASE_ID,
+        COLLECTION_ID,
+        [Query.equal('owner_id', userId)] // Ensure this field exists in your database
       );
+
+      if (response.documents.length === 0) {
+        return null; // No coaching center found
+      }
+
       return response.documents[0];
     } catch (error) {
-      console.error('Error fetching coaching:', error);
+      console.error('Error fetching user coaching:', error);
       throw error;
     }
   },
