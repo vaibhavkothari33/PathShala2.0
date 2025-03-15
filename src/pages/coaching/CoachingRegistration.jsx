@@ -546,22 +546,12 @@ const CoachingRegistration = () => {
 
           {/* Current Step Info */}
           <div className="text-center">
-            <motion.h2
-              key={currentStep}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="text-2xl font-bold text-gray-900"
-            >
+            <h2 className="text-2xl font-bold text-gray-900">
               {steps[currentStep - 1].title}
-            </motion.h2>
-            <motion.p
-              key={`desc-${currentStep}`}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-sm text-gray-500 mt-1"
-            >
+            </h2>
+            <p className="text-sm text-gray-500 mt-1">
               {steps[currentStep - 1].description}
-            </motion.p>
+            </p>
           </div>
         </div>
       </div>
@@ -649,11 +639,10 @@ const CoachingRegistration = () => {
         <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={currentStep}
-            variants={stepVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0.8 }}
+            transition={{ duration: 0.1 }}
           >
             {currentStep === 1 && (
               <section className="basic-info">
@@ -669,23 +658,30 @@ const CoachingRegistration = () => {
                     placeholder="Enter coaching name"
                   />
 
-                  <InputField
-                    label="Description"
-                    name="description"
-                    required
-                    value={formData.basicInfo.description}
-                    onChange={handleBasicInfoChange}
-                    error={formErrors.basicInfo?.description}
-                    rows={4}
-                    placeholder="Describe your coaching center"
-                  />
+                  <div className="md:col-span-2">
+                    <label className={labelClasses}>
+                      Description *
+                    </label>
+                    <textarea
+                      name="description"
+                      required
+                      value={formData.basicInfo.description}
+                      onChange={handleBasicInfoChange}
+                      rows={4}
+                      className={`${inputClasses} ${formErrors.basicInfo?.description ? 'border-red-500' : ''}`}
+                      placeholder="Describe your coaching center"
+                    />
+                    {formErrors.basicInfo?.description && (
+                      <p className="mt-1 text-sm text-red-500">{formErrors.basicInfo.description}</p>
+                    )}
+                  </div>
 
                   <InputField
                     label="Address"
                     name="address"
                     required
                     value={formData.basicInfo.address}
-                    onChange={handleBasicInfo.change}
+                    onChange={handleBasicInfoChange}
                     error={formErrors.basicInfo?.address}
                     placeholder="Enter complete address"
                   />
