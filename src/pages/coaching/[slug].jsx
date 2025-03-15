@@ -412,10 +412,10 @@ const CoachingDetails = () => {
                   <span className="text-gray-600">Established</span>
                   <span className="font-medium text-gray-900">{coaching.establishedYear || "N/A"}</span>
                 </div>
-                <div className="flex items-center justify-between">
+                {/* <div className="flex items-center justify-between">
                   <span className="text-gray-600">Total Students</span>
                   <span className="font-medium text-gray-900">{coaching.students > 0 ? `${coaching.students}+` : "N/A"}</span>
-                </div>
+                </div> */}
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Rating</span>
                   <div className="flex items-center">
