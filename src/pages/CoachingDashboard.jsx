@@ -18,7 +18,12 @@ import {
 import { useAuth } from '../context/AuthContext';
 import coachingService from '../services/coachingService';
 import { toast } from 'react-hot-toast';
-
+// At the top of your CoachingDashboard.jsx file
+import { databases, } from '../config/appwrite'; // Adjust the path as needed
+// Near the top of your file, after imports
+import { Query } from 'appwrite';
+const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
+const REQUESTS_COLLECTION_ID = import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID;
 const CoachingDashboard = () => {
   const { user } = useAuth();
   const [coaching, setCoaching] = useState(null);
@@ -76,26 +81,21 @@ const CoachingDashboard = () => {
   useEffect(() => {
     const fetchRequests = async () => {
       try {
+        // Use coaching.$id instead of coachingId
         const response = await databases.listDocuments(
-          import.meta.env.VITE_APPWRITE_DATABASE_ID,
-          import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID, // Add this collection ID to .env
-          [
-            Query.equal('coachingId', coaching.$id),
-            Query.orderDesc('$createdAt')
-          ]
+          DATABASE_ID,
+          REQUESTS_COLLECTION_ID,
+          [Query.equal('coaching_id', coaching.$id)]
         );
         setRequests(response.documents);
       } catch (error) {
         console.error('Error fetching requests:', error);
-        toast.error('Failed to load requests');
       }
     };
-
     if (coaching?.$id) {
       fetchRequests();
     }
   }, [coaching]);
-
   // Add these functions to handle requests
   const handleRequest = async (requestId, status) => {
     try {

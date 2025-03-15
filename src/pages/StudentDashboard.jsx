@@ -389,6 +389,11 @@ const StudentDashboard = () => {
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center">
+                      <span className="ml-1 text-2xl font-medium">{center.name}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center">
                       <Star className="h-5 w-5 text-yellow-400" />
                       <span className="ml-1 font-medium">{center.rating}</span>
                       {center.reviews > 0 && (

@@ -33,8 +33,13 @@ const coachingService = {
   // Register new coaching center
   async registerCoaching(coachingData) {
     try {
+      // Generate a unique ID
+      const documentId = ID.unique();
+      
       const documentData = {
         ...coachingData,
+        location: coachingData.location || coachingData.city || "", 
+        documentId: documentId, // Add this required field
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
@@ -42,7 +47,7 @@ const coachingService = {
       const response = await databases.createDocument(
         DATABASE_ID,
         COLLECTION_ID,
-        ID.unique(),
+        documentId, // Use the generated ID here
         documentData
       );
       return response;
@@ -206,32 +211,41 @@ const coachingService = {
     }
   },
   // Initialize default coaching centers
-  async initializeDefaultCoachingCenters() {
-    console.log('Initializing default coaching centers...');
-    // Placeholder for logic to initialize default coaching centers
-    const defaultCoachingData = {
-      name: 'Default Coaching Center',
-      location: 'Default Location',
-      mobile: '1234567890',
-      email: 'default@example.com'
-    };
+  // async initializeDefaultCoachingCenters() {
+  //   console.log('Initializing default coaching centers...');
+  //   // Generate a unique ID
+  //   const documentId = ID.unique();
+    
+  //   const defaultCoachingData = {
+  //     name: 'Default Coaching Center',
+  //     phone: '1234567890',
+  //     description: "this is a coaching",
+  //     email: 'default@example.com',
+  //     address: "bennett university",
+  //     city: "Jaipur",
+  //     establishedYear: "2016",
+  //     images_logo: "",
+  //     images_coverImage: "",
+  //     createdAt: new Date().toISOString(),
+  //     updatedAt: new Date().toISOString(),
+  //     slug: "",
+  //     owner_id: "",
+  //     documentId: documentId, // Add this required field
+  //     location: "Jaipur", 
+  //   };
 
-    try {
-      const response = await databases.createDocument(
-        DATABASE_ID,
-        COLLECTION_ID,
-        ID.unique(),
-        defaultCoachingData
-      );
-      console.log('Default coaching center initialized:', response);
-    } catch (error) {
-      console.error('Error initializing default coaching center:', error);
-    }
-
-
-    // Logic to save defaultCoachingData to Appwrite can be added here
-  },
-
+  //   try {
+  //     const response = await databases.createDocument(
+  //       DATABASE_ID,
+  //       COLLECTION_ID,
+  //       documentId, // Use the same ID here
+  //       defaultCoachingData
+  //     );
+  //     console.log('Default coaching center initialized:', response);
+  //   } catch (error) {
+  //     console.error('Error initializing default coaching center:', error);
+  //   }
+  // },
 };
 
 export default coachingService;
