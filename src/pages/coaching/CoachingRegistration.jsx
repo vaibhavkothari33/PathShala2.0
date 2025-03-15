@@ -227,6 +227,7 @@ const CoachingRegistration = () => {
     
     try {
       if (name === 'phone') {
+        // Only allow numbers and limit to 10 digits
         const phoneValue = value.replace(/\D/g, '').slice(0, 10);
         setFormData(prev => ({
           ...prev,
@@ -328,9 +329,14 @@ const CoachingRegistration = () => {
   };
 
   const handleBatchChange = (index, field, value) => {
-    const newBatches = [...formData.batches];
-    newBatches[index][field] = value;
-    setFormData(prev => ({ ...prev, batches: newBatches }));
+    setFormData(prev => {
+      const newBatches = [...prev.batches];
+      newBatches[index] = {
+        ...newBatches[index],
+        [field]: value
+      };
+      return { ...prev, batches: newBatches };
+    });
   };
 
   const addFaculty = () => {
@@ -348,9 +354,14 @@ const CoachingRegistration = () => {
   };
 
   const handleFacultyChange = (index, field, value) => {
-    const newFaculty = [...formData.faculty];
-    newFaculty[index][field] = value;
-    setFormData(prev => ({ ...prev, faculty: newFaculty }));
+    setFormData(prev => {
+      const newFaculty = [...prev.faculty];
+      newFaculty[index] = {
+        ...newFaculty[index],
+        [field]: value
+      };
+      return { ...prev, faculty: newFaculty };
+    });
   };
 
   // Update the nextStep function
@@ -490,6 +501,51 @@ const CoachingRegistration = () => {
 
     window.addEventListener('error', handleError);
     return () => window.removeEventListener('error', handleError);
+  }, []);
+
+  // Add these meta tags to your HTML head to prevent zoom on input focus
+  useEffect(() => {
+    const meta = document.createElement('meta');
+    meta.name = 'viewport';
+    meta.content = 'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0';
+    document.head.appendChild(meta);
+
+    return () => {
+      document.head.removeChild(meta);
+    };
+  }, []);
+
+  // Add these global styles to prevent unwanted behaviors
+  const globalStyles = `
+    input, textarea, select {
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    * {
+      -webkit-tap-highlight-color: transparent;
+    }
+  `;
+
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = globalStyles;
+    document.head.appendChild(style);
+
+    return () => {
+      document.head.removeChild(style);
+    };
   }, []);
 
   if (isLoading) return (
@@ -634,15 +690,15 @@ const CoachingRegistration = () => {
   // Update the input field to show error messages
   const InputField = ({ label, name, type = 'text', value, onChange, error, required, ...props }) => (
     <div>
-      <label className={labelClasses}>
+      <label htmlFor={name} className={labelClasses}>
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       <input
+        id={name}
         type={type}
         name={name}
-        value={value}
+        value={value || ''}
         onChange={onChange}
-        required={required}
         className={`${inputClasses} ${error ? 'border-red-500' : ''}`}
         {...props}
       />
@@ -933,7 +989,7 @@ const CoachingRegistration = () => {
                       </label>
                       <input
                         type="text"
-                        value={batch.name}
+                        value={batch.name || ''}
                         onChange={(e) => handleBatchChange(index, "name", e.target.value)}
                         className={inputClasses}
                         placeholder="e.g., Morning Batch"
@@ -1054,8 +1110,7 @@ const CoachingRegistration = () => {
                       </label>
                       <input
                         type="text"
-                        required
-                        value={faculty.name}
+                        value={faculty.name || ''}
                         onChange={(e) => handleFacultyChange(index, 'name', e.target.value)}
                         className={inputClasses}
                         placeholder="Enter faculty name"
@@ -1069,8 +1124,7 @@ const CoachingRegistration = () => {
                       </label>
                       <input
                         type="text"
-                        required
-                        value={faculty.qualification}
+                        value={faculty.qualification || ''}
                         onChange={(e) => handleFacultyChange(index, 'qualification', e.target.value)}
                         className={inputClasses}
                         placeholder="e.g., PhD in Physics"
@@ -1084,8 +1138,7 @@ const CoachingRegistration = () => {
                       </label>
                       <input
                         type="text"
-                        required
-                        value={faculty.experience}
+                        value={faculty.experience || ''}
                         onChange={(e) => handleFacultyChange(index, 'experience', e.target.value)}
                         className={inputClasses}
                         placeholder="e.g., 5 years"
@@ -1098,8 +1151,7 @@ const CoachingRegistration = () => {
                         Subject *
                       </label>
                       <select
-                        required
-                        value={faculty.subject}
+                        value={faculty.subject || ''}
                         onChange={(e) => handleFacultyChange(index, 'subject', e.target.value)}
                         className={inputClasses}
                       >
@@ -1118,7 +1170,7 @@ const CoachingRegistration = () => {
                         Bio
                       </label>
                       <textarea
-                        value={faculty.bio}
+                        value={faculty.bio || ''}
                         onChange={(e) => handleFacultyChange(index, 'bio', e.target.value)}
                         rows={3}
                         className={inputClasses}
