@@ -96,18 +96,40 @@ const CoachingDetails = () => {
             logo: getImageUrl(coachingData.images_logo),
             coverImage: getImageUrl(coachingData.images_coverImage),
           },
-          classroomImages: coachingData.classroom_images?.map(getImageUrl) || [],
+          classroomImages: Array.isArray(coachingData.classroom_images) 
+            ? coachingData.classroom_images.map(getImageUrl).filter(Boolean)
+            : [],
           faculty: formatFaculty(coachingData),
           batches: formatBatches(coachingData),
           contact: {
-            phone: coachingData.contact_phone || 'N/A',
-            email: coachingData.contact_email || 'N/A',
+            phone: coachingData.phone || coachingData.contact_phone || 'N/A',
+            email: coachingData.email || coachingData.contact_email || 'N/A',
             website: coachingData.website || 'N/A'
-          }
+          },
+          address: coachingData.address || 'N/A',
+          city: coachingData.city || 'N/A'
         };
 
         console.log('Formatted coaching data:', formattedCoaching);
         setCoaching(formattedCoaching);
+
+        // Add this after fetching the coaching data
+        useEffect(() => {
+          if (coaching) {
+            console.log('Contact Information:', {
+              phone: coaching.contact.phone,
+              email: coaching.contact.email,
+              website: coaching.contact.website,
+              address: coaching.address,
+              city: coaching.city
+            });
+            
+            console.log('Gallery Images:', {
+              count: coaching.classroomImages?.length || 0,
+              urls: coaching.classroomImages
+            });
+          }
+        }, [coaching]);
       } catch (error) {
         console.error('Error fetching coaching details:', error);
         toast.error('Failed to load coaching details');
@@ -566,58 +588,44 @@ const CoachingDetails = () => {
                     animate={{ opacity: 1 }}
                     className="space-y-6"
                   >
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {coaching.classroomImages?.map((image, index) => (
-                        <motion.div
-                          key={index}
-                          className="group relative aspect-[4/3] rounded-xl overflow-hidden shadow-lg cursor-pointer"
-                          onClick={() => setSelectedImage(image)}
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                        >
-                          <ImageWithFallback
-                            src={image}
-                            alt={`Classroom ${index + 1}`}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                            fallbackSrc="/default-classroom.jpg"
-                          />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <div className="absolute bottom-0 left-0 right-0 p-4">
-                              <div className="flex items-center justify-between">
-                                <p className="text-white font-medium">Classroom {index + 1}</p>
-                                <motion.div
-                                  whileHover={{ scale: 1.1 }}
-                                  className="bg-white/20 p-2 rounded-full"
-                                >
-                                  <ZoomIn className="h-5 w-5 text-white" />
-                                </motion.div>
+                    {coaching.classroomImages && coaching.classroomImages.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {coaching.classroomImages.map((image, index) => (
+                          <motion.div
+                            key={index}
+                            className="group relative aspect-[4/3] rounded-xl overflow-hidden shadow-lg cursor-pointer"
+                            onClick={() => setSelectedImage(image)}
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                          >
+                            <ImageWithFallback
+                              src={image}
+                              alt={`Classroom ${index + 1}`}
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                              fallbackSrc="/default-classroom.jpg"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                              <div className="absolute bottom-0 left-0 right-0 p-4">
+                                <div className="flex items-center justify-between">
+                                  <p className="text-white font-medium">Classroom {index + 1}</p>
+                                  <motion.div
+                                    whileHover={{ scale: 1.1 }}
+                                    className="bg-white/20 p-2 rounded-full"
+                                  >
+                                    <ZoomIn className="h-5 w-5 text-white" />
+                                  </motion.div>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        </motion.div>
-                      ))}
-                    </div>
-
-                    {/* Image Modal */}
-                    <AnimatePresence>
-                      {selectedImage && (
-                        <ImageModal
-                          images={coaching.classroomImages}
-                          currentImage={selectedImage}
-                          onClose={() => setSelectedImage(null)}
-                          onNext={() => {
-                            const currentIndex = coaching.classroomImages.indexOf(selectedImage);
-                            const nextIndex = (currentIndex + 1) % coaching.classroomImages.length;
-                            setSelectedImage(coaching.classroomImages[nextIndex]);
-                          }}
-                          onPrevious={() => {
-                            const currentIndex = coaching.classroomImages.indexOf(selectedImage);
-                            const previousIndex = currentIndex === 0 ? coaching.classroomImages.length - 1 : currentIndex - 1;
-                            setSelectedImage(coaching.classroomImages[previousIndex]);
-                          }}
-                        />
-                      )}
-                    </AnimatePresence>
+                          </motion.div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-8 text-gray-500">
+                        <Camera className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                        <p>No classroom images available</p>
+                      </div>
+                    )}
                   </motion.div>
                 )}
               </div>
@@ -637,35 +645,56 @@ const CoachingDetails = () => {
             >
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Contact Information</h3>
               <div className="space-y-4">
-                <div className="flex items-center">
-                  <MapPin className="h-5 w-5 text-indigo-500 mr-3" />
-                  <span className="text-gray-600">{coaching.address}</span>
-                  {/* <span className="text-gray-600">{coaching.website}</span> */}
-                </div>
-                <div className="flex items-center">
-                  <Phone className="h-5 w-5 text-indigo-500 mr-3" />
-                  <a href={`tel:${coaching.contact.phone}`} className="text-indigo-600 hover:text-indigo-500">
-                    {coaching.contact.phone}
-                  </a>
-                </div>
-                <div className="flex items-center">
-                  <Mail className="h-5 w-5 text-indigo-500 mr-3" />  {coaching.contact.email}
-                  <a href={`mailto:${coaching.contact.email}`} className="text-indigo-600 hover:text-indigo-500">
-                    {coaching.contact.email}
-                  </a>
-                </div>
-                <div className="flex items-center">
-                  <Globe className="h-5 w-5 text-indigo-500 mr-3" />
-                  <a
-                    href={`${coaching.contact.website}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-indigo-600 hover:text-indigo-500"
-                  >
-                    {coaching.contact.website}
-                  </a>
-                </div>
+                {/* Address */}
+                {(coaching.address || coaching.city) && (
+                  <div className="flex items-start">
+                    <MapPin className="h-5 w-5 text-indigo-500 mr-3 mt-1 flex-shrink-0" />
+                    <span className="text-gray-600">
+                      {[coaching.address, coaching.city].filter(Boolean).join(', ')}
+                    </span>
+                  </div>
+                )}
 
+                {/* Phone */}
+                {coaching.contact.phone && coaching.contact.phone !== 'N/A' && (
+                  <div className="flex items-center">
+                    <Phone className="h-5 w-5 text-indigo-500 mr-3 flex-shrink-0" />
+                    <a 
+                      href={`tel:${coaching.contact.phone}`} 
+                      className="text-indigo-600 hover:text-indigo-500"
+                    >
+                      {coaching.contact.phone}
+                    </a>
+                  </div>
+                )}
+
+                {/* Email */}
+                {coaching.contact.email && coaching.contact.email !== 'N/A' && (
+                  <div className="flex items-center">
+                    <Mail className="h-5 w-5 text-indigo-500 mr-3 flex-shrink-0" />
+                    <a 
+                      href={`mailto:${coaching.contact.email}`} 
+                      className="text-indigo-600 hover:text-indigo-500"
+                    >
+                      {coaching.contact.email}
+                    </a>
+                  </div>
+                )}
+
+                {/* Website */}
+                {coaching.contact.website && coaching.contact.website !== 'N/A' && (
+                  <div className="flex items-center">
+                    <Globe className="h-5 w-5 text-indigo-500 mr-3 flex-shrink-0" />
+                    <a
+                      href={coaching.contact.website.startsWith('http') ? coaching.contact.website : `https://${coaching.contact.website}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-indigo-600 hover:text-indigo-500 truncate"
+                    >
+                      {coaching.contact.website}
+                    </a>
+                  </div>
+                )}
               </div>
             </motion.div>
 
