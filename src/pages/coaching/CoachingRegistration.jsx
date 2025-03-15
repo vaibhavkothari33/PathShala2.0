@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Upload, Plus, Minus, Camera, X, CheckCircle, ChevronRight, ArrowLeft, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import coachingService from '../../services/coachingService';
-import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
+import coachingService from '../../services/coachingService';
 
 const CoachingRegistration = () => {
   const { user } = useAuth();
@@ -100,27 +100,25 @@ const CoachingRegistration = () => {
   ];
 
   useEffect(() => {
-    if (!user) {
-      toast.error('Please login to register a coaching center');
-      navigate('/login');
-    }
-  }, [user, navigate]);
-
-  useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        // Your API call here
+        // Check if user exists
+        if (!user) {
+          throw new Error('Please login to register a coaching center');
+        }
+        // Any other initialization logic here
       } catch (error) {
-        console.error('Error fetching data:', error);
+        console.error('Error:', error);
         setError(error);
+        toast.error(error.message);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchData();
-  }, []);
+  }, [user]);
 
   const handleBasicInfoChange = (e) => {
     const { name, value } = e.target;
@@ -239,10 +237,30 @@ const CoachingRegistration = () => {
     setFormData(prev => ({ ...prev, faculty: newFaculty }));
   };
 
+  const nextStep = (e) => {
+    e.preventDefault();
+    if (currentStep < totalSteps) {
+      setCurrentStep(currentStep + 1);
+      window.scrollTo(0, 0);
+    }
+  };
+
+  const prevStep = (e) => {
+    e.preventDefault();
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1);
+      window.scrollTo(0, 0);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (currentStep !== totalSteps) {
+      nextStep(e);
+      return;
+    }
+    
     setLoading(true);
-
     try {
       await coachingService.checkAuth();
 
@@ -345,22 +363,29 @@ const CoachingRegistration = () => {
     }
   };
 
-  const nextStep = () => {
-    if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
-      window.scrollTo(0, 0);
-    }
-  };
+  if (isLoading) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
+        <p className="mt-4 text-gray-600">Loading...</p>
+      </div>
+    </div>
+  );
 
-  const prevStep = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-      window.scrollTo(0, 0);
-    }
-  };
-
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
+  if (error) return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="text-red-500 text-xl mb-4">Error</div>
+        <p className="text-gray-600">{error.message}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+        >
+          Try Again
+        </button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -479,7 +504,7 @@ const CoachingRegistration = () => {
                         name="city"
                         required
                         value={formData.basicInfo.city}
-                        onChange={handleBasicInfo.change}
+                        onChange={handleBasicInfoChange}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                         placeholder="Enter city"
                       />
@@ -1004,7 +1029,7 @@ const CoachingRegistration = () => {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={currentStep === totalSteps ? handleSubmit : nextStep}
+              onClick={handleSubmit}
               disabled={loading}
               className={`flex items-center px-6 py-2 rounded-lg
                 ${currentStep === totalSteps
