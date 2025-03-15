@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   Users, 
-  Calendar, 
-  BookOpen, 
+  Calendar,
+  BookOpen,
   Settings, 
   Edit, 
   MessageCircle,
@@ -99,12 +99,7 @@ const CoachingDashboard = () => {
   // Add these functions to handle requests
   const handleRequest = async (requestId, status) => {
     try {
-      await databases.updateDocument(
-        import.meta.env.VITE_APPWRITE_DATABASE_ID,
-        import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID,
-        requestId,
-        { status }
-      );
+      await coachingService.updateRequestStatus(requestId, status);
       
       // Update local state
       setRequests(requests.map(req => 
@@ -115,6 +110,30 @@ const CoachingDashboard = () => {
     } catch (error) {
       console.error('Error handling request:', error);
       toast.error('Failed to process request');
+    }
+  };
+
+  const updateRequestStatus = async (requestId, status) => {
+    try {
+      await databases.updateDocument(
+        import.meta.env.VITE_APPWRITE_DATABASE_ID,
+        import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID,
+        requestId, // This is the document ID
+        { 
+          status,
+          updatedAt: new Date().toISOString()
+        }
+      );
+      
+      // Update local state
+      setRequests(requests.map(req => 
+        req.$id === requestId ? { ...req, status } : req
+      ));
+
+      toast.success(`Request ${status === 'accepted' ? 'accepted' : 'rejected'} successfully`);
+    } catch (error) {
+      console.error('Error updating request:', error);
+      toast.error('Failed to update request');
     }
   };
 
@@ -261,24 +280,24 @@ const CoachingDashboard = () => {
                 <p className="text-2xl font-bold">{coaching.students || 0}</p>
               </div>
             </div>
-          </div>
+                    </div>
 
           {/* Batches Card */}
           <div className="bg-white rounded-lg shadow p-6">
             <div className="flex items-center">
               <div className="bg-green-100 p-3 rounded-full">
                 <Calendar className="h-6 w-6 text-green-600" />
-              </div>
+                          </div>
               <div className="ml-4">
                 <h3 className="text-lg font-semibold text-gray-900">Batches</h3>
                 <p className="text-2xl font-bold">{coaching.batches?.length || 0}</p>
-              </div>
-            </div>
-          </div>
+                      </div>
+                    </div>
+                  </div>
 
           {/* Faculty Card */}
           <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
+                              <div className="flex items-center">
               <div className="bg-yellow-100 p-3 rounded-full">
                 <User className="h-6 w-6 text-yellow-600" />
               </div>
@@ -287,21 +306,21 @@ const CoachingDashboard = () => {
                 <p className="text-2xl font-bold">{coaching.faculty?.length || 0}</p>
               </div>
             </div>
-          </div>
+                              </div>
 
           {/* Subjects Card */}
           <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
+                              <div className="flex items-center">
               <div className="bg-purple-100 p-3 rounded-full">
                 <BookOpen className="h-6 w-6 text-purple-600" />
-              </div>
+                              </div>
               <div className="ml-4">
                 <h3 className="text-lg font-semibold text-gray-900">Subjects</h3>
                 <p className="text-2xl font-bold">{coaching.subjects?.length || 0}</p>
-              </div>
-            </div>
-          </div>
-        </div>
+                              </div>
+                            </div>
+                          </div>
+                            </div>
 
         {/* Add Requests Section here */}
         <RequestsSection />
@@ -317,7 +336,7 @@ const CoachingDashboard = () => {
                 <button className="bg-indigo-600 text-white px-3 py-1 rounded-md hover:bg-indigo-700 transition-colors duration-200 flex items-center">
                   <Plus className="h-4 w-4 mr-1" />
                   Add Batch
-                </button>
+                            </button>
               </div>
               <div className="p-6">
                 {coaching.batches && coaching.batches.length > 0 ? (
@@ -360,7 +379,7 @@ const CoachingDashboard = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {coaching.faculty.map((teacher, index) => (
                       <div key={index} className="border rounded-lg p-4">
-                        <div className="flex items-center">
+                          <div className="flex items-center">
                           {teacher.image ? (
                             <img 
                               src={`https://cloud.appwrite.io/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_BUCKET_ID}/files/${teacher.image}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`} 
@@ -370,13 +389,13 @@ const CoachingDashboard = () => {
                           ) : (
                             <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
                               <User className="h-6 w-6 text-gray-500" />
-                            </div>
+                          </div>
                           )}
                           <div>
                             <h3 className="font-semibold">{teacher.name}</h3>
                             <div className="text-sm text-gray-500">
                               {teacher.subject} • {teacher.experience}
-                            </div>
+                          </div>
                           </div>
                         </div>
                       </div>
@@ -431,7 +450,7 @@ const CoachingDashboard = () => {
                     <div className="text-sm text-gray-500">
                       {coaching.address || coaching.city}
                     </div>
-                  </div>
+                </div>
                 </div>
                 
                 <div className="mt-4">
@@ -443,14 +462,14 @@ const CoachingDashboard = () => {
                     View Public Page
                   </Link>
                 </div>
+                </div>
               </div>
-            </div>
 
             {/* Quick Links */}
             <div className="bg-white rounded-lg shadow">
               <div className="p-6 border-b">
                 <h2 className="text-xl font-semibold text-gray-900">Quick Links</h2>
-              </div>
+                </div>
               <div className="p-6">
                 <ul className="space-y-3">
                   <li>
