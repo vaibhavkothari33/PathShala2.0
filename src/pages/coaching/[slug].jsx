@@ -591,7 +591,7 @@ const CoachingDetails = () => {
                             whileTap={{ scale: 0.98 }}
                           >
                             <ImageWithFallback
-                              src={image}
+                              src={coaching.classroomImages}
                               alt={`Classroom ${index + 1}`}
                               className="w-full h-full object-cover"
                               fallbackSrc="/default-classroom.jpg"
