@@ -7,9 +7,9 @@ import {
   Info, Briefcase, GraduationCap, X, ZoomIn, ArrowLeft, ArrowRight
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import coachingService from '../../services/coachingService';
+import { databases } from '../../config/appwrite';
 import { useAuth } from '../../context/AuthContext';
-import { databases } from '../../services/appwriteService';
+import { Query } from 'appwrite';
 
 const CoachingDetails = () => {
   const { slug } = useParams();
@@ -28,17 +28,42 @@ const CoachingDetails = () => {
         setLoading(true);
         console.log('Fetching details for slug:', slug);
 
-        // Use the coachingService to get coaching data by slug
-        const coachingData = await coachingService.getCoachingBySlug(slug);
+        // Fetch coaching data directly using databases
+        const response = await databases.listDocuments(
+          import.meta.env.VITE_APPWRITE_DATABASE_ID,
+          import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID,
+          [Query.equal('slug', slug)]
+        );
 
-        if (!coachingData) {
+        console.log('Raw coaching response:', response);
+
+        if (!response?.documents?.length) {
           toast.error('Coaching center not found');
           navigate('/student/dashboard');
           return;
         }
 
-        console.log('Coaching data loaded:', coachingData);
-        setCoaching(coachingData);
+        const coachingData = response.documents[0];
+        
+        // Format the coaching data
+        const formattedCoaching = {
+          ...coachingData,
+          images: {
+            logo: getImageUrl(coachingData.images_logo),
+            coverImage: getImageUrl(coachingData.images_coverImage),
+          },
+          classroomImages: coachingData.classroom_images?.map(getImageUrl) || [],
+          faculty: formatFaculty(coachingData),
+          batches: formatBatches(coachingData),
+          contact: {
+            phone: coachingData.contact_phone || 'N/A',
+            email: coachingData.contact_email || 'N/A',
+            website: coachingData.website || 'N/A'
+          }
+        };
+
+        console.log('Formatted coaching data:', formattedCoaching);
+        setCoaching(formattedCoaching);
       } catch (error) {
         console.error('Error:', error);
         toast.error('Failed to load coaching details');
@@ -49,6 +74,41 @@ const CoachingDetails = () => {
 
     fetchCoachingDetails();
   }, [slug, navigate]);
+
+  const getImageUrl = (fileId) => {
+    if (!fileId) return null;
+    
+    const storageUrl = import.meta.env.VITE_APPWRITE_STORAGE_URL || 'https://cloud.appwrite.io/v1';
+    const bucketId = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
+    const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
+
+    return `${storageUrl}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
+  };
+
+  const formatFaculty = (data) => {
+    if (!Array.isArray(data.faculty_name)) return [];
+    return data.faculty_name.map((name, i) => ({
+      name: name || `Faculty ${i + 1}`,
+      qualification: data.faculty_qualification?.[i] || '',
+      experience: data.faculty_experience?.[i] || '',
+      subject: data.faculty_subject?.[i] || '',
+      image: data.faculty_image?.[i] ? getImageUrl(data.faculty_image[i]) : null
+    }));
+  };
+
+  const formatBatches = (data) => {
+    if (!Array.isArray(data.batches_name)) return [];
+    return data.batches_name.map((name, i) => ({
+      id: `batch-${i}`,
+      name: name || `Batch ${i + 1}`,
+      subjects: Array.isArray(data.batches_subjects?.[i]) 
+        ? data.batches_subjects[i] 
+        : [],
+      timing: data.batches_timing?.[i] || 'Schedule not set',
+      fees: data.batches_monthlyFee?.[i] || '0',
+      availableSeats: data.batches_availableSeats?.[i] || '0'
+    }));
+  };
 
   const handleBookDemo = async () => {
     try {
@@ -65,7 +125,7 @@ const CoachingDetails = () => {
         coaching_id: coaching.$id,
         coaching_name: coaching.name,
         student_id: user.$id,
-        studentName: user.name,
+        studentName: user.name || user.email,
         type: 'demo',
         status: 'pending',
         message: `Demo class request for ${coaching.name}`,
@@ -73,13 +133,14 @@ const CoachingDetails = () => {
       };
 
       // Add the request to the database
-      await databases.createDocument(
+      const response = await databases.createDocument(
         import.meta.env.VITE_APPWRITE_DATABASE_ID,
         import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID,
         'unique()',
         requestData
       );
 
+      console.log('Demo request created:', response);
       toast.success('Demo class request sent successfully!');
       
     } catch (error) {
@@ -194,9 +255,9 @@ const CoachingDetails = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section with Improved Styling */}
       <div className="relative h-[200px] sm:h-[300px]"> {/* Adjust height for mobile */}
-        {coaching.image && (
+        {coaching.images.coverImage && (
           <img
-            src={coaching.image}
+            src={coaching.images.coverImage}
             alt={coaching.name}
             className="w-full h-full object-cover"
           />
@@ -211,9 +272,9 @@ const CoachingDetails = () => {
             Back to Dashboard
           </Link>
           <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-8">
-            {coaching.logo && (
+            {coaching.images.logo && (
               <img
-                src={coaching.logo}
+                src={coaching.images.logo}
                 alt={`${coaching.name} logo`}
                 className="h-16 w-16 sm:h-20 sm:w-20 rounded-lg shadow-xl border-2 border-white/20 mb-4 sm:mb-0"
               />
@@ -511,7 +572,7 @@ const CoachingDetails = () => {
                   </a>
                 </div>
                 <div className="flex items-center">
-                  <Mail className="h-5 w-5 text-indigo-500 mr-3" />  {coaching.email}
+                  <Mail className="h-5 w-5 text-indigo-500 mr-3" />  {coaching.contact.email}
                   <a href={`mailto:${coaching.contact.email}`} className="text-indigo-600 hover:text-indigo-500">
                     {coaching.contact.email}
                   </a>
