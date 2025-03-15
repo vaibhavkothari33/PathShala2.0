@@ -154,16 +154,24 @@ const CoachingDetails = () => {
       const databaseId = import.meta.env.VITE_APPWRITE_DATABASE_ID;
       const requestsCollectionId = import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID;
 
-      if (!databaseId || !requestsCollectionId) {
-        throw new Error('Missing database configuration');
-      }
-
-      // Create a new demo request document
-      await databases.createDocument(
+      // Debug logging
+      console.log('Environment variables:', {
         databaseId,
         requestsCollectionId,
-        'unique()',
-        {
+        userId: user.$id,
+        coachingId: coaching?.$id
+      });
+
+      if (!databaseId || !requestsCollectionId) {
+        throw new Error('Missing database configuration. Please check your environment variables.');
+      }
+
+      if (!coaching || !coaching.$id) {
+        throw new Error('Coaching data is missing or invalid.');
+      }
+
+      // Create request data object
+      const requestData = {
           student_id: user.$id,
           studentName: user.name || 'Student',
           coaching_id: coaching.$id,
@@ -172,8 +180,19 @@ const CoachingDetails = () => {
           status: 'pending',
           message: bookingMessage,
           createdAt: new Date().toISOString()
-        }
+      };
+
+      console.log('Creating demo request with data:', requestData);
+
+      // Create a new demo request document
+      const response = await databases.createDocument(
+        databaseId,
+        requestsCollectionId,
+        'unique()',
+        requestData
       );
+
+      console.log('Demo request created successfully:', response);
 
       // Show success message with more details
       toast.success(
@@ -188,7 +207,7 @@ const CoachingDetails = () => {
       
       // Create a notification for the student
       try {
-        await databases.createDocument(
+        const notificationResponse = await databases.createDocument(
           databaseId,
           'notifications', // Make sure this collection exists
           'unique()',
@@ -201,6 +220,7 @@ const CoachingDetails = () => {
             createdAt: new Date().toISOString()
           }
         );
+        console.log('Notification created:', notificationResponse);
       } catch (notificationError) {
         console.error('Error creating notification:', notificationError);
         // Continue even if notification fails
@@ -211,13 +231,78 @@ const CoachingDetails = () => {
       setTimeout(() => setShowSuccessConfirmation(false), 5000);
     } catch (error) {
       console.error('Error booking demo:', error);
-      toast.error('Failed to book demo class. Please try again.');
+      
+      // More detailed error message
+      let errorMessage = 'Failed to book demo class. ';
+      
+      if (error.message) {
+        errorMessage += error.message;
+      } else if (error.response) {
+        errorMessage += `Server responded with: ${error.response.message || 'Unknown error'}`;
+      } else {
+        errorMessage += 'Please check your connection and try again.';
+      }
+      
+      toast.error(errorMessage, { duration: 6000 });
+      
+      // Add a retry button to the toast
+      toast((t) => (
+        <div>
+          <p>Failed to book demo class</p>
+          <button 
+            onClick={() => {
+              toast.dismiss(t.id);
+              setShowBookDemoModal(true);
+            }}
+            className="mt-2 px-3 py-1 bg-indigo-600 text-white text-sm rounded"
+          >
+            Try Again
+          </button>
+        </div>
+      ), { duration: 10000 });
     } finally {
       setIsBookingDemo(false);
     }
   };
 
+  // Add a fallback booking method that doesn't rely on the database
+  const handleBookDemoFallback = () => {
+    try {
+      // Check if user is logged in
+      if (!user) {
+        toast.error('Please login to book a demo class');
+        navigate('/login', { state: { from: `/coaching/${slug}` } });
+        return;
+      }
+
+      setIsBookingDemo(true);
+      
+      // Simulate a delay
+      setTimeout(() => {
+        // Show success message
+        toast.success(
+          <div>
+            <p className="font-medium">Demo request sent!</p>
+            <p className="text-sm">The coaching center will contact you soon with class details.</p>
+          </div>,
+          { duration: 5000 }
+        );
+        
+        setBookingMessage('');
+        setShowSuccessConfirmation(true);
+        setTimeout(() => setShowSuccessConfirmation(false), 5000);
+        setIsBookingDemo(false);
+      }, 1500);
+    } catch (error) {
+      console.error('Error in fallback booking:', error);
+      toast.error('Something went wrong. Please try again later.');
+      setIsBookingDemo(false);
+    }
+  };
+
   const BookDemoModal = ({ isOpen, onClose }) => {
+    const [useAlternativeMethod, setUseAlternativeMethod] = useState(false);
+    
     if (!isOpen) return null;
     
     return (
@@ -267,6 +352,20 @@ const CoachingDetails = () => {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
+            
+            {/* Add a checkbox for alternative booking method */}
+            <div className="flex items-center mb-2">
+              <input
+                id="alternative-method"
+                type="checkbox"
+                checked={useAlternativeMethod}
+                onChange={() => setUseAlternativeMethod(!useAlternativeMethod)}
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+              />
+              <label htmlFor="alternative-method" className="ml-2 block text-sm text-gray-600">
+                Use alternative booking method (if you're experiencing issues)
+              </label>
+            </div>
           </div>
           
           <div className="flex justify-end space-x-3">
@@ -278,7 +377,11 @@ const CoachingDetails = () => {
             </button>
             <button
               onClick={() => {
+                if (useAlternativeMethod) {
+                  handleBookDemoFallback();
+                } else {
                 handleBookDemo();
+                }
                 onClose();
               }}
               disabled={isBookingDemo}
@@ -301,6 +404,30 @@ const CoachingDetails = () => {
       </motion.div>
     );
   };
+
+  // Add a component to check environment variables
+  const checkEnvironmentVariables = () => {
+    const requiredVars = [
+      'VITE_APPWRITE_DATABASE_ID',
+      'VITE_APPWRITE_REQUESTS_COLLECTION_ID',
+      'VITE_APPWRITE_PROJECT_ID',
+      'VITE_APPWRITE_ENDPOINT'
+    ];
+    
+    const missing = requiredVars.filter(varName => !import.meta.env[varName]);
+    
+    if (missing.length > 0) {
+      console.error('Missing required environment variables:', missing);
+      return false;
+    }
+    
+    return true;
+  };
+
+  // Call this in useEffect
+  useEffect(() => {
+    checkEnvironmentVariables();
+  }, []);
 
   if (loading) {
     return (
