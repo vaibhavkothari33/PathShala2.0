@@ -60,14 +60,6 @@ const CoachingDetails = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    console.log('Environment variables:', {
-      endpoint: import.meta.env.VITE_APPWRITE_ENDPOINT,
-      projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID,
-      bucketId: import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID,
-      databaseId: import.meta.env.VITE_APPWRITE_DATABASE_ID,
-      collectionId: import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID
-    });
-
     const fetchCoachingDetails = async () => {
       try {
         setLoading(true);
@@ -96,18 +88,13 @@ const CoachingDetails = () => {
         const coachingData = response.documents[0];
         console.log('Raw coaching data:', coachingData);
 
-        // Format the coaching data
+        // Format the coaching data - using direct URLs
         const formattedCoaching = {
           ...coachingData,
-          images: {
-            logo: getImageUrl(coachingData.logo) || getImageUrl(coachingData.images_logo),
-            coverImage: getImageUrl(coachingData.coverImage) || getImageUrl(coachingData.images_coverImage),
-          },
+          logo: coachingData.logo || coachingData.images_logo,
+          coverImage: coachingData.coverImage || coachingData.images_coverImage,
           classroomImages: Array.isArray(coachingData.classroom_images) 
-            ? coachingData.classroom_images
-                .filter(Boolean)
-                .map(fileId => getImageUrl(fileId))
-                .filter(url => url !== null)
+            ? coachingData.classroom_images.filter(Boolean)
             : [],
           faculty: formatFaculty(coachingData),
           batches: formatBatches(coachingData),
@@ -126,13 +113,7 @@ const CoachingDetails = () => {
           subjects: Array.isArray(coachingData.subjects) ? coachingData.subjects : []
         };
 
-        console.log('Raw classroom images:', coachingData.classroom_images);
-        console.log('Formatted classroom images:', formattedCoaching.classroomImages);
-        console.log('Image URLs:', {
-          logo: formattedCoaching.images.logo,
-          cover: formattedCoaching.images.coverImage,
-          classroom: formattedCoaching.classroomImages
-        });
+        console.log('Formatted coaching data:', formattedCoaching);
         setCoaching(formattedCoaching);
 
       } catch (error) {
@@ -149,39 +130,6 @@ const CoachingDetails = () => {
     }
   }, [slug, navigate]);
 
-  useEffect(() => {
-    if (coaching?.classroomImages) {
-      console.log('Current classroom images:', coaching.classroomImages);
-    }
-  }, [coaching]);
-
-  const getImageUrl = (fileId) => {
-    if (!fileId) {
-      console.log('No fileId provided for image');
-      return null;
-    }
-    
-    try {
-      // Use environment variables with fallbacks
-      const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1';
-      const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
-      const bucketId = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
-
-      if (!bucketId || !projectId) {
-        console.error('Missing storage configuration:', { bucketId, projectId });
-        return null;
-      }
-
-      // Hardcoded URL format as fallback
-      const imageUrl = `${endpoint}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
-      console.log('Generated image URL:', imageUrl);
-      return imageUrl;
-    } catch (error) {
-      console.error('Error constructing image URL:', error);
-      return null;
-    }
-  };
-
   const formatFaculty = (data) => {
     if (!Array.isArray(data.faculty_name)) return [];
     return data.faculty_name.map((name, i) => ({
@@ -189,7 +137,7 @@ const CoachingDetails = () => {
       qualification: data.faculty_qualification?.[i] || '',
       experience: data.faculty_experience?.[i] || '',
       subject: data.faculty_subject?.[i] || '',
-      image: data.faculty_image?.[i] ? getImageUrl(data.faculty_image[i]) : null
+      image: data.faculty_image?.[i] || null
     }));
   };
 
@@ -288,11 +236,14 @@ const CoachingDetails = () => {
     <div className="border rounded-lg p-4">
       <div className="flex items-center">
         {teacher.image ? (
-          <ImageWithFallback
+          <img
             src={teacher.image}
             alt={teacher.name}
             className="w-10 h-10 rounded-full object-cover mr-3"
-            fallbackSrc="/default-faculty.jpg"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = "/default-faculty.jpg";
+            }}
           />
         ) : (
           <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
@@ -388,12 +339,15 @@ const CoachingDetails = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section with Improved Styling */}
       <div className="relative h-[200px] sm:h-[300px]"> {/* Adjust height for mobile */}
-        {coaching.images.coverImage ? (
-          <ImageWithFallback
-            src={coaching.images.coverImage}
+        {coaching.coverImage ? (
+          <img
+            src={coaching.coverImage}
             alt={`${coaching.name} cover`}
             className="w-full h-full object-cover"
-            fallbackSrc="/default-cover.jpg"
+            onError={(e) => {
+              e.target.onerror = null;
+              e.target.src = "/default-cover.jpg";
+            }}
           />
         ) : (
           <div className="w-full h-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center">
@@ -410,12 +364,15 @@ const CoachingDetails = () => {
             Back to Dashboard
           </Link>
           <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-8">
-            {coaching.images.logo ? (
-              <ImageWithFallback
-                src={coaching.images.logo}
+            {coaching.logo ? (
+              <img
+                src={coaching.logo}
                 alt={`${coaching.name} logo`}
                 className="h-16 w-16 sm:h-20 sm:w-20 rounded-lg shadow-xl border-2 border-white/20 mb-4 sm:mb-0"
-                fallbackSrc="/default-logo.jpg"
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = "/default-logo.jpg";
+                }}
               />
             ) : (
               <div className="h-16 w-16 sm:h-20 sm:w-20 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-xl">
@@ -616,11 +573,14 @@ const CoachingDetails = () => {
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
                           >
-                            <ImageWithFallback
+                            <img
                               src={imageUrl}
                               alt={`Classroom ${index + 1}`}
-                              className="w-full h-full object-cover"
-                              fallbackSrc="/default-classroom.jpg"
+                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = "/default-classroom.jpg";
+                              }}
                             />
                             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                               <div className="absolute bottom-0 left-0 right-0 p-4">
@@ -729,10 +689,6 @@ const CoachingDetails = () => {
                   <span className="text-gray-600">Established</span>
                   <span className="font-medium text-gray-900">{coaching.establishedYear || "N/A"}</span>
                 </div>
-                {/* <div className="flex items-center justify-between">
-                  <span className="text-gray-600">Total Students</span>
-                  <span className="font-medium text-gray-900">{coaching.students > 0 ? `${coaching.students}+` : "N/A"}</span>
-                </div> */}
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Rating</span>
                   <div className="flex items-center">
