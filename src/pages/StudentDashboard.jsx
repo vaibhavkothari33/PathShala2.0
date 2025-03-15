@@ -72,10 +72,10 @@ const StudentDashboard = () => {
         students: coaching.totalStudents || 0,
 
         image: coaching.images_coverImage 
-          ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/files/${coaching.images_coverImage}`
+          ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.images_coverImage}`
           : coaching.images_logo 
-            ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/files/${coaching.images_logo}`
-            : "/default-coaching.jpg",
+            ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.images_logo}`
+            : "/placeholder-coaching.jpg",
 
         location: coaching.address || "Address not available",
         city: coaching.city || "",
@@ -108,15 +108,15 @@ const StudentDashboard = () => {
             experience: coaching.faculty_experience?.[i] || '',
             subject: coaching.faculty_subject?.[i] || '',
             bio: coaching.faculty_bio?.[i] || '',
-            image: Array.isArray(coaching.faculty_image)
-              ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${coaching.faculty_image[i]}`
+            image: coaching.faculty_image?.[i]
+              ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.faculty_image[i]}`
               : null,
           }))
           : [],
         establishedYear: coaching.establishedYear || '',
         classroomImages: Array.isArray(coaching.images_classroomImages)
           ? coaching.images_classroomImages.map(imgId =>
-            `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${imgId}`
+            `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${imgId}`
           )
           : [],
         slug: coaching.slug || coaching.name?.toLowerCase().replace(/\s+/g, '-') || coaching.$id
@@ -124,6 +124,8 @@ const StudentDashboard = () => {
 
       // // console.log('Formatted centers:', formattedCenters);
       setCoachingCenters(formattedCenters);
+
+      console.log('Raw coaching data:', response.documents[0]);
     } catch (error) {
       console.error('Error fetching coaching centers:', error);
       toast.error('Failed to load coaching centers');
@@ -195,6 +197,16 @@ const StudentDashboard = () => {
   useEffect(() => {
     console.log('Storage URL:', import.meta.env.VITE_APPWRITE_STORAGE_URL);
     console.log('Sample coaching center:', coachingCenters[0]);
+  }, [coachingCenters]);
+
+  useEffect(() => {
+    if (coachingCenters.length > 0) {
+      console.log('First coaching center:', {
+        name: coachingCenters[0].name,
+        coverImage: coachingCenters[0].image,
+        logo: coachingCenters[0].images_logo,
+      });
+    }
   }, [coachingCenters]);
 
   return (
@@ -387,7 +399,14 @@ const StudentDashboard = () => {
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       console.error(`Failed to load image for ${coaching.name}:`, e);
-                      e.target.src = "/default-coaching.jpg";
+                      if (!e.target.src.includes('images_logo')) {
+                        const logoUrl = coaching.images_logo 
+                          ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.images_logo}`
+                          : "/placeholder-coaching.jpg";
+                        e.target.src = logoUrl;
+                      } else {
+                        e.target.src = "/placeholder-coaching.jpg";
+                      }
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
