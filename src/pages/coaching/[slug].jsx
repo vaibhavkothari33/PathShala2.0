@@ -23,6 +23,7 @@ const CoachingDetails = () => {
   const [isBookingDemo, setIsBookingDemo] = useState(false);
   const [bookingMessage, setBookingMessage] = useState('');
   const [showBookDemoModal, setShowBookDemoModal] = useState(false);
+  const [showSuccessConfirmation, setShowSuccessConfirmation] = useState(false);
 
   useEffect(() => {
     const fetchCoachingDetails = async () => {
@@ -51,6 +52,27 @@ const CoachingDetails = () => {
 
     fetchCoachingDetails();
   }, [slug, navigate]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (!selectedImage) return;
+      
+      if (e.key === 'Escape') {
+        setSelectedImage(null);
+      } else if (e.key === 'ArrowRight') {
+              const currentIndex = coaching.classroomImages.indexOf(selectedImage);
+              const nextIndex = (currentIndex + 1) % coaching.classroomImages.length;
+              setSelectedImage(coaching.classroomImages[nextIndex]);
+      } else if (e.key === 'ArrowLeft') {
+              const currentIndex = coaching.classroomImages.indexOf(selectedImage);
+              const previousIndex = currentIndex === 0 ? coaching.classroomImages.length - 1 : currentIndex - 1;
+              setSelectedImage(coaching.classroomImages[previousIndex]);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedImage, coaching]);
 
   const ImageModal = ({ images, currentImage, onClose, onNext, onPrevious }) => (
     <motion.div
@@ -153,8 +175,15 @@ const CoachingDetails = () => {
         }
       );
 
-      // Show success message
-      toast.success('Demo class request sent successfully!');
+      // Show success message with more details
+      toast.success(
+        <div>
+          <p className="font-medium">Demo request sent!</p>
+          <p className="text-sm">The coaching center will contact you soon with class details.</p>
+        </div>,
+        { duration: 5000 }
+      );
+      
       setBookingMessage('');
       
       // Create a notification for the student
@@ -176,6 +205,10 @@ const CoachingDetails = () => {
         console.error('Error creating notification:', notificationError);
         // Continue even if notification fails
       }
+
+      // Show success confirmation
+      setShowSuccessConfirmation(true);
+      setTimeout(() => setShowSuccessConfirmation(false), 5000);
     } catch (error) {
       console.error('Error booking demo:', error);
       toast.error('Failed to book demo class. Please try again.');
@@ -211,8 +244,14 @@ const CoachingDetails = () => {
           </div>
           
           <div className="mb-6">
+            <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4 rounded-r">
+              <p className="text-sm text-blue-700">
+                Your request will be sent to the coaching center. Once approved, they will contact you with the class details.
+              </p>
+            </div>
+            
             <p className="text-gray-600 mb-4">
-              Request a free demo class at {coaching.name}. Our team will contact you to schedule the session.
+              Request a free demo class at {coaching.name}. Please let us know what subjects you're interested in.
             </p>
             
             <div className="mb-4">
@@ -251,7 +290,10 @@ const CoachingDetails = () => {
                   Sending...
                 </>
               ) : (
-                'Send Request'
+                <>
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Send Request
+                </>
               )}
             </button>
           </div>
@@ -738,6 +780,25 @@ const CoachingDetails = () => {
           isOpen={showBookDemoModal} 
           onClose={() => setShowBookDemoModal(false)} 
         />
+
+        {showSuccessConfirmation && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-4 right-4 bg-green-600 text-white p-4 rounded-lg shadow-lg z-50 max-w-sm"
+          >
+            <div className="flex items-start">
+              <CheckCircle className="h-5 w-5 mr-3 flex-shrink-0 mt-0.5" />
+              <div>
+                <h4 className="font-medium mb-1">Demo Request Sent!</h4>
+                <p className="text-sm text-white/90">
+                  Your request has been sent to {coaching.name}. They will review it and contact you with class details soon.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
     </div>
   );

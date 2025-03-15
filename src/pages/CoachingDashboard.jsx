@@ -13,7 +13,8 @@ import {
   Plus,
   Bell,
   CheckCircle,
-  XCircle
+  XCircle,
+  X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { databases } from '../config/appwrite';
@@ -37,6 +38,9 @@ const CoachingDashboard = () => {
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [showRequests, setShowRequests] = useState(false);
+  const [selectedRequest, setSelectedRequest] = useState(null);
+  const [replyMessage, setReplyMessage] = useState('');
+  const [isSending, setIsSending] = useState(false);
 
   // Separate requests fetching into its own function
   const fetchRequests = async (coachingId) => {
@@ -256,7 +260,7 @@ const CoachingDashboard = () => {
               user_id: request.student_id,
               title: `Demo Class Request ${status === 'accepted' ? 'Accepted' : 'Rejected'}`,
               message: status === 'accepted' 
-                ? `Your demo class request for ${coaching.name} has been accepted. We will contact you shortly.`
+                ? `Your demo class request for ${coaching.name} has been accepted. They will contact you with details soon.`
                 : `Your demo class request for ${coaching.name} has been rejected.`,
               type: 'demo_request',
               status: 'unread',
@@ -264,6 +268,19 @@ const CoachingDashboard = () => {
             }
           );
           console.log('Notification created:', notification);
+          
+          // If accepted, prompt to send a message with details
+          if (status === 'accepted') {
+            toast.success('Request accepted! Please send the student details about the demo class.', {
+              duration: 5000,
+            });
+            
+            // Find the request and set it as selected to open the message modal
+            const selectedReq = requests.find(req => req.$id === requestId);
+            if (selectedReq) {
+              setSelectedRequest(selectedReq);
+            }
+          }
         } catch (notificationError) {
           console.error('Error creating notification:', notificationError);
           // Don't throw error, continue with request update
@@ -277,7 +294,9 @@ const CoachingDashboard = () => {
         )
       );
 
+      if (status !== 'accepted') {
       toast.success(`Request ${status === 'accepted' ? 'accepted' : 'rejected'} successfully`);
+      }
     } catch (error) {
       console.error('Error handling request:', error);
       toast.error('Failed to process request');
@@ -285,100 +304,376 @@ const CoachingDashboard = () => {
   };
 
   // Update the RequestsSection component
-  const RequestsSection = () => (
-    <div className="mb-8">
-      <div className="bg-white rounded-lg shadow">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Recent Requests</h2>
-          <div className="flex items-center">
-            {requests.length > 0 && (
-              <span className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-sm mr-2">
-                {requests.filter(req => req.status === 'pending').length} new
-              </span>
-            )}
-            <button
-              onClick={() => setShowRequests(!showRequests)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <Bell className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
+  const RequestsSection = () => {
+    const sendMessage = async (requestId, studentId) => {
+      try {
+        setIsSending(true);
         
-        {showRequests && (
-          <div className="p-6">
-            {requests.length > 0 ? (
-              <div className="divide-y">
-                {requests.map((request) => (
-                  <div key={request.$id} className="py-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <h3 className="font-medium text-gray-900">
-                          {request.studentName}
-                        </h3>
-                        <p className="text-sm text-gray-500">
-                          {request.type === 'demo' ? (
-                            <span className="flex items-center">
-                              <Calendar className="h-4 w-4 mr-1 text-indigo-500" />
-                              Demo Class Request
-                            </span>
-                          ) : (
-                            <span className="flex items-center">
-                              <Users className="h-4 w-4 mr-1 text-green-500" />
-                              Batch Join Request - {request.batchName}
-                            </span>
-                          )}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-1">
-                          {new Date(request.createdAt).toLocaleString()}
-                        </p>
+        // Get the database and collection IDs from environment variables
+        const databaseId = import.meta.env.VITE_APPWRITE_DATABASE_ID;
+        const messagesCollectionId = 'messages'; // Make sure this collection exists
+        
+        if (!databaseId || !messagesCollectionId) {
+          throw new Error('Missing database configuration');
+        }
+        
+        // Create a new message document
+        await databases.createDocument(
+          databaseId,
+          messagesCollectionId,
+          'unique()',
+          {
+            sender_id: user.$id,
+            sender_type: 'coaching',
+            sender_name: coaching.name,
+            recipient_id: studentId,
+            recipient_type: 'student',
+            content: replyMessage,
+            request_id: requestId,
+            status: 'sent',
+            createdAt: new Date().toISOString()
+          }
+        );
+        
+        // Update the request status to 'responded'
+        await databases.updateDocument(
+          databaseId,
+          REQUESTS_COLLECTION_ID,
+          requestId,
+          { 
+            status: 'responded',
+            updatedAt: new Date().toISOString()
+          }
+        );
+        
+        // Create a notification for the student
+        try {
+          await databases.createDocument(
+            databaseId,
+            'notifications',
+            'unique()',
+            {
+              user_id: studentId,
+              title: 'New Message from Coaching',
+              message: `${coaching.name} has sent you a message regarding your demo class request.`,
+              type: 'message',
+              status: 'unread',
+              createdAt: new Date().toISOString()
+            }
+          );
+        } catch (notificationError) {
+          console.error('Error creating notification:', notificationError);
+        }
+        
+        // Update local state
+        setRequests(prevRequests => 
+          prevRequests.map(req => 
+            req.$id === requestId ? { ...req, status: 'responded' } : req
+          )
+        );
+        
+        setReplyMessage('');
+        setSelectedRequest(null);
+        toast.success('Message sent successfully');
+      } catch (error) {
+        console.error('Error sending message:', error);
+        toast.error('Failed to send message');
+      } finally {
+        setIsSending(false);
+      }
+    };
+
+    return (
+      <div className="mb-8">
+        <div className="bg-white rounded-lg shadow">
+          <div className="flex items-center justify-between p-6 border-b">
+            <h2 className="text-xl font-semibold text-gray-900">Demo Requests</h2>
+            <div className="flex items-center">
+              {requests.length > 0 && (
+                <span className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-sm mr-2">
+                  {requests.filter(req => req.status === 'pending').length} new
+                </span>
+              )}
+              <button
+                onClick={() => setShowRequests(!showRequests)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <Bell className="h-5 w-5" />
+              </button>
+            </div>
+          </div>
+          
+          {showRequests && (
+            <div className="p-6">
+              {requests.length > 0 ? (
+                <div className="divide-y">
+                  {requests.map((request) => (
+                    <div key={request.$id} className="py-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h3 className="font-medium text-gray-900">
+                            {request.studentName}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            {request.type === 'demo' ? (
+                              <span className="flex items-center">
+                                <Calendar className="h-4 w-4 mr-1 text-indigo-500" />
+                                Demo Class Request
+                              </span>
+                            ) : (
+                              <span className="flex items-center">
+                                <Users className="h-4 w-4 mr-1 text-green-500" />
+                                Batch Join Request - {request.batchName}
+                              </span>
+                            )}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            {new Date(request.createdAt).toLocaleString()}
+                          </p>
+                        </div>
+                        
+                        {request.status === 'pending' ? (
+                          <div className="flex space-x-2">
+                            <button
+                              onClick={() => setSelectedRequest(request)}
+                              className="p-2 bg-indigo-100 text-indigo-600 rounded-full hover:bg-indigo-200 transition-colors duration-200 flex items-center"
+                            >
+                              <MessageCircle className="h-5 w-5" />
+                              <span className="ml-1 text-sm">Reply</span>
+                            </button>
+                            <button
+                              onClick={() => handleRequest(request.$id, 'accepted')}
+                              className="p-2 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors duration-200 flex items-center"
+                            >
+                              <CheckCircle className="h-5 w-5" />
+                              <span className="ml-1 text-sm">Accept</span>
+                            </button>
+                            <button
+                              onClick={() => handleRequest(request.$id, 'rejected')}
+                              className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors duration-200 flex items-center"
+                            >
+                              <XCircle className="h-5 w-5" />
+                              <span className="ml-1 text-sm">Reject</span>
+                            </button>
+                          </div>
+                        ) : request.status === 'responded' ? (
+                          <span className="px-3 py-1 rounded-full text-sm bg-indigo-100 text-indigo-600">
+                            Responded
+                          </span>
+                        ) : (
+                          <span className={`px-3 py-1 rounded-full text-sm ${
+                            request.status === 'accepted' 
+                              ? 'bg-green-100 text-green-600' 
+                              : 'bg-red-100 text-red-600'
+                          }`}>
+                            {request.status}
+                          </span>
+                        )}
                       </div>
+                      {request.message && (
+                        <div className="mt-2 text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                          <p className="font-medium text-xs text-gray-500 mb-1">Student's message:</p>
+                          <p>{request.message}</p>
+                        </div>
+                      )}
                       
-                      {request.status === 'pending' ? (
-                        <div className="flex space-x-2">
+                      {/* Show reply button for responded requests */}
+                      {request.status === 'responded' && (
+                        <div className="mt-2 flex justify-end">
                           <button
-                            onClick={() => handleRequest(request.$id, 'accepted')}
-                            className="p-2 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors duration-200 flex items-center"
+                            onClick={() => setSelectedRequest(request)}
+                            className="text-indigo-600 text-sm flex items-center hover:text-indigo-800"
                           >
-                            <CheckCircle className="h-5 w-5" />
-                            <span className="ml-1 text-sm">Accept</span>
-                          </button>
-                          <button
-                            onClick={() => handleRequest(request.$id, 'rejected')}
-                            className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors duration-200 flex items-center"
-                          >
-                            <XCircle className="h-5 w-5" />
-                            <span className="ml-1 text-sm">Reject</span>
+                            <MessageCircle className="h-4 w-4 mr-1" />
+                            Send another message
                           </button>
                         </div>
-                      ) : (
-                        <span className={`px-3 py-1 rounded-full text-sm ${
-                          request.status === 'accepted' 
-                            ? 'bg-green-100 text-green-600' 
-                            : 'bg-red-100 text-red-600'
-                        }`}>
-                          {request.status}
-                        </span>
                       )}
                     </div>
-                    {request.message && (
-                      <p className="mt-2 text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                        {request.message}
-                      </p>
-                    )}
-                  </div>
-                ))}
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+                  <p>No demo requests yet</p>
+                  <p className="text-sm text-gray-400 mt-1">When students request a demo class, they'll appear here</p>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        
+        {/* Reply Modal */}
+        {selectedRequest && (
+          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-xl shadow-xl max-w-lg w-full p-6">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Reply to {selectedRequest.studentName}
+                </h3>
+                <button
+                  onClick={() => setSelectedRequest(null)}
+                  className="p-1 rounded-full hover:bg-gray-100"
+                >
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
               </div>
-            ) : (
-              <div className="text-center py-4 text-gray-500">
-                No requests yet
+              
+              <div className="mb-6">
+                <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                  <p className="text-sm text-gray-500 mb-1">Request details:</p>
+                  <p className="text-sm font-medium">{selectedRequest.type === 'demo' ? 'Demo Class Request' : 'Batch Join Request'}</p>
+                  {selectedRequest.message && (
+                    <div className="mt-2 text-sm">
+                      <p className="text-gray-500">Student's message:</p>
+                      <p className="text-gray-700">{selectedRequest.message}</p>
+                    </div>
+                  )}
+                </div>
+                
+                <div className="mb-4">
+                  <label htmlFor="reply" className="block text-sm font-medium text-gray-700 mb-1">
+                    Your Message
+                  </label>
+                  <textarea
+                    id="reply"
+                    rows={5}
+                    value={replyMessage}
+                    onChange={(e) => setReplyMessage(e.target.value)}
+                    placeholder="Provide details about the demo class (timing, subjects, location, etc.)"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                  />
+                </div>
+                
+                <div className="bg-blue-50 border-l-4 border-blue-500 p-3 text-sm text-blue-700">
+                  <p>This message will be sent to the student and they will be notified.</p>
+                </div>
               </div>
-            )}
+              
+              <div className="flex justify-end space-x-3">
+                <button
+                  onClick={() => setSelectedRequest(null)}
+                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => sendMessage(selectedRequest.$id, selectedRequest.student_id)}
+                  disabled={!replyMessage.trim() || isSending}
+                  className={`px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center ${
+                    !replyMessage.trim() || isSending ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
+                >
+                  {isSending ? (
+                    <>
+                      <div className="h-4 w-4 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <MessageCircle className="h-4 w-4 mr-2" />
+                      Send Message
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
-    </div>
-  );
+    );
+  };
+
+  // Add a Messages section to the dashboard
+  const MessagesSection = () => {
+    const [messages, setMessages] = useState([]);
+    const [loading, setLoading] = useState(false);
+    
+    useEffect(() => {
+      const fetchMessages = async () => {
+        try {
+          setLoading(true);
+          
+          const databaseId = import.meta.env.VITE_APPWRITE_DATABASE_ID;
+          const messagesCollectionId = 'messages';
+          
+          if (!databaseId || !messagesCollectionId) {
+            throw new Error('Missing database configuration');
+          }
+          
+          const response = await databases.listDocuments(
+            databaseId,
+            messagesCollectionId,
+            [
+              Query.equal('sender_id', user.$id),
+              Query.orderDesc('$createdAt'),
+              Query.limit(10)
+            ]
+          );
+          
+          setMessages(response.documents || []);
+        } catch (error) {
+          console.error('Error fetching messages:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+      
+      if (coaching && coaching.$id) {
+        fetchMessages();
+      }
+    }, [coaching, user]);
+    
+    return (
+      <div className="bg-white rounded-lg shadow mb-8">
+        <div className="flex items-center justify-between p-6 border-b">
+          <h2 className="text-xl font-semibold text-gray-900">Recent Messages</h2>
+          <Link 
+            to="/coaching/messages" 
+            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
+          >
+            View all
+          </Link>
+        </div>
+        
+        <div className="p-6">
+          {loading ? (
+            <div className="text-center py-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
+              <p className="mt-2 text-gray-500 text-sm">Loading messages...</p>
+            </div>
+          ) : messages.length > 0 ? (
+            <div className="divide-y">
+              {messages.slice(0, 3).map((message) => (
+                <div key={message.$id} className="py-4">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-sm text-gray-500">
+                        To: <span className="font-medium">{message.recipient_type === 'student' ? 'Student' : 'Coaching'}</span>
+                      </p>
+                      <p className="mt-1 text-gray-700">{message.content}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {new Date(message.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <span className="px-2 py-1 bg-green-100 text-green-600 rounded-full text-xs">
+                      Sent
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <MessageCircle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+              <p>No messages yet</p>
+              <p className="text-sm text-gray-400 mt-1">Messages you send to students will appear here</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   // Show loading state
   if (loading) {
@@ -478,6 +773,9 @@ const CoachingDashboard = () => {
 
         {/* Add Requests Section here */}
         <RequestsSection />
+        
+        {/* Add Messages Section here */}
+        <MessagesSection />
 
         {/* Main Dashboard Sections */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
