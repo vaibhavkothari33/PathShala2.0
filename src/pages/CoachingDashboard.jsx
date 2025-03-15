@@ -44,88 +44,113 @@ const CoachingDashboard = () => {
         setLoading(true);
         setError(null);
 
-        // Check user authentication
+        // Check for user authentication
         if (!user || !user.$id) {
           navigate('/login');
-          throw new Error('Please login to access dashboard');
+          return;
         }
 
-        // Debug log
-        console.log('Fetching coaching data for user:', user.$id);
+        console.log('Attempting to fetch coaching data with:', {
+          databaseId: DATABASE_ID,
+          collectionId: COACHING_COLLECTION_ID,
+          userId: user.$id
+        });
 
-        // Fetch coaching data with error handling
-        try {
-          const response = await databases.listDocuments(
-            DATABASE_ID,
-            COACHING_COLLECTION_ID,
-            [Query.equal('owner_id', user.$id)]
-          );
+        // Fetch coaching data
+        const response = await databases.listDocuments(
+          DATABASE_ID,
+          COACHING_COLLECTION_ID,
+          [
+            Query.equal('owner_id', user.$id)
+          ]
+        );
 
-          console.log('Raw coaching response:', response);
+        console.log('Raw coaching response:', response);
 
-          if (!response?.documents?.length) {
-            navigate('/coaching/register');
-            throw new Error('No coaching center found');
-          }
+        if (!response?.documents?.length) {
+          console.log('No coaching found, redirecting to registration');
+          navigate('/coaching/register');
+          return;
+        }
 
-          const coachingData = response.documents[0];
-          
-          // Format coaching data
-          const formattedCoaching = {
-            ...coachingData,
-            name: coachingData.name || 'Unnamed Coaching',
-            students: calculateTotalStudents(coachingData),
-            batches: formatBatches(coachingData),
-            faculty: formatFaculty(coachingData),
-            totalRevenue: calculateTotalRevenue(coachingData),
-            images: {
-              logo: getImageUrl(coachingData.images_logo),
-              coverImage: getImageUrl(coachingData.images_coverImage),
-            }
-          };
+        const coachingData = response.documents[0];
+        console.log('Coaching data found:', coachingData);
 
-          setCoaching(formattedCoaching);
+        // Format coaching data with null checks
+        const formattedCoaching = {
+          ...coachingData,
+          name: coachingData.name || 'Unnamed Coaching',
+          students: calculateTotalStudents(coachingData),
+          batches: formatBatches(coachingData),
+          faculty: formatFaculty(coachingData),
+          totalRevenue: calculateTotalRevenue(coachingData),
+          images: {
+            logo: getImageUrl(coachingData.images_logo),
+            coverImage: getImageUrl(coachingData.images_coverImage),
+          },
+          slug: coachingData.slug || coachingData.$id
+        };
 
-          // Fetch requests if coaching exists
-          if (formattedCoaching.$id) {
+        console.log('Formatted coaching data:', formattedCoaching);
+        setCoaching(formattedCoaching);
+
+        // Fetch requests if coaching exists
+        if (formattedCoaching.$id) {
+          try {
             const requestsResponse = await databases.listDocuments(
               DATABASE_ID,
               REQUESTS_COLLECTION_ID,
               [Query.equal('coaching_id', formattedCoaching.$id)]
             );
+            console.log('Requests fetched:', requestsResponse.documents);
             setRequests(requestsResponse.documents || []);
+          } catch (requestError) {
+            console.error('Error fetching requests:', requestError);
+            toast.error('Failed to load requests');
           }
-
-        } catch (err) {
-          console.error('Error fetching data:', err);
-          throw new Error('Failed to load coaching data');
         }
 
       } catch (error) {
         console.error('Dashboard error:', error);
-        setError(error.message);
-        toast.error(error.message);
+        const errorMessage = error.message || 'Failed to load coaching data';
+        setError(errorMessage);
+        toast.error(errorMessage);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchData();
+    if (user) {
+      fetchData();
+    }
   }, [user, navigate]);
+
+  // Add this debug log
+  useEffect(() => {
+    console.log('Current coaching state:', coaching);
+  }, [coaching]);
 
   // Update the getImageUrl helper function
   const getImageUrl = (fileId) => {
     if (!fileId) return null;
     
-    const storageUrl = import.meta.env.VITE_APPWRITE_STORAGE_URL || 'https://cloud.appwrite.io/v1';
-    const bucketId = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
-    const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
+    try {
+      const storageUrl = import.meta.env.VITE_APPWRITE_STORAGE_URL || 'https://cloud.appwrite.io/v1';
+      const bucketId = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
+      const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
 
-    // Add console.log to debug URL construction
-    const imageUrl = `${storageUrl}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
-    console.log('Constructed image URL:', imageUrl);
-    
-    return imageUrl;
+      if (!bucketId || !projectId) {
+        console.error('Missing storage configuration');
+        return null;
+      }
+
+      const imageUrl = `${storageUrl}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
+      console.log('Constructed image URL:', imageUrl);
+      return imageUrl;
+    } catch (error) {
+      console.error('Error constructing image URL:', error);
+      return null;
+    }
   };
 
   // Updated helper functions with null checks
