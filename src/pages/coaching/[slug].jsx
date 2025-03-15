@@ -8,15 +8,19 @@ import {
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import coachingService from '../../services/coachingService';
+import { useAuth } from '../../context/AuthContext';
+import { databases } from '../../services/appwriteService';
 
 const CoachingDetails = () => {
   const { slug } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [coaching, setCoaching] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Overview');
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [isBookingDemo, setIsBookingDemo] = useState(false);
 
   useEffect(() => {
     const fetchCoachingDetails = async () => {
@@ -45,6 +49,46 @@ const CoachingDetails = () => {
 
     fetchCoachingDetails();
   }, [slug, navigate]);
+
+  const handleBookDemo = async () => {
+    try {
+      if (!user) {
+        toast.error('Please login to book a demo class');
+        navigate('/login');
+        return;
+      }
+
+      setIsBookingDemo(true);
+      
+      // Create a new request document
+      const requestData = {
+        coaching_id: coaching.$id,
+        coaching_name: coaching.name,
+        student_id: user.$id,
+        studentName: user.name,
+        type: 'demo',
+        status: 'pending',
+        message: `Demo class request for ${coaching.name}`,
+        createdAt: new Date().toISOString(),
+      };
+
+      // Add the request to the database
+      await databases.createDocument(
+        import.meta.env.VITE_APPWRITE_DATABASE_ID,
+        import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID,
+        'unique()',
+        requestData
+      );
+
+      toast.success('Demo class request sent successfully!');
+      
+    } catch (error) {
+      console.error('Error booking demo:', error);
+      toast.error('Failed to book demo class');
+    } finally {
+      setIsBookingDemo(false);
+    }
+  };
 
   const ImageModal = ({ images, currentImage, onClose, onNext, onPrevious }) => (
     <motion.div
@@ -112,6 +156,39 @@ const CoachingDetails = () => {
   }
 
   if (!coaching) return null;
+
+  const QuickActions = () => (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-xl sm:rounded-2xl shadow-xl p-6 sm:p-8 text-white"
+    >
+      <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
+      <div className="space-y-3">
+        <button 
+          onClick={handleBookDemo}
+          disabled={isBookingDemo}
+          className="w-full bg-white text-indigo-600 px-4 py-3 rounded-lg hover:bg-indigo-50 transition-colors duration-200 font-medium flex items-center justify-center"
+        >
+          {isBookingDemo ? (
+            <>
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="h-5 w-5 border-t-2 border-indigo-600 rounded-full mr-2"
+              />
+              Booking...
+            </>
+          ) : (
+            'Book Free Demo'
+          )}
+        </button>
+        <button className="w-full bg-indigo-500 text-white px-4 py-3 rounded-lg hover:bg-indigo-400 transition-colors duration-200 font-medium">
+          Download Brochure
+        </button>
+      </div>
+    </motion.div>
+  );
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -411,22 +488,7 @@ const CoachingDetails = () => {
 
           {/* Right Column - Enhanced Sidebar Components */}
           <div className="lg:col-span-1 space-y-4 sm:space-y-6">
-            {/* Quick Actions */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-xl sm:rounded-2xl shadow-xl p-6 sm:p-8 text-white"
-            >
-              <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
-              <div className="space-y-3">
-                <button className="w-full bg-white text-indigo-600 px-4 py-3 rounded-lg hover:bg-indigo-50 transition-colors duration-200 font-medium">
-                  Book Free Demo
-                </button>
-                <button className="w-full bg-indigo-500 text-white px-4 py-3 rounded-lg hover:bg-indigo-400 transition-colors duration-200 font-medium">
-                  Download Brochure
-                </button>
-              </div>
-            </motion.div>
+            <QuickActions />
 
             {/* Contact Information */}
             <motion.div

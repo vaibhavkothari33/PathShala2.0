@@ -205,6 +205,28 @@ const CoachingDashboard = () => {
         }
       );
       
+      // Find the request in the local state
+      const request = requests.find(req => req.$id === requestId);
+      
+      // Create a notification for the student
+      if (request) {
+        await databases.createDocument(
+          import.meta.env.VITE_APPWRITE_DATABASE_ID,
+          import.meta.env.VITE_APPWRITE_NOTIFICATIONS_COLLECTION_ID,
+          'unique()',
+          {
+            user_id: request.student_id,
+            title: `Demo Class Request ${status === 'accepted' ? 'Accepted' : 'Rejected'}`,
+            message: status === 'accepted' 
+              ? `Your demo class request for ${coaching.name} has been accepted. We will contact you shortly.`
+              : `Your demo class request for ${coaching.name} has been rejected.`,
+            type: 'demo_request',
+            status: 'unread',
+            createdAt: new Date().toISOString()
+          }
+        );
+      }
+      
       // Update local state
       setRequests(prevRequests => 
         prevRequests.map(req => 
@@ -252,10 +274,20 @@ const CoachingDashboard = () => {
                           {request.studentName}
                         </h3>
                         <p className="text-sm text-gray-500">
-                          {request.type === 'batch' ? 'Batch Join Request' : 'Demo Class Request'} - {request.batchName}
+                          {request.type === 'demo' ? (
+                            <span className="flex items-center">
+                              <Calendar className="h-4 w-4 mr-1 text-indigo-500" />
+                              Demo Class Request
+                            </span>
+                          ) : (
+                            <span className="flex items-center">
+                              <Users className="h-4 w-4 mr-1 text-green-500" />
+                              Batch Join Request - {request.batchName}
+                            </span>
+                          )}
                         </p>
                         <p className="text-xs text-gray-400 mt-1">
-                          {new Date(request.$createdAt).toLocaleDateString()}
+                          {new Date(request.createdAt).toLocaleString()}
                         </p>
                       </div>
                       
@@ -263,15 +295,17 @@ const CoachingDashboard = () => {
                         <div className="flex space-x-2">
                           <button
                             onClick={() => handleRequest(request.$id, 'accepted')}
-                            className="p-2 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors duration-200"
+                            className="p-2 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors duration-200 flex items-center"
                           >
                             <CheckCircle className="h-5 w-5" />
+                            <span className="ml-1 text-sm">Accept</span>
                           </button>
                           <button
                             onClick={() => handleRequest(request.$id, 'rejected')}
-                            className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors duration-200"
+                            className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors duration-200 flex items-center"
                           >
                             <XCircle className="h-5 w-5" />
+                            <span className="ml-1 text-sm">Reject</span>
                           </button>
                         </div>
                       ) : (
