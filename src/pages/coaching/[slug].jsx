@@ -116,84 +116,83 @@ const CoachingDetails = () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
               {/* Improved Tabs */}
-              <div className="border-b border-gray-100 overflow-x-auto">
-                <nav className="flex whitespace-nowrap">
-                  {['overview', 'batches', 'faculty', 'gallery'].map((tab) => (
-                    <button
-                      key={tab}
-                      onClick={() => setActiveTab(tab)}
-                      className={`${
-                        activeTab === tab
-                          ? 'border-indigo-600 text-indigo-600 bg-indigo-50/60'
-                          : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'
-                      } flex items-center px-4 sm:px-8 py-4 sm:py-5 border-b-2 font-medium text-sm uppercase tracking-wide transition-colors duration-200`}
-                    >
-                      {tab === 'overview' && <Info className="h-4 w-4 mr-2" />}
-                      {tab === 'batches' && <Calendar className="h-4 w-4 mr-2" />}
-                      {tab === 'faculty' && <GraduationCap className="h-4 w-4 mr-2" />}
-                      {tab === 'gallery' && <Camera className="h-4 w-4 mr-2" />}
-                      {tab}
-                    </button>
-                  ))}
-                </nav>
+              <div className="sticky top-0 bg-white z-10 border-b border-gray-100">
+                <div className="overflow-x-auto scrollbar-hide">
+                  <nav className="flex min-w-full">
+                    {['overview', 'batches', 'faculty', 'gallery'].map((tab) => (
+                      <button
+                        key={tab}
+                        onClick={() => setActiveTab(tab)}
+                        className={`${
+                          activeTab === tab
+                            ? 'border-indigo-600 text-indigo-600 bg-indigo-50/60'
+                            : 'border-transparent text-gray-500'
+                        } flex-1 min-w-[120px] flex items-center justify-center px-3 py-4 border-b-2 text-sm font-medium transition-colors duration-200`}
+                      >
+                        {tab === 'overview' && <Info className="h-4 w-4 mr-2" />}
+                        {tab === 'batches' && <Calendar className="h-4 w-4 mr-2" />}
+                        {tab === 'faculty' && <GraduationCap className="h-4 w-4 mr-2" />}
+                        {tab === 'gallery' && <Camera className="h-4 w-4 mr-2" />}
+                        {tab}
+                      </button>
+                    ))}
+                  </nav>
+                </div>
               </div>
 
               {/* Enhanced Tab Content */}
-              <div className="p-8">
+              <div className="p-4 sm:p-6 md:p-8">
                 {activeTab === 'overview' && (
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="space-y-10"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="space-y-6 sm:space-y-8"
                   >
-                    <div>
-                      <h3 className="text-2xl font-semibold text-gray-900 mb-5 flex items-center">
+                    {/* About Section */}
+                    <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
+                      <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 flex items-center">
                         <Info className="h-5 w-5 mr-2 text-indigo-500" />
                         About
                       </h3>
-                      <p className="text-gray-700 leading-relaxed text-lg">{coaching.description}</p>
+                      <p className="text-gray-700 leading-relaxed text-sm sm:text-base">{coaching.description}</p>
                     </div>
 
+                    {/* Facilities Section */}
                     {coaching.facilities && coaching.facilities.length > 0 && (
-                      <div>
-                        <h3 className="text-2xl font-semibold text-gray-900 mb-5 flex items-center">
+                      <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
+                        <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 flex items-center">
                           <Home className="h-5 w-5 mr-2 text-indigo-500" />
                           Facilities
                         </h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                           {coaching.facilities.map((facility, index) => (
-                            <motion.div
+                            <div
                               key={index}
-                              initial={{ opacity: 0, x: -20 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ delay: index * 0.1 }}
-                              className="flex items-center p-4 bg-indigo-50/60 rounded-xl border border-indigo-100"
+                              className="flex items-center p-3 bg-indigo-50/60 rounded-lg border border-indigo-100"
                             >
-                              <CheckCircle className="h-5 w-5 text-indigo-600 mr-3 flex-shrink-0" />
-                              <span className="text-gray-700 font-medium">{facility}</span>
-                            </motion.div>
+                              <CheckCircle className="h-4 w-4 text-indigo-600 mr-2 flex-shrink-0" />
+                              <span className="text-gray-700 text-sm">{facility}</span>
+                            </div>
                           ))}
                         </div>
                       </div>
                     )}
 
+                    {/* Subjects Section */}
                     {coaching.subjects && coaching.subjects.length > 0 && (
-                      <div>
-                        <h3 className="text-2xl font-semibold text-gray-900 mb-5 flex items-center">
+                      <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm">
+                        <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 flex items-center">
                           <BookOpen className="h-5 w-5 mr-2 text-indigo-500" />
                           Subjects Offered
                         </h3>
-                        <div className="flex flex-wrap gap-3">
+                        <div className="flex flex-wrap gap-2">
                           {coaching.subjects.map((subject, index) => (
-                            <motion.span
+                            <span
                               key={index}
-                              initial={{ opacity: 0, scale: 0.8 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ delay: index * 0.1 }}
-                              className="px-5 py-2.5 bg-blue-50 text-blue-700 rounded-full text-sm font-medium border border-blue-100"
+                              className="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-sm border border-blue-100"
                             >
                               {subject}
-                            </motion.span>
+                            </span>
                           ))}
                         </div>
                       </div>
@@ -203,135 +202,118 @@ const CoachingDetails = () => {
 
                 {activeTab === 'batches' && (
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="space-y-6"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="space-y-4"
                   >
                     {coaching.batches && coaching.batches.map((batch, index) => (
-                      <motion.div
+                      <div
                         key={batch.id || index}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="bg-white rounded-xl border border-gray-200 hover:border-indigo-500 transition-all duration-300 overflow-hidden shadow-sm hover:shadow-md"
+                        className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm"
                       >
-                        <div className="p-4 sm:p-6">
-                          <div className="flex flex-col space-y-4">
-                            <div>
-                              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">{batch.name}</h3>
-                              <div className="mt-4 space-y-3">
-                                <div className="flex items-center text-gray-700">
-                                  <Clock className="h-5 w-5 mr-3 text-indigo-500 flex-shrink-0" />
-                                  <span className="text-sm sm:text-base">{batch.timing}</span>
-                                </div>
-                                <div className="flex items-center text-gray-700">
-                                  <BookOpen className="h-5 w-5 mr-3 text-indigo-500 flex-shrink-0" />
-                                  <span className="text-sm sm:text-base">{Array.isArray(batch.subjects) ? batch.subjects.join(", ") : batch.subjects}</span>
-                                </div>
-                                <div className="flex items-center text-gray-700">
-                                  <Users className="h-5 w-5 mr-3 text-indigo-500 flex-shrink-0" />
-                                  <span className="flex items-center text-sm sm:text-base">
-                                    <span className="font-medium text-indigo-600 mr-1">{batch.availableSeats}</span>
-                                    seats available
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 mt-4">
-                              <div className="text-2xl sm:text-3xl font-bold text-indigo-700">
-                                ₹{batch.fees || batch.monthlyFee}
-                                <span className="text-sm font-normal text-gray-500">/month</span>
-                              </div>
-                              <motion.button
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                onClick={() => setSelectedBatch(batch.id)}
-                                className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors duration-200 font-medium shadow-sm text-sm sm:text-base"
-                              >
-                                Select Batch
-                              </motion.button>
+                        <div className="space-y-4">
+                          {/* Batch Header */}
+                          <div className="flex justify-between items-start">
+                            <h3 className="text-lg font-semibold text-gray-900">{batch.name}</h3>
+                            <div className="text-xl font-bold text-indigo-700">
+                              ₹{batch.fees || batch.monthlyFee}
+                              <span className="text-xs font-normal text-gray-500">/month</span>
                             </div>
                           </div>
+
+                          {/* Batch Details */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                            <div className="flex items-center text-gray-700">
+                              <Clock className="h-4 w-4 mr-2 text-indigo-500" />
+                              <span>{batch.timing}</span>
+                            </div>
+                            <div className="flex items-center text-gray-700">
+                              <Users className="h-4 w-4 mr-2 text-indigo-500" />
+                              <span>{batch.availableSeats} seats available</span>
+                            </div>
+                            <div className="flex items-center text-gray-700 sm:col-span-2">
+                              <BookOpen className="h-4 w-4 mr-2 text-indigo-500" />
+                              <span className="line-clamp-1">{Array.isArray(batch.subjects) ? batch.subjects.join(", ") : batch.subjects}</span>
+                            </div>
+                          </div>
+
+                          {/* Action Button */}
+                          <button
+                            onClick={() => setSelectedBatch(batch.id)}
+                            className="w-full mt-2 px-4 py-2.5 bg-indigo-600 text-white rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors duration-200"
+                          >
+                            Select Batch
+                          </button>
                         </div>
-                      </motion.div>
+                      </div>
                     ))}
                   </motion.div>
                 )}
 
                 {activeTab === 'faculty' && (
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="grid grid-cols-1 gap-4 sm:gap-6"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="space-y-4"
                   >
                     {coaching.faculty && coaching.faculty.map((teacher, index) => (
-                      <motion.div
+                      <div
                         key={index}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: index * 0.1 }}
-                        className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 hover:border-indigo-500 transition-all duration-300 shadow-sm hover:shadow-md"
+                        className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm"
                       >
-                        <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-5">
+                        <div className="flex items-center space-x-4">
                           {teacher.image && (
                             <img
                               src={teacher.image}
                               alt={teacher.name}
-                              className="h-20 w-20 rounded-full object-cover border-2 border-indigo-100 shadow"
+                              className="h-16 w-16 rounded-full object-cover border-2 border-indigo-100"
                             />
                           )}
-                          <div className="text-center sm:text-left">
-                            <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{teacher.name}</h3>
-                            <div className="mt-3 space-y-2.5">
-                              <div className="flex items-center justify-center sm:justify-start text-gray-700">
-                                <BookOpen className="h-4 w-4 mr-2 text-indigo-500 flex-shrink-0" />
-                                <span className="text-sm sm:text-base">{teacher.subject}</span>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-1">{teacher.name}</h3>
+                            <div className="space-y-1 text-sm">
+                              <div className="flex items-center text-gray-700">
+                                <BookOpen className="h-4 w-4 mr-2 text-indigo-500" />
+                                <span className="truncate">{teacher.subject}</span>
                               </div>
-                              <div className="flex items-center justify-center sm:justify-start text-gray-700">
-                                <Award className="h-4 w-4 mr-2 text-indigo-500 flex-shrink-0" />
-                                <span className="text-sm sm:text-base">{teacher.qualification}</span>
+                              <div className="flex items-center text-gray-700">
+                                <Award className="h-4 w-4 mr-2 text-indigo-500" />
+                                <span className="truncate">{teacher.qualification}</span>
                               </div>
-                              <div className="flex items-center justify-center sm:justify-start text-gray-700">
-                                <Briefcase className="h-4 w-4 mr-2 text-indigo-500 flex-shrink-0" />
-                                <span className="text-sm sm:text-base">{teacher.experience} experience</span>
+                              <div className="flex items-center text-gray-700">
+                                <Briefcase className="h-4 w-4 mr-2 text-indigo-500" />
+                                <span>{teacher.experience} experience</span>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </motion.div>
+                      </div>
                     ))}
                   </motion.div>
                 )}
 
                 {activeTab === 'gallery' && (
                   <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
                   >
-                    <h3 className="text-2xl font-semibold text-gray-900 mb-5 flex items-center">
-                      <Camera className="h-5 w-5 mr-2 text-indigo-500" />
-                      Our Facilities
-                    </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {coaching.classroomImages && coaching.classroomImages.map((image, index) => (
-                        <motion.div
+                        <div
                           key={index}
-                          initial={{ opacity: 0, scale: 0.9 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          transition={{ delay: index * 0.1 }}
-                          className="relative aspect-video rounded-xl overflow-hidden shadow-md group"
+                          className="relative aspect-video rounded-lg overflow-hidden shadow-sm"
                         >
                           <img
                             src={image}
                             alt={`Classroom ${index + 1}`}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            className="w-full h-full object-cover"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end">
-                            <div className="p-4 text-white">
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                            <div className="p-3 text-white text-sm">
                               <span className="font-medium">Classroom {index + 1}</span>
                             </div>
                           </div>
-                        </motion.div>
+                        </div>
                       ))}
                     </div>
                   </motion.div>

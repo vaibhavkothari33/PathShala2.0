@@ -75,7 +75,11 @@ const StudentDashboard = () => {
           ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.images_coverImage}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`
           : coaching.images_logo 
             ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.images_logo}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`
-            : "/placeholder-coaching.jpg",
+            : "/default-coaching.jpg",
+
+        logo: coaching.images_logo
+          ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.images_logo}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`
+          : null,
 
         location: coaching.address || "Address not available",
         city: coaching.city || "",
@@ -204,7 +208,7 @@ const StudentDashboard = () => {
       console.log('First coaching center:', {
         name: coachingCenters[0].name,
         coverImage: coachingCenters[0].image,
-        logo: coachingCenters[0].images_logo,
+        logo: coachingCenters[0].logo,
       });
     }
   }, [coachingCenters]);
@@ -408,20 +412,23 @@ const StudentDashboard = () => {
                     alt={coaching.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      console.error(`Failed to load image for ${coaching.name}:`, e);
-                      if (!e.target.src.includes('images_logo')) {
-                        const logoUrl = coaching.images_logo 
-                          ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.images_logo}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`
-                          : "/placeholder-coaching.jpg";
-                        e.target.src = logoUrl;
-                      } else {
-                        e.target.src = "/placeholder-coaching.jpg";
+                      if (!e.target.src.includes('default-coaching.jpg')) {
+                        e.target.src = "/default-coaching.jpg";
                       }
                     }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
-                    <h3 className="text-lg font-semibold text-white">{coaching.name}</h3>
+                    <div className="flex items-center space-x-3">
+                      {coaching.logo && (
+                        <img
+                          src={coaching.logo}
+                          alt={`${coaching.name} logo`}
+                          className="h-8 w-8 rounded-full border-2 border-white object-cover"
+                        />
+                      )}
+                      <h3 className="text-lg font-semibold text-white truncate">{coaching.name}</h3>
+                    </div>
                     <div className="px-3 py-1 bg-white rounded-full text-indigo-600 font-medium text-sm">
                       {coaching.price}/month
                     </div>
