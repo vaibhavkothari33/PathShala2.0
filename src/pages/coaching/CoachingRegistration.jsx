@@ -7,9 +7,9 @@ import { useAuth } from '../../context/AuthContext';
 import coachingService from '../../services/coachingService';
 
 const stepVariants = {
-  hidden: { opacity: 0, x: 50 },
+  hidden: { opacity: 0.5, x: 10 },
   visible: { opacity: 1, x: 0 },
-  exit: { opacity: 0, x: -50 }
+  exit: { opacity: 0.5, x: -10 }
 };
 
 const inputClasses = "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white/50 backdrop-blur-sm";
@@ -107,6 +107,99 @@ const CoachingRegistration = () => {
     { id: 4, title: 'Batches', description: 'Add batch details' },
     { id: 5, title: 'Faculty', description: 'Add faculty information' }
   ];
+
+  // Add form validation state
+  const [formErrors, setFormErrors] = useState({
+    basicInfo: {},
+    images: {},
+    facilities: false,
+    batches: [],
+    faculty: []
+  });
+
+  // Add validation function
+  const validateStep = (step) => {
+    let isValid = true;
+    const errors = { ...formErrors };
+
+    switch (step) {
+      case 1:
+        // Basic Info validation
+        const requiredFields = ['name', 'description', 'address', 'city', 'phone', 'email'];
+        requiredFields.forEach(field => {
+          if (!formData.basicInfo[field]) {
+            errors.basicInfo[field] = 'This field is required';
+            isValid = false;
+          } else {
+            delete errors.basicInfo[field];
+          }
+        });
+        
+        // Email validation
+        if (formData.basicInfo.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.basicInfo.email)) {
+          errors.basicInfo.email = 'Invalid email format';
+          isValid = false;
+        }
+        
+        // Phone validation
+        if (formData.basicInfo.phone && !/^\d{10}$/.test(formData.basicInfo.phone)) {
+          errors.basicInfo.phone = 'Invalid phone number';
+          isValid = false;
+        }
+        break;
+
+      case 2:
+        // Images validation
+        if (!formData.images.logo) {
+          errors.images.logo = 'Logo is required';
+          isValid = false;
+        }
+        break;
+
+      case 3:
+        // Facilities validation
+        if (formData.facilities.length === 0) {
+          errors.facilities = 'Select at least one facility';
+          isValid = false;
+        }
+        break;
+
+      case 4:
+        // Batches validation
+        const batchErrors = formData.batches.map(batch => {
+          const error = {};
+          if (!batch.name) error.name = 'Batch name is required';
+          if (!batch.subjects.length) error.subjects = 'Select at least one subject';
+          if (!batch.timing) error.timing = 'Timing is required';
+          return error;
+        });
+        
+        if (batchErrors.some(error => Object.keys(error).length > 0)) {
+          errors.batches = batchErrors;
+          isValid = false;
+        }
+        break;
+
+      case 5:
+        // Faculty validation
+        const facultyErrors = formData.faculty.map(faculty => {
+          const error = {};
+          if (!faculty.name) error.name = 'Faculty name is required';
+          if (!faculty.qualification) error.qualification = 'Qualification is required';
+          if (!faculty.subject) error.subject = 'Subject is required';
+          return error;
+        });
+        
+        if (facultyErrors.some(error => Object.keys(error).length > 0)) {
+          errors.faculty = facultyErrors;
+          isValid = false;
+        }
+        break;
+    }
+
+    setFormErrors(errors);
+    return isValid;
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -246,11 +339,14 @@ const CoachingRegistration = () => {
     setFormData(prev => ({ ...prev, faculty: newFaculty }));
   };
 
+  // Update the nextStep function
   const nextStep = (e) => {
     e.preventDefault();
-    if (currentStep < totalSteps) {
-      setCurrentStep(currentStep + 1);
+    if (validateStep(currentStep)) {
+      setCurrentStep(prev => prev + 1);
       window.scrollTo(0, 0);
+      } else {
+      toast.error('Please fill in all required fields correctly');
     }
   };
 
@@ -474,13 +570,9 @@ const CoachingRegistration = () => {
 
   const ContentWrapper = ({ children }) => (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <motion.div
-        className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl p-6 md:p-8"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
+      <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl p-6 md:p-8">
         {children}
-      </motion.div>
+      </div>
     </div>
   );
 
@@ -529,150 +621,123 @@ const CoachingRegistration = () => {
     </div>
   );
 
+  // Update the input field to show error messages
+  const InputField = ({ label, name, type = 'text', value, onChange, error, ...props }) => (
+    <div>
+      <label className={labelClasses}>
+        {label} {props.required && '*'}
+      </label>
+      <input
+        type={type}
+        name={name}
+        value={value}
+        onChange={onChange}
+        className={`${inputClasses} ${error ? 'border-red-500' : ''}`}
+        {...props}
+      />
+      {error && (
+        <p className="mt-1 text-sm text-red-500">{error}</p>
+      )}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-indigo-50/20 to-blue-50/20">
       <Header currentStep={currentStep} steps={steps} />
       
       <ContentWrapper>
-        <AnimatePresence mode="wait">
+        <AnimatePresence mode="wait" initial={false}>
           <motion.div
             key={currentStep}
             variants={stepVariants}
             initial="hidden"
             animate="visible"
             exit="exit"
-            transition={{ duration: 0.3 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
           >
             {currentStep === 1 && (
               <section className="basic-info">
                 <h2 className="text-xl font-semibold text-gray-900 mb-6">Basic Information</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {/* Name */}
-                  <div>
-                    <label className={labelClasses}>
-                      Coaching Name *
-                    </label>
-                    <input
-                      type="text"
-                      name="name"
-                      required
-                      value={formData.basicInfo.name}
-                      onChange={handleBasicInfoChange}
-                      className={inputClasses}
-                      placeholder="Enter coaching name"
-                    />
-                  </div>
+                  <InputField
+                    label="Coaching Name"
+                    name="name"
+                    required
+                    value={formData.basicInfo.name}
+                    onChange={handleBasicInfoChange}
+                    error={formErrors.basicInfo?.name}
+                    placeholder="Enter coaching name"
+                  />
 
-                  {/* Description */}
-                  <div className="md:col-span-2">
-                    <label className={labelClasses}>
-                      Description *
-                    </label>
-                    <textarea
-                      name="description"
-                      required
-                      value={formData.basicInfo.description}
-                      onChange={handleBasicInfoChange}
-                      rows={4}
-                      className={inputClasses}
-                      placeholder="Describe your coaching center"
-                    />
-                  </div>
+                  <InputField
+                    label="Description"
+                    name="description"
+                    required
+                    value={formData.basicInfo.description}
+                    onChange={handleBasicInfoChange}
+                    error={formErrors.basicInfo?.description}
+                    rows={4}
+                    placeholder="Describe your coaching center"
+                  />
 
-                  {/* Address */}
-                  <div>
-                    <label className={labelClasses}>
-                      Address *
-                    </label>
-                    <input
-                      type="text"
-                      name="address"
-                      required
-                      value={formData.basicInfo.address}
-                      onChange={handleBasicInfoChange}
-                      className={inputClasses}
-                      placeholder="Enter complete address"
-                    />
-                  </div>
+                  <InputField
+                    label="Address"
+                    name="address"
+                    required
+                    value={formData.basicInfo.address}
+                    onChange={handleBasicInfo.change}
+                    error={formErrors.basicInfo?.address}
+                    placeholder="Enter complete address"
+                  />
 
-                  {/* City */}
-                  <div>
-                    <label className={labelClasses}>
-                      City *
-                    </label>
-                    <input
-                      type="text"
-                      name="city"
-                      required
-                      value={formData.basicInfo.city}
-                      onChange={handleBasicInfoChange}
-                      className={inputClasses}
-                      placeholder="Enter city"
-                    />
-                  </div>
+                  <InputField
+                    label="City"
+                    name="city"
+                    required
+                    value={formData.basicInfo.city}
+                    onChange={handleBasicInfoChange}
+                    error={formErrors.basicInfo?.city}
+                    placeholder="Enter city"
+                  />
 
-                  {/* Phone */}
-                  <div>
-                    <label className={labelClasses}>
-                      Phone *
-                    </label>
-                    <input
-                      type="tel"
-                      name="phone"
-                      required
-                      value={formData.basicInfo.phone}
-                      onChange={handleBasicInfoChange}
-                      className={inputClasses}
-                      placeholder="Enter contact number"
-                    />
-                  </div>
+                  <InputField
+                    label="Phone"
+                    name="phone"
+                    required
+                    value={formData.basicInfo.phone}
+                    onChange={handleBasicInfoChange}
+                    error={formErrors.basicInfo?.phone}
+                    placeholder="Enter contact number"
+                  />
 
-                  {/* Email */}
-                  <div>
-                    <label className={labelClasses}>
-                      Email *
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      required
-                      value={formData.basicInfo.email}
-                      onChange={handleBasicInfoChange}
-                      className={inputClasses}
-                      placeholder="Enter email address"
-                    />
-                  </div>
+                  <InputField
+                    label="Email"
+                    name="email"
+                    required
+                    value={formData.basicInfo.email}
+                    onChange={handleBasicInfoChange}
+                    error={formErrors.basicInfo?.email}
+                    placeholder="Enter email address"
+                  />
 
-                  {/* Website */}
-                  <div>
-                    <label className={labelClasses}>
-                      Website
-                    </label>
-                    <input
-                      type="url"
-                      name="website"
-                      value={formData.basicInfo.website}
-                      onChange={handleBasicInfoChange}
-                      className={inputClasses}
-                      placeholder="Enter website URL (optional)"
-                    />
-                  </div>
+                  <InputField
+                    label="Website"
+                    name="website"
+                    value={formData.basicInfo.website}
+                    onChange={handleBasicInfoChange}
+                    error={formErrors.basicInfo?.website}
+                    placeholder="Enter website URL (optional)"
+                  />
 
-                  {/* Established Year */}
-                  <div>
-                    <label className={labelClasses}>
-                      Established Year *
-                    </label>
-                    <input
-                      type="text"
-                      name="establishedYear"
-                      required
-                      value={formData.basicInfo.establishedYear}
-                      onChange={handleBasicInfoChange}
-                      className={inputClasses}
-                      placeholder="Enter establishment year"
-                    />
-                  </div>
+                  <InputField
+                    label="Established Year"
+                    name="establishedYear"
+                    required
+                    value={formData.basicInfo.establishedYear}
+                    onChange={handleBasicInfoChange}
+                    error={formErrors.basicInfo?.establishedYear}
+                    placeholder="Enter establishment year"
+                  />
                 </div>
               </section>
             )}
