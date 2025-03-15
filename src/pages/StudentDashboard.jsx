@@ -50,7 +50,7 @@ const StudentDashboard = () => {
       const formattedCenters = response.documents.map((coaching) => {
         // Construct the base storage URL
         const storageUrl = `https://cloud.appwrite.io/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files`;
-        
+
         // Helper function to construct image URL
         const getImageUrl = (fileId) => {
           if (!fileId) return null;
@@ -74,9 +74,9 @@ const StudentDashboard = () => {
           students: coaching.totalStudents || 0,
 
           // Update image handling
-          image: getImageUrl(coaching.images_coverImage) || 
-                 getImageUrl(coaching.images_logo) || 
-                 "/default-coaching.jpg",
+          image: getImageUrl(coaching.images_coverImage) ||
+            getImageUrl(coaching.images_logo) ||
+            "/default-coaching.jpg",
 
           // Update logo handling
           logo: getImageUrl(coaching.images_logo),
@@ -124,7 +124,7 @@ const StudentDashboard = () => {
       });
 
       setCoachingCenters(formattedCenters);
-      
+
       // Debug logging
       console.log('First coaching data:', {
         raw: response.documents[0],
@@ -443,7 +443,7 @@ const StudentDashboard = () => {
                     <div className="flex items-center justify-between">
                       <h3 className="text-xl sm:text-2xl font-medium truncate">{coaching.name}</h3>
                     </div>
-                    
+
                     <div className="flex flex-wrap items-center gap-2">
                       <div className="flex items-center">
                         <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
