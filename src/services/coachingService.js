@@ -3,8 +3,7 @@ import { databases, storage, account } from '../config/appwrite';
 
 // Use environment variables for constants
 const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
-const COACHING_COLLECTION_ID = import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID;
-const REQUESTS_COLLECTION_ID = import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID;
+const COLLECTION_ID = import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID;
 const BUCKET_ID = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
 
 const coachingService = {
@@ -34,16 +33,21 @@ const coachingService = {
   // Register new coaching center
   async registerCoaching(coachingData) {
     try {
+      // Generate a unique ID
+      const documentId = ID.unique();
+      
       const documentData = {
         ...coachingData,
+        location: coachingData.location || coachingData.city || "", 
+        documentId: documentId, // Add this required field
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()
       };
 
       const response = await databases.createDocument(
         DATABASE_ID,
-        COACHING_COLLECTION_ID,
-        ID.unique(),
+        COLLECTION_ID,
+        documentId, // Use the generated ID here
         documentData
       );
       return response;
@@ -63,7 +67,7 @@ const coachingService = {
       // Query for coaching centers where owner_id equals the userId
       const response = await databases.listDocuments(
         DATABASE_ID,
-        COACHING_COLLECTION_ID,
+        COLLECTION_ID,
         [Query.equal('owner_id', userId)] // Ensure this field exists in your database
       );
 
@@ -86,7 +90,7 @@ const coachingService = {
 
       const response = await databases.listDocuments(
         DATABASE_ID,
-        COACHING_COLLECTION_ID,
+        COLLECTION_ID,
         [Query.equal('slug', [slug])]
       );
 
@@ -207,226 +211,41 @@ const coachingService = {
     }
   },
   // Initialize default coaching centers
-  async initializeDefaultCoachingCenters() {
-    console.log('Initializing default coaching centers...');
-    // Placeholder for logic to initialize default coaching centers
-    const defaultCoachingData = {
-      name: 'Default Coaching Center',
-      location: 'Default Location',
-      mobile: '1234567890',
-      email: 'default@example.com'
-    };
+  // async initializeDefaultCoachingCenters() {
+  //   console.log('Initializing default coaching centers...');
+  //   // Generate a unique ID
+  //   const documentId = ID.unique();
+    
+  //   const defaultCoachingData = {
+  //     name: 'Default Coaching Center',
+  //     phone: '1234567890',
+  //     description: "this is a coaching",
+  //     email: 'default@example.com',
+  //     address: "bennett university",
+  //     city: "Jaipur",
+  //     establishedYear: "2016",
+  //     images_logo: "",
+  //     images_coverImage: "",
+  //     createdAt: new Date().toISOString(),
+  //     updatedAt: new Date().toISOString(),
+  //     slug: "",
+  //     owner_id: "",
+  //     documentId: documentId, // Add this required field
+  //     location: "Jaipur", 
+  //   };
 
-    try {
-      const response = await databases.createDocument(
-        DATABASE_ID,
-        COACHING_COLLECTION_ID,
-        ID.unique(),
-        defaultCoachingData
-      );
-      console.log('Default coaching center initialized:', response);
-    } catch (error) {
-      console.error('Error initializing default coaching center:', error);
-    }
-
-
-    // Logic to save defaultCoachingData to Appwrite can be added here
-  },
-
-  // Create a new request (for batch join or demo class)
-  async createRequest(requestData) {
-    try {
-      const user = await this.checkAuth();
-      
-      const documentId = ID.unique();
-      const response = await databases.createDocument(
-        DATABASE_ID,
-        REQUESTS_COLLECTION_ID,
-        documentId,
-        {
-          coachingId: requestData.coachingId,
-          studentId: user.$id,
-          studentName: user.name,
-          studentEmail: user.email,
-          studentPhone: requestData.studentPhone || '',
-          type: requestData.type, // 'batch' or 'demo'
-          batchId: requestData.batchId,
-          batchName: requestData.batchName,
-          message: requestData.message || '',
-          status: 'pending',
-          createdAt: new Date().toISOString(),
-        }
-      );
-      
-      return response;
-    } catch (error) {
-      console.error('Error creating request:', error);
-      throw error;
-    }
-  },
-
-  // Get all requests for a coaching center
-  async getCoachingRequests(coachingId) {
-    try {
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        REQUESTS_COLLECTION_ID,
-        [
-          Query.equal('coachingId', coachingId),
-          Query.orderDesc('$createdAt')
-        ]
-      );
-      
-      return response.documents;
-    } catch (error) {
-      console.error('Error fetching coaching requests:', error);
-      throw error;
-    }
-  },
-
-  // Get requests for a student
-  async getStudentRequests(studentId) {
-    try {
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        REQUESTS_COLLECTION_ID,
-        [
-          Query.equal('studentId', studentId),
-          Query.orderDesc('$createdAt')
-        ]
-      );
-      
-      return response.documents;
-    } catch (error) {
-      console.error('Error fetching student requests:', error);
-      throw error;
-    }
-  },
-
-  // Update request status
-  async updateRequestStatus(requestId, status) {
-    try {
-      const response = await databases.updateDocument(
-        DATABASE_ID,
-        REQUESTS_COLLECTION_ID,
-        requestId,
-        {
-          status,
-          updatedAt: new Date().toISOString()
-        }
-      );
-      
-      return response;
-    } catch (error) {
-      console.error('Error updating request status:', error);
-      throw error;
-    }
-  },
-
-  // Delete request
-  async deleteRequest(requestId) {
-    try {
-      await databases.deleteDocument(
-        DATABASE_ID,
-        REQUESTS_COLLECTION_ID,
-        requestId
-      );
-      
-      return true;
-    } catch (error) {
-      console.error('Error deleting request:', error);
-      throw error;
-    }
-  },
-
-  // Get request by ID
-  async getRequestById(requestId) {
-    try {
-      const response = await databases.getDocument(
-        DATABASE_ID,
-        REQUESTS_COLLECTION_ID,
-        requestId
-      );
-      
-      return response;
-    } catch (error) {
-      console.error('Error fetching request:', error);
-      throw error;
-    }
-  },
-
-  // Get pending requests count for a coaching center
-  async getPendingRequestsCount(coachingId) {
-    try {
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        REQUESTS_COLLECTION_ID,
-        [
-          Query.equal('coachingId', coachingId),
-          Query.equal('status', 'pending')
-        ]
-      );
-      
-      return response.total;
-    } catch (error) {
-      console.error('Error fetching pending requests count:', error);
-      throw error;
-    }
-  },
-
-  // Transform request data
-  transformRequestData(doc) {
-    if (!doc) return null;
-
-    return {
-      id: doc.$id,
-      createdAt: doc.$createdAt,
-      updatedAt: doc.$updatedAt,
-      coachingId: doc.coachingId,
-      studentId: doc.studentId,
-      studentName: doc.studentName,
-      studentEmail: doc.studentEmail,
-      studentPhone: doc.studentPhone || '',
-      type: doc.type,
-      batchId: doc.batchId,
-      batchName: doc.batchName,
-      status: doc.status,
-      message: doc.message || '',
-      formattedDate: new Date(doc.$createdAt).toLocaleDateString('en-US', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      })
-    };
-  },
-
-  // Get all requests with pagination
-  async getRequestsWithPagination(coachingId, page = 1, limit = 10) {
-    try {
-      const offset = (page - 1) * limit;
-      
-      const response = await databases.listDocuments(
-        DATABASE_ID,
-        REQUESTS_COLLECTION_ID,
-        [
-          Query.equal('coachingId', coachingId),
-          Query.orderDesc('$createdAt'),
-          Query.limit(limit),
-          Query.offset(offset)
-        ]
-      );
-      
-      return {
-        requests: response.documents.map(doc => this.transformRequestData(doc)),
-        total: response.total,
-        currentPage: page,
-        totalPages: Math.ceil(response.total / limit)
-      };
-    } catch (error) {
-      console.error('Error fetching paginated requests:', error);
-      throw error;
-    }
-  }
+  //   try {
+  //     const response = await databases.createDocument(
+  //       DATABASE_ID,
+  //       COLLECTION_ID,
+  //       documentId, // Use the same ID here
+  //       defaultCoachingData
+  //     );
+  //     console.log('Default coaching center initialized:', response);
+  //   } catch (error) {
+  //     console.error('Error initializing default coaching center:', error);
+  //   }
+  // },
 };
 
 export default coachingService;
