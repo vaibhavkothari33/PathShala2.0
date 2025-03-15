@@ -35,12 +35,11 @@ const CoachingDashboard = () => {
 
   // Updated data fetching with better error handling
   useEffect(() => {
-    const fetchCoachingData = async () => {
+    const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
 
-        // Check for user authentication
         if (!user || !user.$id) {
           throw new Error('Please login to access dashboard');
         }
@@ -80,9 +79,20 @@ const CoachingDashboard = () => {
         console.log('Formatted coaching data:', formattedCoaching);
         setCoaching(formattedCoaching);
 
-        // Fetch requests if coaching ID exists
+        // Fetch requests here, after coaching data is set
         if (formattedCoaching.$id) {
-          fetchRequests(formattedCoaching.$id);
+          try {
+            const requestsResponse = await databases.listDocuments(
+              import.meta.env.VITE_APPWRITE_DATABASE_ID,
+              import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID,
+              [Query.equal('coaching_id', formattedCoaching.$id)]
+            );
+            console.log('Requests fetched:', requestsResponse.documents);
+            setRequests(requestsResponse.documents);
+          } catch (requestError) {
+            console.error('Error fetching requests:', requestError);
+            toast.error('Failed to load requests');
+          }
         }
 
       } catch (error) {
@@ -99,7 +109,7 @@ const CoachingDashboard = () => {
       }
     };
 
-    fetchCoachingData();
+    fetchData();
   }, [user, navigate]);
 
   // Helper function to get image URL
@@ -168,33 +178,26 @@ const CoachingDashboard = () => {
     }, 0);
   };
 
-  // Add this function to fetch requests
-  useEffect(() => {
-    const fetchRequests = async (coachingId) => {
-      try {
-        const response = await databases.listDocuments(
-          DATABASE_ID,
-          REQUESTS_COLLECTION_ID,
-          [Query.equal('coaching_id', coachingId)]
-        );
-        setRequests(response.documents);
-      } catch (error) {
-        console.error('Error fetching requests:', error);
-      }
-    };
-    if (coaching?.$id) {
-      fetchRequests(coaching.$id);
-    }
-  }, [coaching]);
-  // Add these functions to handle requests
+  // Update the request handling functions
   const handleRequest = async (requestId, status) => {
     try {
-      await coachingService.updateRequestStatus(requestId, status);
+      // Update the request status in the database
+      await databases.updateDocument(
+        import.meta.env.VITE_APPWRITE_DATABASE_ID,
+        import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID,
+        requestId,
+        { 
+          status,
+          updatedAt: new Date().toISOString()
+        }
+      );
       
       // Update local state
-      setRequests(requests.map(req => 
-        req.$id === requestId ? { ...req, status } : req
-      ));
+      setRequests(prevRequests => 
+        prevRequests.map(req => 
+          req.$id === requestId ? { ...req, status } : req
+        )
+      );
 
       toast.success(`Request ${status === 'accepted' ? 'accepted' : 'rejected'} successfully`);
     } catch (error) {
@@ -203,31 +206,7 @@ const CoachingDashboard = () => {
     }
   };
 
-  const updateRequestStatus = async (requestId, status) => {
-    try {
-      await databases.updateDocument(
-        import.meta.env.VITE_APPWRITE_DATABASE_ID,
-        import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID,
-        requestId, // This is the document ID
-        { 
-          status,
-          updatedAt: new Date().toISOString()
-        }
-      );
-      
-      // Update local state
-      setRequests(requests.map(req => 
-        req.$id === requestId ? { ...req, status } : req
-      ));
-
-      toast.success(`Request ${status === 'accepted' ? 'accepted' : 'rejected'} successfully`);
-    } catch (error) {
-      console.error('Error updating request:', error);
-      toast.error('Failed to update request');
-    }
-  };
-
-  // Add this section after the Overview Cards
+  // Update the RequestsSection component
   const RequestsSection = () => (
     <div className="mb-8">
       <div className="bg-white rounded-lg shadow">
