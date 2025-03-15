@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-react';
 import {
   MapPin, Star, Clock, Users, Phone, Mail, Globe, Home,
   BookOpen, Award, CheckCircle, ChevronLeft, Calendar, Camera,
-  Info, Briefcase, GraduationCap
+  Info, Briefcase, GraduationCap, X
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import coachingService from '../../services/coachingService';
@@ -14,8 +14,9 @@ const CoachingDetails = () => {
   const navigate = useNavigate();
   const [coaching, setCoaching] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('Overview');
   const [selectedBatch, setSelectedBatch] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   useEffect(() => {
     const fetchCoachingDetails = async () => {
@@ -44,6 +45,36 @@ const CoachingDetails = () => {
 
     fetchCoachingDetails();
   }, [slug, navigate]);
+
+  const ImageModal = ({ image, onClose }) => (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9 }}
+        animate={{ scale: 1 }}
+        exit={{ scale: 0.9 }}
+        className="relative max-w-7xl w-full max-h-[90vh] rounded-lg overflow-hidden"
+        onClick={e => e.stopPropagation()}
+      >
+        <img
+          src={image}
+          alt="Classroom view"
+          className="w-full h-full object-contain"
+        />
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-full bg-black/50 text-white hover:bg-black/70 transition-colors"
+        >
+          <X className="h-6 w-6" />
+        </button>
+      </motion.div>
+    </motion.div>
+  );
 
   if (loading) {
     return (
@@ -299,9 +330,12 @@ const CoachingDetails = () => {
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {coaching.classroomImages && coaching.classroomImages.map((image, index) => (
-                        <div
+                        <motion.div
                           key={index}
-                          className="relative aspect-video rounded-lg overflow-hidden shadow-sm"
+                          className="relative aspect-video rounded-lg overflow-hidden shadow-sm cursor-pointer group"
+                          onClick={() => setSelectedImage(image)}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
                         >
                           <img
                             src={image}
@@ -309,13 +343,29 @@ const CoachingDetails = () => {
                             className="w-full h-full object-cover"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
-                            <div className="p-3 text-white text-sm">
+                            <div className="p-3 text-white text-sm w-full flex justify-between items-center">
                               <span className="font-medium">Classroom {index + 1}</span>
+                              <motion.button
+                                className="p-2 rounded-full bg-white/20 hover:bg-white/30 transition-colors"
+                                whileHover={{ scale: 1.1 }}
+                              >
+                                <Camera className="h-4 w-4 text-white" />
+                              </motion.button>
                             </div>
                           </div>
-                        </div>
+                        </motion.div>
                       ))}
                     </div>
+
+                    {/* Image Modal */}
+                    <AnimatePresence>
+                      {selectedImage && (
+                        <ImageModal
+                          image={selectedImage}
+                          onClose={() => setSelectedImage(null)}
+                        />
+                      )}
+                    </AnimatePresence>
                   </motion.div>
                 )}
               </div>
