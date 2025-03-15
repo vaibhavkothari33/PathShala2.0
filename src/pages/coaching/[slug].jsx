@@ -6,6 +6,9 @@ import {
   BookOpen, Award, CheckCircle, ChevronLeft, Calendar, Camera,
   Info, Briefcase, GraduationCap, X
 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X, Camera } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import coachingService from '../../services/coachingService';
 
