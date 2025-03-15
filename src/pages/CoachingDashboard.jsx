@@ -15,15 +15,20 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import coachingService from '../services/coachingService';
-import { toast } from 'react-hot-toast';
-// At the top of your CoachingDashboard.jsx file
-import { databases, } from '../config/appwrite'; // Adjust the path as needed
-// Near the top of your file, after imports
+import { useAuth } from '../../context/AuthContext';
+import { databases } from '../../config/appwrite';
 import { Query } from 'appwrite';
+import { toast } from 'react-hot-toast';
+
+// Add environment variables check
 const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
+const COACHING_COLLECTION_ID = import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID;
 const REQUESTS_COLLECTION_ID = import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID;
+
+if (!DATABASE_ID || !COACHING_COLLECTION_ID) {
+  console.error('Missing required environment variables');
+}
+
 const CoachingDashboard = () => {
   const { user } = useAuth();
   const [coaching, setCoaching] = useState(null);
@@ -33,81 +38,73 @@ const CoachingDashboard = () => {
   const [requests, setRequests] = useState([]);
   const [showRequests, setShowRequests] = useState(false);
 
-  // Updated data fetching with better error handling
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         setError(null);
 
+        // Check user authentication
         if (!user || !user.$id) {
+          navigate('/login');
           throw new Error('Please login to access dashboard');
         }
 
+        // Debug log
         console.log('Fetching coaching data for user:', user.$id);
 
-        // Fetch coaching data
-        const response = await databases.listDocuments(
-          import.meta.env.VITE_APPWRITE_DATABASE_ID,
-          import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID,
-          [Query.equal('owner_id', user.$id)]
-        );
+        // Fetch coaching data with error handling
+        try {
+          const response = await databases.listDocuments(
+            DATABASE_ID,
+            COACHING_COLLECTION_ID,
+            [Query.equal('owner_id', user.$id)]
+          );
 
-        console.log('Raw coaching data:', response);
+          console.log('Raw coaching response:', response);
 
-        if (!response.documents || response.documents.length === 0) {
-          throw new Error('No coaching center found');
-        }
-
-        const coachingData = response.documents[0];
-
-        // Format the coaching data with proper image URLs
-        const formattedCoaching = {
-          ...coachingData,
-          name: coachingData.name || 'Unnamed Coaching',
-          students: calculateTotalStudents(coachingData),
-          batches: formatBatches(coachingData),
-          faculty: formatFaculty(coachingData),
-          totalRevenue: calculateTotalRevenue(coachingData),
-          images: {
-            logo: getImageUrl(coachingData.images_logo),
-            coverImage: getImageUrl(coachingData.images_coverImage),
+          if (!response?.documents?.length) {
+            navigate('/coaching/register');
+            throw new Error('No coaching center found');
           }
-        };
 
-        // Debug log
-        console.log('Formatted coaching data with images:', {
-          logo: formattedCoaching.images.logo,
-          cover: formattedCoaching.images.coverImage
-        });
+          const coachingData = response.documents[0];
+          
+          // Format coaching data
+          const formattedCoaching = {
+            ...coachingData,
+            name: coachingData.name || 'Unnamed Coaching',
+            students: calculateTotalStudents(coachingData),
+            batches: formatBatches(coachingData),
+            faculty: formatFaculty(coachingData),
+            totalRevenue: calculateTotalRevenue(coachingData),
+            images: {
+              logo: getImageUrl(coachingData.images_logo),
+              coverImage: getImageUrl(coachingData.images_coverImage),
+            }
+          };
 
-        setCoaching(formattedCoaching);
+          setCoaching(formattedCoaching);
 
-        // Fetch requests here, after coaching data is set
-        if (formattedCoaching.$id) {
-          try {
+          // Fetch requests if coaching exists
+          if (formattedCoaching.$id) {
             const requestsResponse = await databases.listDocuments(
-              import.meta.env.VITE_APPWRITE_DATABASE_ID,
-              import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID,
+              DATABASE_ID,
+              REQUESTS_COLLECTION_ID,
               [Query.equal('coaching_id', formattedCoaching.$id)]
             );
-            console.log('Requests fetched:', requestsResponse.documents);
-            setRequests(requestsResponse.documents);
-          } catch (requestError) {
-            console.error('Error fetching requests:', requestError);
-            toast.error('Failed to load requests');
+            setRequests(requestsResponse.documents || []);
           }
+
+        } catch (err) {
+          console.error('Error fetching data:', err);
+          throw new Error('Failed to load coaching data');
         }
 
       } catch (error) {
         console.error('Dashboard error:', error);
         setError(error.message);
-        toast.error(error.message || 'Failed to load dashboard');
-        
-        // Redirect to registration if no coaching found
-        if (error.message === 'No coaching center found') {
-          navigate('/coaching/register');
-        }
+        toast.error(error.message);
       } finally {
         setLoading(false);
       }
@@ -196,8 +193,8 @@ const CoachingDashboard = () => {
     try {
       // Update the request status in the database
       await databases.updateDocument(
-        import.meta.env.VITE_APPWRITE_DATABASE_ID,
-        import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID,
+        DATABASE_ID,
+        REQUESTS_COLLECTION_ID,
         requestId,
         { 
           status,
@@ -211,8 +208,8 @@ const CoachingDashboard = () => {
       // Create a notification for the student
       if (request) {
         await databases.createDocument(
-          import.meta.env.VITE_APPWRITE_DATABASE_ID,
-          import.meta.env.VITE_APPWRITE_NOTIFICATIONS_COLLECTION_ID,
+          DATABASE_ID,
+          'notifications',
           'unique()',
           {
             user_id: request.student_id,
