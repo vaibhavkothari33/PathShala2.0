@@ -62,45 +62,45 @@ const CoachingDetails = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section with Improved Styling */}
-      <div className="relative h-[300px]"> {/* Reduced height */}
+      <div className="relative h-[200px] sm:h-[300px]"> {/* Adjust height for mobile */}
         {coaching.image && (
           <img
             src={coaching.image}
             alt={coaching.name}
-            className="w-full h-full object-cover max-h-[300px]" // Ensures image doesn’t get too big
+            className="w-full h-full object-cover"
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 to-black/40" />
-        <div className="absolute inset-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-center">
+        <div className="absolute inset-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-end pb-6"> {/* Changed to justify-end */}
           <Link
             to="/student/dashboard"
-            className="flex items-center text-white/90 hover:text-white mb-6 transition-colors duration-200"
+            className="flex items-center text-white/90 hover:text-white mb-4 text-sm sm:text-base"
           >
-            <ChevronLeft className="h-5 w-5 mr-1" />
+            <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
             Back to Dashboard
           </Link>
-          <div className="flex items-center space-x-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-8">
             {coaching.logo && (
               <img
                 src={coaching.logo}
                 alt={`${coaching.name} logo`}
-                className="h-20 w-20 rounded-lg shadow-xl border-2 border-white/20" // Reduced logo size
+                className="h-16 w-16 sm:h-20 sm:w-20 rounded-lg shadow-xl border-2 border-white/20 mb-4 sm:mb-0"
               />
             )}
             <div>
-              <h1 className="text-5xl font-bold text-white mb-3">{coaching.name}</h1>
-              <div className="flex items-center space-x-6 text-white/90">
+              <h1 className="text-3xl sm:text-5xl font-bold text-white mb-2 sm:mb-3">{coaching.name}</h1>
+              <div className="flex flex-wrap gap-4 text-sm sm:text-base text-white/90">
                 <div className="flex items-center">
-                  <MapPin className="h-5 w-5 mr-2 text-indigo-300" />
+                  <MapPin className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-indigo-300" />
                   <span>{coaching.city}</span>
                 </div>
                 <div className="flex items-center">
-                  <Star className="h-5 w-5 text-yellow-400 mr-2" />
+                  <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400 mr-2" />
                   <span className="font-medium">{coaching.rating}</span>
-                  <span className="ml-1 text-white/70">({coaching.reviews} reviews)</span>
+                  <span className="ml-1 text-white/70">({coaching.reviews})</span>
                 </div>
                 <div className="flex items-center">
-                  <Users className="h-5 w-5 mr-2 text-indigo-300" />
+                  <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-2 text-indigo-300" />
                   <span>{coaching.students}+ students</span>
                 </div>
               </div>
@@ -116,16 +116,17 @@ const CoachingDetails = () => {
           <div className="lg:col-span-2">
             <div className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100">
               {/* Improved Tabs */}
-              <div className="border-b border-gray-100">
-                <nav className="flex">
+              <div className="border-b border-gray-100 overflow-x-auto">
+                <nav className="flex whitespace-nowrap">
                   {['overview', 'batches', 'faculty', 'gallery'].map((tab) => (
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
-                      className={`${activeTab === tab
+                      className={`${
+                        activeTab === tab
                           ? 'border-indigo-600 text-indigo-600 bg-indigo-50/60'
                           : 'border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-300'
-                        } flex items-center px-8 py-5 border-b-2 font-medium text-sm uppercase tracking-wide transition-colors duration-200`}
+                      } flex items-center px-4 sm:px-8 py-4 sm:py-5 border-b-2 font-medium text-sm uppercase tracking-wide transition-colors duration-200`}
                     >
                       {tab === 'overview' && <Info className="h-4 w-4 mr-2" />}
                       {tab === 'batches' && <Calendar className="h-4 w-4 mr-2" />}
@@ -214,30 +215,30 @@ const CoachingDetails = () => {
                         transition={{ delay: index * 0.1 }}
                         className="bg-white rounded-xl border border-gray-200 hover:border-indigo-500 transition-all duration-300 overflow-hidden shadow-sm hover:shadow-md"
                       >
-                        <div className="p-6">
-                          <div className="flex flex-col md:flex-row justify-between items-start">
-                            <div className="mb-6 md:mb-0">
-                              <h3 className="text-2xl font-semibold text-gray-900">{batch.name}</h3>
-                              <div className="mt-5 space-y-4">
+                        <div className="p-4 sm:p-6">
+                          <div className="flex flex-col space-y-4">
+                            <div>
+                              <h3 className="text-xl sm:text-2xl font-semibold text-gray-900">{batch.name}</h3>
+                              <div className="mt-4 space-y-3">
                                 <div className="flex items-center text-gray-700">
                                   <Clock className="h-5 w-5 mr-3 text-indigo-500 flex-shrink-0" />
-                                  <span>{batch.timing}</span>
+                                  <span className="text-sm sm:text-base">{batch.timing}</span>
                                 </div>
                                 <div className="flex items-center text-gray-700">
                                   <BookOpen className="h-5 w-5 mr-3 text-indigo-500 flex-shrink-0" />
-                                  <span>{Array.isArray(batch.subjects) ? batch.subjects.join(", ") : batch.subjects}</span>
+                                  <span className="text-sm sm:text-base">{Array.isArray(batch.subjects) ? batch.subjects.join(", ") : batch.subjects}</span>
                                 </div>
                                 <div className="flex items-center text-gray-700">
                                   <Users className="h-5 w-5 mr-3 text-indigo-500 flex-shrink-0" />
-                                  <span className="flex items-center">
+                                  <span className="flex items-center text-sm sm:text-base">
                                     <span className="font-medium text-indigo-600 mr-1">{batch.availableSeats}</span>
                                     seats available
                                   </span>
                                 </div>
                               </div>
                             </div>
-                            <div className="text-center md:text-right w-full md:w-auto">
-                              <div className="text-3xl font-bold text-indigo-700 mb-4">
+                            <div className="flex flex-col sm:flex-row justify-between items-center space-y-4 sm:space-y-0 mt-4">
+                              <div className="text-2xl sm:text-3xl font-bold text-indigo-700">
                                 ₹{batch.fees || batch.monthlyFee}
                                 <span className="text-sm font-normal text-gray-500">/month</span>
                               </div>
@@ -245,7 +246,7 @@ const CoachingDetails = () => {
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => setSelectedBatch(batch.id)}
-                                className="w-full md:w-auto px-8 py-3.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors duration-200 font-medium shadow-sm"
+                                className="w-full sm:w-auto px-6 sm:px-8 py-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors duration-200 font-medium shadow-sm text-sm sm:text-base"
                               >
                                 Select Batch
                               </motion.button>
@@ -261,7 +262,7 @@ const CoachingDetails = () => {
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                    className="grid grid-cols-1 gap-4 sm:gap-6"
                   >
                     {coaching.faculty && coaching.faculty.map((teacher, index) => (
                       <motion.div
@@ -269,9 +270,9 @@ const CoachingDetails = () => {
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.1 }}
-                        className="bg-white rounded-xl border border-gray-200 p-6 hover:border-indigo-500 transition-all duration-300 shadow-sm hover:shadow-md"
+                        className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 hover:border-indigo-500 transition-all duration-300 shadow-sm hover:shadow-md"
                       >
-                        <div className="flex items-start space-x-5">
+                        <div className="flex flex-col sm:flex-row items-center sm:items-start space-y-4 sm:space-y-0 sm:space-x-5">
                           {teacher.image && (
                             <img
                               src={teacher.image}
@@ -279,20 +280,20 @@ const CoachingDetails = () => {
                               className="h-20 w-20 rounded-full object-cover border-2 border-indigo-100 shadow"
                             />
                           )}
-                          <div>
-                            <h3 className="text-xl font-semibold text-gray-900">{teacher.name}</h3>
+                          <div className="text-center sm:text-left">
+                            <h3 className="text-lg sm:text-xl font-semibold text-gray-900">{teacher.name}</h3>
                             <div className="mt-3 space-y-2.5">
-                              <div className="flex items-center text-gray-700">
+                              <div className="flex items-center justify-center sm:justify-start text-gray-700">
                                 <BookOpen className="h-4 w-4 mr-2 text-indigo-500 flex-shrink-0" />
-                                <span>{teacher.subject}</span>
+                                <span className="text-sm sm:text-base">{teacher.subject}</span>
                               </div>
-                              <div className="flex items-center text-gray-700">
+                              <div className="flex items-center justify-center sm:justify-start text-gray-700">
                                 <Award className="h-4 w-4 mr-2 text-indigo-500 flex-shrink-0" />
-                                <span>{teacher.qualification}</span>
+                                <span className="text-sm sm:text-base">{teacher.qualification}</span>
                               </div>
-                              <div className="flex items-center text-gray-700">
+                              <div className="flex items-center justify-center sm:justify-start text-gray-700">
                                 <Briefcase className="h-4 w-4 mr-2 text-indigo-500 flex-shrink-0" />
-                                <span>{teacher.experience} experience</span>
+                                <span className="text-sm sm:text-base">{teacher.experience} experience</span>
                               </div>
                             </div>
                           </div>
@@ -340,12 +341,12 @@ const CoachingDetails = () => {
           </div>
 
           {/* Right Column - Enhanced Sidebar Components */}
-          <div className="lg:col-span-1 space-y-6">
+          <div className="lg:col-span-1 space-y-4 sm:space-y-6">
             {/* Quick Actions */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-2xl shadow-xl p-8 text-white"
+              className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-xl sm:rounded-2xl shadow-xl p-6 sm:p-8 text-white"
             >
               <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
               <div className="space-y-3">
@@ -363,7 +364,7 @@ const CoachingDetails = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="bg-white rounded-xl shadow-lg p-6"
+              className="bg-white rounded-xl shadow-lg p-4 sm:p-6"
             >
               <h3 className="text-xl font-semibold text-gray-900 mb-4">Contact Information</h3>
               <div className="space-y-4">
