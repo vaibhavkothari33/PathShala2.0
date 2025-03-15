@@ -4,7 +4,7 @@ import { Search, MapPin, Filter, Star, Clock, Users, BookOpen, ChevronDown, X, A
 import { Link } from 'react-router-dom';
 import { databases } from '../config/appwrite'; // Import Appwrite databases
 import { toast } from 'react-hot-toast';
-
+import coachingService from '../services/coachingService';
 const StudentDashboard = () => {
   const [coachingCenters, setCoachingCenters] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,6 +16,7 @@ const StudentDashboard = () => {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [coaching, setCoaching] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
 
   // Fetch coaching centers from Appwrite
@@ -40,78 +41,78 @@ const StudentDashboard = () => {
 
   const fetchCoachingCenters = async () => {
     setLoading(true); // Set loading state before fetching
-  
+
     try {
       const response = await databases.listDocuments(
         import.meta.env.VITE_APPWRITE_DATABASE_ID,
         import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID
       );
-  
+
       console.log('Fetched coaching centers:', response.documents);
-  
-      const formattedCenters = response.documents.map((doc) => ({
-        id: doc.$id,
-        name: doc.name || 'Unnamed Center',
-        description: doc.description || '',
-        subjects: doc.subjects && Array.isArray(doc.subjects)
-          ? doc.subjects
-          : doc.batches_subjects && Array.isArray(doc.batches_subjects)
-            ? [...new Set(doc.batches_subjects.flat())]
+
+      const formattedCenters = response.documents.map((coaching) => ({
+        id: coaching.$id,
+        name: coaching.name || 'Unnamed Center',
+        description: coaching.description || '',
+        subjects: coaching.subjects && Array.isArray(coaching.subjects)
+          ? coaching.subjects
+          : coaching.batches_subjects && Array.isArray(coaching.batches_subjects)
+            ? [...new Set(coaching.batches_subjects.flat())]
             : [],
-        rating: doc.rating || 4.5,
-        reviews: doc.reviews || 0,
-        price: doc.batches_monthlyFee && Array.isArray(doc.batches_monthlyFee)
-          ? `₹${doc.batches_monthlyFee[0]}`
+        rating: coaching.rating || 4.5,
+        reviews: coaching.reviews || 0,
+        price: coaching.batches_monthlyFee && Array.isArray(coaching.batches_monthlyFee)
+          ? `₹${coaching.batches_monthlyFee[0]}`
           : "₹2000",
-        students: doc.totalStudents || 0,
-        image: doc.images_coverImage
-          ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${doc.images_coverImage}`
+        students: coaching.totalStudents || 0,
+        image: coaching.images_coverImage
+          ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${coaching.images_coverImage}`
           : "https://upload.wikimedia.org/wikipedia/commons/b/b0/Bennett_University_.jpg",
-        location: doc.address || "Address not available",
-        city: doc.city || "",
-        availability: doc.batches_timing?.length
-          ? doc.batches_timing[0]
+        location: coaching.address || "Address not available",
+        city: coaching.city || "",
+        availability: coaching.batches_timing?.length
+          ? coaching.batches_timing[0]
           : "Mon-Sat, 9 AM - 7 PM",
         contact: {
-          phone: doc.phone || "",
-          email: doc.email || "",
-          website: doc.website || ""
+          phone: coaching.phone || "",
+          email: coaching.email || "",
+          website: coaching.website || ""
         },
-        facilities: doc.facilities || [],
-        batches: Array.isArray(doc.batches_name)
-          ? doc.batches_name.map((name, i) => ({
-              name,
-              subjects: doc.batches_subjects && Array.isArray(doc.batches_subjects)
-                ? doc.batches_subjects[i] || []
-                : [],
-              timing: doc.batches_timing?.[i] || '',
-              capacity: doc.batches_capacity?.[i] || '',
-              availableSeats: doc.batches_availableSeats?.[i] || '',
-              monthlyFee: doc.batches_monthlyFee?.[i] || '',
-              duration: doc.batches_duration?.[i] || '',
-            }))
+        facilities: coaching.facilities || [],
+        batches: Array.isArray(coaching.batches_name)
+          ? coaching.batches_name.map((name, i) => ({
+            name,
+            subjects: coaching.batches_subjects && Array.isArray(coaching.batches_subjects)
+              ? coaching.batches_subjects[i] || []
+              : [],
+            timing: coaching.batches_timing?.[i] || '',
+            capacity: coaching.batches_capacity?.[i] || '',
+            availableSeats: coaching.batches_availableSeats?.[i] || '',
+            monthlyFee: coaching.batches_monthlyFee?.[i] || '',
+            duration: coaching.batches_duration?.[i] || '',
+          }))
           : [],
-        faculty: Array.isArray(doc.faculty_name)
-          ? doc.faculty_name.map((name, i) => ({
-              name,
-              qualification: doc.faculty_qualification?.[i] || '',
-              experience: doc.faculty_experience?.[i] || '',
-              subject: doc.faculty_subject?.[i] || '',
-              bio: doc.faculty_bio?.[i] || '',
-              image: Array.isArray(doc.faculty_image)
-                ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${doc.faculty_image[i]}`
-                : null,
-            }))
+        faculty: Array.isArray(coaching.faculty_name)
+          ? coaching.faculty_name.map((name, i) => ({
+            name,
+            qualification: coaching.faculty_qualification?.[i] || '',
+            experience: coaching.faculty_experience?.[i] || '',
+            subject: coaching.faculty_subject?.[i] || '',
+            bio: coaching.faculty_bio?.[i] || '',
+            image: Array.isArray(coaching.faculty_image)
+              ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${coaching.faculty_image[i]}`
+              : null,
+          }))
           : [],
-        establishedYear: doc.establishedYear || '',
-        classroomImages: Array.isArray(doc.images_classroomImages)
-          ? doc.images_classroomImages.map(imgId =>
-              `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${imgId}`
-            )
+        establishedYear: coaching.establishedYear || '',
+        classroomImages: Array.isArray(coaching.images_classroomImages)
+          ? coaching.images_classroomImages.map(imgId =>
+            `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${imgId}`
+          )
           : [],
-        slug: doc.slug || doc.name?.toLowerCase().replace(/\s+/g, '-') || doc.$id
+        slug: coaching.slug || coaching.name?.toLowerCase().replace(/\s+/g, '-') || coaching.$id
       }));
-  
+
       console.log('Formatted centers:', formattedCenters);
       setCoachingCenters(formattedCenters);
     } catch (error) {
@@ -121,7 +122,7 @@ const StudentDashboard = () => {
       setLoading(false); // Ensure loading state is cleared
     }
   };
-  
+
   // Filter and search functionality
   const getFilteredCenters = () => {
     return coachingCenters.filter(center => {
@@ -360,9 +361,9 @@ const StudentDashboard = () => {
           </div>
         ) : (
           <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {filteredCenters.map((center, index) => (
+            {filteredCenters.map((coaching, index) => (
               <motion.div
-                key={center.id}
+                key={coaching.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
@@ -370,8 +371,8 @@ const StudentDashboard = () => {
               >
                 <div className="relative h-48 rounded-t-xl overflow-hidden">
                   <img
-                   src={center.image}
-                    alt={center.name}
+                    src={coaching.image}
+                    alt={coaching.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
                       e.target.src = "https://upload.wikimedia.org/wikipedia/commons/b/b0/Bennett_University_.jpg";
@@ -379,9 +380,9 @@ const StudentDashboard = () => {
                   />
                   <div className="absolute inset-0 duration-300" />
                   <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
-                    <h3 className="text-lg font-semibold text-white">{center.name}</h3>
+                    <h3 className="text-lg font-semibold text-white">{coaching.name}</h3>
                     <div className="px-3 py-1 bg-white rounded-full text-indigo-600 font-medium text-sm">
-                      {center.price}/month
+                      {coaching.price}/month
                     </div>
                   </div>
                 </div>
@@ -389,46 +390,46 @@ const StudentDashboard = () => {
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center">
-                      <span className="ml-1 text-2xl font-medium">{center.name}</span>
+                      <span className="ml-1 text-2xl font-medium">{coaching.name}</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center">
                       <Star className="h-5 w-5 text-yellow-400" />
-                      <span className="ml-1 font-medium">{center.rating}</span>
-                      {center.reviews > 0 && (
+                      <span className="ml-1 font-medium">{coaching.rating}</span>
+                      {coaching.reviews > 0 && (
                         <>
                           <span className="mx-2 text-gray-300">•</span>
-                          <span className="text-gray-600">{center.reviews} reviews</span>
+                          <span className="text-gray-600">{coaching.reviews} reviews</span>
                         </>
                       )}
                     </div>
-                    {center.students > 0 && (
+                    {coaching.students > 0 && (
                       <div className="flex items-center text-gray-600">
                         <Users className="h-5 w-5 mr-1" />
-                        <span>{center.students} students</span>
+                        <span>{coaching.students} students</span>
                       </div>
                     )}
                   </div>
 
                   <div className="space-y-2 mb-4">
-                    {center.location && (
+                    {coaching.location && (
                       <div className="flex items-center text-gray-600">
                         <MapPin className="h-4 w-4 mr-2 text-indigo-500" />
-                        <span className="text-sm">{center.location}</span>
+                        <span className="text-sm">{coaching.location}</span>
                       </div>
                     )}
-                    {center.availability && (
+                    {coaching.availability && (
                       <div className="flex items-center text-gray-600">
                         <Clock className="h-4 w-4 mr-2 text-indigo-500" />
-                        <span className="text-sm">{center.availability}</span>
+                        <span className="text-sm">{coaching.availability}</span>
                       </div>
                     )}
                   </div>
 
-                  {center.subjects.length > 0 && (
+                  {coaching.subjects.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-6">
-                      {center.subjects.map((subject, index) => (
+                      {coaching.subjects.map((subject, index) => (
                         <span
                           key={index}
                           className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-medium hover:bg-indigo-100 transition-colors duration-200"
@@ -440,7 +441,7 @@ const StudentDashboard = () => {
                   )}
 
                   <Link
-                    to={`/coaching/${center.slug}`}
+                    to={`/coaching/${coaching.slug}`}
                     className="block"
                   >
                     <motion.button
