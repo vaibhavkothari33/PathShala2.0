@@ -25,7 +25,7 @@ const DATABASE_ID = import.meta.env.VITE_APPWRITE_DATABASE_ID;
 const COACHING_COLLECTION_ID = import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID;
 const REQUESTS_COLLECTION_ID = import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID;
 
-if (!DATABASE_ID || !COACHING_COLLECTION_ID) {
+if (!DATABASE_ID || !COACHING_COLLECTION_ID || !REQUESTS_COLLECTION_ID) {
   console.error('Missing required environment variables');
 }
 
@@ -37,6 +37,35 @@ const CoachingDashboard = () => {
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [showRequests, setShowRequests] = useState(false);
+
+  // Separate requests fetching into its own function
+  const fetchRequests = async (coachingId) => {
+    try {
+      console.log('Fetching requests for coaching:', coachingId);
+      
+      if (!REQUESTS_COLLECTION_ID) {
+        throw new Error('Requests collection ID not configured');
+      }
+
+      const requestsResponse = await databases.listDocuments(
+        DATABASE_ID,
+        REQUESTS_COLLECTION_ID,
+        [
+          Query.equal('coaching_id', coachingId),
+          Query.orderDesc('$createdAt'),
+          Query.limit(100)
+        ]
+      );
+
+      console.log('Requests response:', requestsResponse);
+      setRequests(requestsResponse.documents || []);
+    } catch (error) {
+      console.error('Error fetching requests:', error);
+      toast.error('Failed to load requests');
+      // Don't throw the error, just log it
+      setRequests([]);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,19 +79,13 @@ const CoachingDashboard = () => {
           return;
         }
 
-        console.log('Attempting to fetch coaching data with:', {
-          databaseId: DATABASE_ID,
-          collectionId: COACHING_COLLECTION_ID,
-          userId: user.$id
-        });
+        console.log('Fetching coaching data for user:', user.$id);
 
         // Fetch coaching data
         const response = await databases.listDocuments(
           DATABASE_ID,
           COACHING_COLLECTION_ID,
-          [
-            Query.equal('owner_id', user.$id)
-          ]
+          [Query.equal('owner_id', user.$id)]
         );
 
         console.log('Raw coaching response:', response);
@@ -91,23 +114,11 @@ const CoachingDashboard = () => {
           slug: coachingData.slug || coachingData.$id
         };
 
-        console.log('Formatted coaching data:', formattedCoaching);
         setCoaching(formattedCoaching);
 
-        // Fetch requests if coaching exists
+        // Fetch requests separately
         if (formattedCoaching.$id) {
-          try {
-            const requestsResponse = await databases.listDocuments(
-              DATABASE_ID,
-              REQUESTS_COLLECTION_ID,
-              [Query.equal('coaching_id', formattedCoaching.$id)]
-            );
-            console.log('Requests fetched:', requestsResponse.documents);
-            setRequests(requestsResponse.documents || []);
-          } catch (requestError) {
-            console.error('Error fetching requests:', requestError);
-            toast.error('Failed to load requests');
-          }
+          await fetchRequests(formattedCoaching.$id);
         }
 
       } catch (error) {
@@ -213,11 +224,13 @@ const CoachingDashboard = () => {
     }, 0);
   };
 
-  // Update the request handling functions
+  // Update the handleRequest function
   const handleRequest = async (requestId, status) => {
     try {
+      console.log('Handling request:', requestId, status);
+
       // Update the request status in the database
-      await databases.updateDocument(
+      const updatedRequest = await databases.updateDocument(
         DATABASE_ID,
         REQUESTS_COLLECTION_ID,
         requestId,
@@ -226,27 +239,35 @@ const CoachingDashboard = () => {
           updatedAt: new Date().toISOString()
         }
       );
+
+      console.log('Request updated:', updatedRequest);
       
       // Find the request in the local state
       const request = requests.find(req => req.$id === requestId);
       
       // Create a notification for the student
-      if (request) {
-        await databases.createDocument(
-          DATABASE_ID,
-          'notifications',
-          'unique()',
-          {
-            user_id: request.student_id,
-            title: `Demo Class Request ${status === 'accepted' ? 'Accepted' : 'Rejected'}`,
-            message: status === 'accepted' 
-              ? `Your demo class request for ${coaching.name} has been accepted. We will contact you shortly.`
-              : `Your demo class request for ${coaching.name} has been rejected.`,
-            type: 'demo_request',
-            status: 'unread',
-            createdAt: new Date().toISOString()
-          }
-        );
+      if (request && coaching) {
+        try {
+          const notification = await databases.createDocument(
+            DATABASE_ID,
+            'notifications', // Make sure this collection exists
+            'unique()',
+            {
+              user_id: request.student_id,
+              title: `Demo Class Request ${status === 'accepted' ? 'Accepted' : 'Rejected'}`,
+              message: status === 'accepted' 
+                ? `Your demo class request for ${coaching.name} has been accepted. We will contact you shortly.`
+                : `Your demo class request for ${coaching.name} has been rejected.`,
+              type: 'demo_request',
+              status: 'unread',
+              createdAt: new Date().toISOString()
+            }
+          );
+          console.log('Notification created:', notification);
+        } catch (notificationError) {
+          console.error('Error creating notification:', notificationError);
+          // Don't throw error, continue with request update
+        }
       }
       
       // Update local state
