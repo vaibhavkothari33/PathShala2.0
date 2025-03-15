@@ -4,10 +4,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Star, Clock, Users, Phone, Mail, Globe, Home,
   BookOpen, Award, CheckCircle, ChevronLeft, Calendar, Camera,
-  Info, Briefcase, GraduationCap, X, ZoomIn, ArrowLeft, ArrowRight, User
+  Info, Briefcase, GraduationCap, X, ZoomIn, ArrowLeft, ArrowRight, User, MessageCircle
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import coachingService from '../../services/coachingService';
+import { useAuth } from '../../context/AuthContext';
+import { databases } from '../../config/appwrite';
 
 const CoachingDetails = () => {
   const { slug } = useParams();
@@ -17,6 +19,10 @@ const CoachingDetails = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [selectedImage, setSelectedImage] = useState(null);
+  const { user } = useAuth();
+  const [isBookingDemo, setIsBookingDemo] = useState(false);
+  const [bookingMessage, setBookingMessage] = useState('');
+  const [showBookDemoModal, setShowBookDemoModal] = useState(false);
 
   useEffect(() => {
     const fetchCoachingDetails = async () => {
@@ -51,7 +57,7 @@ const CoachingDetails = () => {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm"
+      className="fixed inset-0 z-50 bg-black/95 backdrop-blur-sm"
     >
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="relative w-full h-full flex items-center justify-center">
@@ -59,6 +65,7 @@ const CoachingDetails = () => {
           <button
             onClick={onClose}
             className="absolute top-4 right-4 z-50 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            aria-label="Close gallery"
           >
             <X className="h-6 w-6 text-white" />
           </button>
@@ -66,31 +73,42 @@ const CoachingDetails = () => {
           {/* Navigation buttons */}
           <button
             onClick={onPrevious}
-            className="absolute left-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            className="absolute left-4 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            aria-label="Previous image"
           >
             <ArrowLeft className="h-6 w-6 text-white" />
           </button>
           <button
             onClick={onNext}
-            className="absolute right-4 p-2 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            className="absolute right-4 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+            aria-label="Next image"
           >
             <ArrowRight className="h-6 w-6 text-white" />
           </button>
 
-          {/* Main image */}
-          <motion.img
+          {/* Main image with animation */}
+          <motion.div
             key={currentImage}
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.9 }}
-            src={currentImage}
-            alt="Classroom view"
-            className="max-w-[90vw] max-h-[90vh] object-contain"
-          />
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="w-full h-full flex items-center justify-center p-4"
+          >
+            <img
+              src={currentImage}
+              alt="Classroom view"
+              className="max-w-[95vw] max-h-[90vh] object-contain"
+              onError={(e) => {
+                e.target.onerror = null;
+                e.target.src = "/default-classroom.jpg";
+              }}
+            />
+          </motion.div>
 
           {/* Image counter */}
-          <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 bg-black/50 px-4 py-2 rounded-full">
-            <p className="text-white text-sm">
+          <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-black/60 px-4 py-2 rounded-full">
+            <p className="text-white text-sm font-medium">
               {images.indexOf(currentImage) + 1} / {images.length}
             </p>
           </div>
@@ -98,6 +116,149 @@ const CoachingDetails = () => {
       </div>
     </motion.div>
   );
+
+  const handleBookDemo = async () => {
+    try {
+      // Check if user is logged in
+      if (!user) {
+        toast.error('Please login to book a demo class');
+        navigate('/login', { state: { from: `/coaching/${slug}` } });
+        return;
+      }
+
+      setIsBookingDemo(true);
+
+      // Get the database and collection IDs from environment variables
+      const databaseId = import.meta.env.VITE_APPWRITE_DATABASE_ID;
+      const requestsCollectionId = import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID;
+
+      if (!databaseId || !requestsCollectionId) {
+        throw new Error('Missing database configuration');
+      }
+
+      // Create a new demo request document
+      await databases.createDocument(
+        databaseId,
+        requestsCollectionId,
+        'unique()',
+        {
+          student_id: user.$id,
+          studentName: user.name || 'Student',
+          coaching_id: coaching.$id,
+          coachingName: coaching.name,
+          type: 'demo',
+          status: 'pending',
+          message: bookingMessage,
+          createdAt: new Date().toISOString()
+        }
+      );
+
+      // Show success message
+      toast.success('Demo class request sent successfully!');
+      setBookingMessage('');
+      
+      // Create a notification for the student
+      try {
+        await databases.createDocument(
+          databaseId,
+          'notifications', // Make sure this collection exists
+          'unique()',
+          {
+            user_id: user.$id,
+            title: 'Demo Class Request Sent',
+            message: `Your demo class request for ${coaching.name} has been sent. We will notify you once it's approved.`,
+            type: 'demo_request',
+            status: 'unread',
+            createdAt: new Date().toISOString()
+          }
+        );
+      } catch (notificationError) {
+        console.error('Error creating notification:', notificationError);
+        // Continue even if notification fails
+      }
+    } catch (error) {
+      console.error('Error booking demo:', error);
+      toast.error('Failed to book demo class. Please try again.');
+    } finally {
+      setIsBookingDemo(false);
+    }
+  };
+
+  const BookDemoModal = ({ isOpen, onClose }) => {
+    if (!isOpen) return null;
+    
+    return (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4"
+      >
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.9, opacity: 0 }}
+          className="bg-white rounded-xl shadow-xl max-w-md w-full p-6"
+        >
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-xl font-semibold text-gray-900">Book a Free Demo Class</h3>
+            <button
+              onClick={onClose}
+              className="p-1 rounded-full hover:bg-gray-100"
+            >
+              <X className="h-5 w-5 text-gray-500" />
+            </button>
+          </div>
+          
+          <div className="mb-6">
+            <p className="text-gray-600 mb-4">
+              Request a free demo class at {coaching.name}. Our team will contact you to schedule the session.
+            </p>
+            
+            <div className="mb-4">
+              <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-1">
+                Message (Optional)
+              </label>
+              <textarea
+                id="message"
+                rows={4}
+                value={bookingMessage}
+                onChange={(e) => setBookingMessage(e.target.value)}
+                placeholder="Tell us what subjects you're interested in..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+          </div>
+          
+          <div className="flex justify-end space-x-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => {
+                handleBookDemo();
+                onClose();
+              }}
+              disabled={isBookingDemo}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center"
+            >
+              {isBookingDemo ? (
+                <>
+                  <div className="h-4 w-4 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
+                  Sending...
+                </>
+              ) : (
+                'Send Request'
+              )}
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    );
+  };
 
   if (loading) {
     return (
@@ -376,6 +537,11 @@ const CoachingDetails = () => {
                     animate={{ opacity: 1 }}
                     className="space-y-6"
                   >
+                    <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-4 flex items-center">
+                      <Camera className="h-5 w-5 mr-2 text-indigo-500" />
+                      Classroom Gallery
+                    </h3>
+                    
                     {coaching.classroomImages && coaching.classroomImages.length > 0 ? (
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {coaching.classroomImages.map((image, index) => (
@@ -385,11 +551,12 @@ const CoachingDetails = () => {
                             onClick={() => setSelectedImage(image)}
                             whileHover={{ scale: 1.02 }}
                             whileTap={{ scale: 0.98 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 17 }}
                           >
                             <img
                               src={image}
                               alt={`Classroom ${index + 1}`}
-                              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                               onError={(e) => {
                                 e.target.onerror = null;
                                 e.target.src = "/default-classroom.jpg";
@@ -412,9 +579,9 @@ const CoachingDetails = () => {
                         ))}
                       </div>
                     ) : (
-                      <div className="text-center py-8 text-gray-500">
+                      <div className="text-center py-12 bg-gray-50 rounded-xl border border-gray-200">
                         <Camera className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-                        <p>No classroom images available</p>
+                        <p className="text-gray-500">No classroom images available</p>
                       </div>
                     )}
                   </motion.div>
@@ -433,12 +600,29 @@ const CoachingDetails = () => {
             >
               <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
               <div className="space-y-3">
-                <button className="w-full bg-white text-indigo-600 px-4 py-3 rounded-lg hover:bg-indigo-50 transition-colors duration-200 font-medium flex items-center justify-center">
+                <button 
+                  onClick={() => setShowBookDemoModal(true)}
+                  className="w-full bg-white text-indigo-600 px-4 py-3 rounded-lg hover:bg-indigo-50 transition-colors duration-200 font-medium flex items-center justify-center"
+                >
+                  <Calendar className="h-4 w-4 mr-2" />
                   Book Free Demo
                 </button>
-                <button className="w-full bg-indigo-500 text-white px-4 py-3 rounded-lg hover:bg-indigo-400 transition-colors duration-200 font-medium">
-                  Download Brochure
-                </button>
+                {coaching.brochureUrl ? (
+                  <a 
+                    href={coaching.brochureUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full bg-indigo-500 text-white px-4 py-3 rounded-lg hover:bg-indigo-400 transition-colors duration-200 font-medium flex items-center justify-center"
+                  >
+                    <BookOpen className="h-4 w-4 mr-2" />
+                    Download Brochure
+                  </a>
+                ) : (
+                  <button className="w-full bg-indigo-500 text-white px-4 py-3 rounded-lg hover:bg-indigo-400 transition-colors duration-200 font-medium flex items-center justify-center">
+                    <MessageCircle className="h-4 w-4 mr-2" />
+                    Contact Coaching
+                  </button>
+                )}
               </div>
             </motion.div>
 
@@ -549,6 +733,11 @@ const CoachingDetails = () => {
             }}
           />
         )}
+        
+        <BookDemoModal 
+          isOpen={showBookDemoModal} 
+          onClose={() => setShowBookDemoModal(false)} 
+        />
       </AnimatePresence>
     </div>
   );
