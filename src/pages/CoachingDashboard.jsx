@@ -61,7 +61,7 @@ const CoachingDashboard = () => {
 
         const coachingData = response.documents[0];
 
-        // Format the coaching data with null checks
+        // Format the coaching data with proper image URLs
         const formattedCoaching = {
           ...coachingData,
           name: coachingData.name || 'Unnamed Coaching',
@@ -72,11 +72,15 @@ const CoachingDashboard = () => {
           images: {
             logo: getImageUrl(coachingData.images_logo),
             coverImage: getImageUrl(coachingData.images_coverImage),
-          },
-          slug: coachingData.slug || coachingData.$id
+          }
         };
 
-        console.log('Formatted coaching data:', formattedCoaching);
+        // Debug log
+        console.log('Formatted coaching data with images:', {
+          logo: formattedCoaching.images.logo,
+          cover: formattedCoaching.images.coverImage
+        });
+
         setCoaching(formattedCoaching);
 
         // Fetch requests here, after coaching data is set
@@ -112,10 +116,19 @@ const CoachingDashboard = () => {
     fetchData();
   }, [user, navigate]);
 
-  // Helper function to get image URL
+  // Update the getImageUrl helper function
   const getImageUrl = (fileId) => {
     if (!fileId) return null;
-    return `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${fileId}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`;
+    
+    const storageUrl = import.meta.env.VITE_APPWRITE_STORAGE_URL || 'https://cloud.appwrite.io/v1';
+    const bucketId = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
+    const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
+
+    // Add console.log to debug URL construction
+    const imageUrl = `${storageUrl}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
+    console.log('Constructed image URL:', imageUrl);
+    
+    return imageUrl;
   };
 
   // Updated helper functions with null checks
@@ -442,27 +455,7 @@ const CoachingDashboard = () => {
                 {coaching.faculty && coaching.faculty.length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {coaching.faculty.map((teacher, index) => (
-                      <div key={index} className="border rounded-lg p-4">
-                        <div className="flex items-center">
-                          {teacher.image ? (
-                            <img 
-                              src={teacher.image} 
-                              alt={teacher.name}
-                              className="w-10 h-10 rounded-full object-cover mr-3"
-                            />
-                          ) : (
-                            <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-                              <User className="h-6 w-6 text-gray-500" />
-                            </div>
-                          )}
-                          <div>
-                            <h3 className="font-semibold">{teacher.name}</h3>
-                            <div className="text-sm text-gray-500">
-                              {teacher.subject} • {teacher.experience}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <FacultyCard key={index} teacher={teacher} />
                     ))}
                   </div>
                 ) : (
@@ -477,57 +470,7 @@ const CoachingDashboard = () => {
           {/* Right Column */}
           <div className="lg:col-span-1 space-y-8">
             {/* Preview Card */}
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b">
-                <h2 className="text-xl font-semibold text-gray-900">Preview</h2>
-              </div>
-              <div className="p-6">
-                <div className="mb-4">
-                  {coaching.images?.coverImage ? (
-                    <img 
-                      src={coaching.images.coverImage} 
-                      alt="Cover"
-                      className="w-full h-32 object-cover rounded-lg"
-                    />
-                  ) : (
-                    <div className="w-full h-32 bg-gray-200 rounded-lg flex items-center justify-center">
-                      <span className="text-gray-400">No cover image</span>
-                    </div>
-                  )}
-                </div>
-                
-                <div className="flex items-start">
-                  {coaching.images?.logo ? (
-                    <img 
-                      src={coaching.images.logo} 
-                      alt="Logo"
-                      className="w-12 h-12 object-cover rounded-lg mr-3"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
-                      <span className="text-gray-400 text-xs">Logo</span>
-                    </div>
-                  )}
-                  
-                  <div>
-                    <h3 className="font-semibold">{coaching.name}</h3>
-                    <div className="text-sm text-gray-500">
-                      {coaching.address || coaching.city}
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="mt-4">
-                  <Link 
-                    to={`/coaching/${coaching.slug}`} 
-                    target="_blank"
-                    className="w-full block text-center bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors duration-200"
-                  >
-                    View Public Page
-                  </Link>
-                </div>
-              </div>
-            </div>
+            <PreviewSection coaching={coaching} />
 
             {/* Quick Links */}
             <div className="bg-white rounded-lg shadow">
@@ -606,21 +549,93 @@ const StatsCard = ({ icon, title, value, bgColor }) => (
   </div>
 );
 
-const BatchesSection = ({ batches }) => (
-  <div className="bg-white rounded-lg shadow">
-    {/* Batches content */}
+const FacultyCard = ({ teacher }) => (
+  <div className="border rounded-lg p-4">
+    <div className="flex items-center">
+      {teacher.image ? (
+        <img 
+          src={teacher.image} 
+          alt={teacher.name}
+          className="w-10 h-10 rounded-full object-cover mr-3"
+          onError={(e) => {
+            console.error('Faculty image load error:', e);
+            e.target.src = '/default-faculty.jpg';
+          }}
+        />
+      ) : (
+        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
+          <User className="h-6 w-6 text-gray-500" />
+        </div>
+      )}
+      <div>
+        <h3 className="font-semibold">{teacher.name}</h3>
+        <div className="text-sm text-gray-500">
+          {teacher.subject} • {teacher.experience}
+        </div>
+      </div>
+    </div>
   </div>
 );
 
-const FacultySection = ({ faculty }) => (
+const PreviewSection = ({ coaching }) => (
   <div className="bg-white rounded-lg shadow">
-    {/* Faculty content */}
-  </div>
-);
-
-const PreviewCard = ({ coaching }) => (
-  <div className="bg-white rounded-lg shadow">
-    {/* Preview content */}
+    <div className="p-6 border-b">
+      <h2 className="text-xl font-semibold text-gray-900">Preview</h2>
+    </div>
+    <div className="p-6">
+      <div className="mb-4">
+        {coaching.images?.coverImage ? (
+          <img 
+            src={coaching.images.coverImage} 
+            alt="Cover"
+            className="w-full h-32 object-cover rounded-lg"
+            onError={(e) => {
+              console.error('Cover image load error:', e);
+              e.target.src = '/default-cover.jpg';
+            }}
+          />
+        ) : (
+          <div className="w-full h-32 bg-gray-200 rounded-lg flex items-center justify-center">
+            <span className="text-gray-400">No cover image</span>
+          </div>
+        )}
+      </div>
+      
+      <div className="flex items-start">
+        {coaching.images?.logo ? (
+          <img 
+            src={coaching.images.logo} 
+            alt="Logo"
+            className="w-12 h-12 object-cover rounded-lg mr-3"
+            onError={(e) => {
+              console.error('Logo load error:', e);
+              e.target.src = '/default-logo.jpg';
+            }}
+          />
+        ) : (
+          <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
+            <span className="text-gray-400 text-xs">Logo</span>
+          </div>
+        )}
+        
+        <div>
+          <h3 className="font-semibold">{coaching.name}</h3>
+          <div className="text-sm text-gray-500">
+            {coaching.address || coaching.city}
+          </div>
+        </div>
+      </div>
+      
+      <div className="mt-4">
+        <Link 
+          to={`/coaching/${coaching.slug}`} 
+          target="_blank"
+          className="w-full block text-center bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors duration-200"
+        >
+          View Public Page
+        </Link>
+      </div>
+    </div>
   </div>
 );
 
