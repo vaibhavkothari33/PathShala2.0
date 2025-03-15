@@ -12,7 +12,7 @@ const stepVariants = {
   exit: { opacity: 0.5, x: -10 }
 };
 
-const inputClasses = "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 bg-white/50 backdrop-blur-sm";
+const inputClasses = "w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 bg-white";
 const labelClasses = "block text-sm font-medium text-gray-700 mb-2";
 
 const CoachingRegistration = () => {
@@ -141,9 +141,9 @@ const CoachingRegistration = () => {
           isValid = false;
         }
         
-        // Phone validation
-        if (formData.basicInfo.phone && !/^\d{10}$/.test(formData.basicInfo.phone)) {
-          errors.basicInfo.phone = 'Invalid phone number';
+        // Phone validation - only validate if there's a value
+        if (formData.basicInfo.phone && formData.basicInfo.phone.length !== 10) {
+          errors.basicInfo.phone = 'Phone number must be 10 digits';
           isValid = false;
         }
         break;
@@ -224,6 +224,18 @@ const CoachingRegistration = () => {
 
   const handleBasicInfoChange = (e) => {
     const { name, value } = e.target;
+    
+    // Special handling for phone number
+    if (name === 'phone') {
+      // Only allow numbers and limit to 10 digits
+      const phoneValue = value.replace(/\D/g, '').slice(0, 10);
+      setFormData(prev => ({
+        ...prev,
+        basicInfo: { ...prev.basicInfo, [name]: phoneValue }
+      }));
+      return;
+    }
+
     setFormData(prev => ({
       ...prev,
       basicInfo: { ...prev.basicInfo, [name]: value }
@@ -493,7 +505,7 @@ const CoachingRegistration = () => {
   );
 
   const Header = ({ currentStep, steps }) => (
-    <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md shadow-sm border-b">
+    <div className="sticky top-0 z-50 bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex flex-col space-y-6">
           {/* Progress Bar - Mobile */}
@@ -560,7 +572,7 @@ const CoachingRegistration = () => {
 
   const ContentWrapper = ({ children }) => (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-xl p-6 md:p-8">
+      <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
         {children}
       </div>
     </div>
@@ -568,30 +580,26 @@ const CoachingRegistration = () => {
 
   const NavigationButtons = ({ currentStep, totalSteps, loading, prevStep, handleSubmit }) => (
     <div className="flex justify-between mt-8 pt-6 border-t">
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+      <button
         onClick={prevStep}
         className={`flex items-center px-6 py-3 rounded-xl text-sm font-medium
           ${currentStep === 1 
             ? 'invisible' 
-            : 'bg-gray-100 text-gray-600 hover:bg-gray-200 hover:shadow-md transition-all duration-200'}`}
+            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
       >
         <ArrowLeft className="h-5 w-5 mr-2" />
         Previous
-      </motion.button>
+      </button>
 
-      <motion.button
-        whileHover={{ scale: 1.02 }}
-        whileTap={{ scale: 0.98 }}
+      <button
         onClick={handleSubmit}
         disabled={loading}
         className={`flex items-center px-6 py-3 rounded-xl text-sm font-medium
           ${currentStep === totalSteps
             ? 'bg-gradient-to-r from-indigo-600 to-blue-600'
             : 'bg-indigo-600'} 
-          text-white transition-all duration-200
-          ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:shadow-lg hover:translate-y-[-1px]'}`}
+          text-white
+          ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
       >
         {loading ? (
           <div className="flex items-center">
@@ -607,7 +615,7 @@ const CoachingRegistration = () => {
             <ArrowRight className="h-5 w-5 ml-2" />
           </>
         )}
-      </motion.button>
+      </button>
     </div>
   );
 
@@ -636,542 +644,547 @@ const CoachingRegistration = () => {
       <Header currentStep={currentStep} steps={steps} />
       
       <ContentWrapper>
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key={currentStep}
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0.8 }}
-            transition={{ duration: 0.1 }}
-          >
-            {currentStep === 1 && (
-              <section className="basic-info">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Basic Information</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <InputField
-                    label="Coaching Name"
+        <div>
+          {currentStep === 1 && (
+            <section className="basic-info">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Basic Information</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className={labelClasses}>
+                    Coaching Name {required && '*'}
+                  </label>
+                  <input
+                    type="text"
                     name="name"
-                    required
                     value={formData.basicInfo.name}
                     onChange={handleBasicInfoChange}
-                    error={formErrors.basicInfo?.name}
+                    className={`${inputClasses} ${formErrors.basicInfo?.name ? 'border-red-500' : ''}`}
                     placeholder="Enter coaching name"
+                    autoComplete="off"
+                    style={{ WebkitAppearance: 'none' }}
                   />
+                  {formErrors.basicInfo?.name && (
+                    <p className="mt-1 text-sm text-red-500">{formErrors.basicInfo.name}</p>
+                  )}
+                </div>
 
-                  <div className="md:col-span-2">
-                    <label className={labelClasses}>
-                      Description *
-                    </label>
-                    <textarea
-                      name="description"
-                      required
-                      value={formData.basicInfo.description}
-                      onChange={handleBasicInfoChange}
-                      rows={4}
-                      className={`${inputClasses} ${formErrors.basicInfo?.description ? 'border-red-500' : ''}`}
-                      placeholder="Describe your coaching center"
+                <div className="md:col-span-2">
+                  <label className={labelClasses}>
+                    Description *
+                  </label>
+                  <textarea
+                    name="description"
+                    required
+                    value={formData.basicInfo.description}
+                    onChange={handleBasicInfoChange}
+                    rows={4}
+                    className={`${inputClasses} ${formErrors.basicInfo?.description ? 'border-red-500' : ''}`}
+                    placeholder="Describe your coaching center"
+                  />
+                  {formErrors.basicInfo?.description && (
+                    <p className="mt-1 text-sm text-red-500">{formErrors.basicInfo.description}</p>
+                  )}
+                </div>
+
+                <InputField
+                  label="Address"
+                  name="address"
+                  required
+                  value={formData.basicInfo.address}
+                  onChange={handleBasicInfoChange}
+                  error={formErrors.basicInfo?.address}
+                  placeholder="Enter complete address"
+                />
+
+                <InputField
+                  label="City"
+                  name="city"
+                  required
+                  value={formData.basicInfo.city}
+                  onChange={handleBasicInfoChange}
+                  error={formErrors.basicInfo?.city}
+                  placeholder="Enter city"
+                />
+
+                <InputField
+                  label="Phone"
+                  name="phone"
+                  type="tel"
+                  required
+                  value={formData.basicInfo.phone}
+                  onChange={handleBasicInfoChange}
+                  error={formErrors.basicInfo?.phone}
+                  placeholder="Enter 10-digit number"
+                  pattern="[0-9]*"
+                  inputMode="numeric"
+                  maxLength={10}
+                />
+
+                <InputField
+                  label="Email"
+                  name="email"
+                  required
+                  value={formData.basicInfo.email}
+                  onChange={handleBasicInfoChange}
+                  error={formErrors.basicInfo?.email}
+                  placeholder="Enter email address"
+                />
+
+                <InputField
+                  label="Website"
+                  name="website"
+                  value={formData.basicInfo.website}
+                  onChange={handleBasicInfoChange}
+                  error={formErrors.basicInfo?.website}
+                  placeholder="Enter website URL (optional)"
+                />
+
+                <InputField
+                  label="Established Year"
+                  name="establishedYear"
+                  required
+                  value={formData.basicInfo.establishedYear}
+                  onChange={handleBasicInfoChange}
+                  error={formErrors.basicInfo?.establishedYear}
+                  placeholder="Enter establishment year"
+                />
+              </div>
+            </section>
+          )}
+
+          {currentStep === 2 && (
+            <section className="images">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Images</h2>
+
+              {/* Logo and Cover Image */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                {/* Logo Upload */}
+                <div className="relative">
+                  <div className={`border-2 border-dashed border-gray-300 rounded-lg p-6 text-center ${imagePreviews.logo ? 'bg-gray-50' : ''}`}>
+                    <input
+                      type="file"
+                      id="logo"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, 'logo')}
+                      className="hidden"
                     />
-                    {formErrors.basicInfo?.description && (
-                      <p className="mt-1 text-sm text-red-500">{formErrors.basicInfo.description}</p>
-                    )}
-                  </div>
-
-                  <InputField
-                    label="Address"
-                    name="address"
-                    required
-                    value={formData.basicInfo.address}
-                    onChange={handleBasicInfoChange}
-                    error={formErrors.basicInfo?.address}
-                    placeholder="Enter complete address"
-                  />
-
-                  <InputField
-                    label="City"
-                    name="city"
-                    required
-                    value={formData.basicInfo.city}
-                    onChange={handleBasicInfoChange}
-                    error={formErrors.basicInfo?.city}
-                    placeholder="Enter city"
-                  />
-
-                  <InputField
-                    label="Phone"
-                    name="phone"
-                    required
-                    value={formData.basicInfo.phone}
-                    onChange={handleBasicInfoChange}
-                    error={formErrors.basicInfo?.phone}
-                    placeholder="Enter contact number"
-                  />
-
-                  <InputField
-                    label="Email"
-                    name="email"
-                    required
-                    value={formData.basicInfo.email}
-                    onChange={handleBasicInfoChange}
-                    error={formErrors.basicInfo?.email}
-                    placeholder="Enter email address"
-                  />
-
-                  <InputField
-                    label="Website"
-                    name="website"
-                    value={formData.basicInfo.website}
-                    onChange={handleBasicInfoChange}
-                    error={formErrors.basicInfo?.website}
-                    placeholder="Enter website URL (optional)"
-                  />
-
-                  <InputField
-                    label="Established Year"
-                    name="establishedYear"
-                    required
-                    value={formData.basicInfo.establishedYear}
-                    onChange={handleBasicInfoChange}
-                    error={formErrors.basicInfo?.establishedYear}
-                    placeholder="Enter establishment year"
-                  />
-                </div>
-              </section>
-            )}
-
-            {currentStep === 2 && (
-              <section className="images">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Images</h2>
-
-                {/* Logo and Cover Image */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                  {/* Logo Upload */}
-                  <div className="relative">
-                    <div className={`border-2 border-dashed border-gray-300 rounded-lg p-6 text-center ${imagePreviews.logo ? 'bg-gray-50' : ''}`}>
-                      <input
-                        type="file"
-                        id="logo"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(e, 'logo')}
-                        className="hidden"
-                      />
-                      {imagePreviews.logo ? (
-                        <div className="relative">
-                          <img
-                            src={imagePreviews.logo}
-                            alt="Logo preview"
-                            className="max-h-40 mx-auto rounded-lg"
-                          />
-                          <button
-                            onClick={() => handleRemoveImage('logo')}
-                            className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <label
-                          htmlFor="logo"
-                          className="cursor-pointer flex flex-col items-center"
-                        >
-                          <Camera className="h-8 w-8 text-gray-400 mb-2" />
-                          <span className="text-sm text-gray-600">Upload Logo</span>
-                        </label>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Cover Image Upload */}
-                  <div className="relative">
-                    <div className={`border-2 border-dashed border-gray-300 rounded-lg p-6 text-center ${imagePreviews.coverImage ? 'bg-gray-50' : ''}`}>
-                      <input
-                        type="file"
-                        id="coverImage"
-                        accept="image/*"
-                        onChange={(e) => handleImageUpload(e, 'coverImage')}
-                        className="hidden"
-                      />
-                      {imagePreviews.coverImage ? (
-                        <div className="relative">
-                          <img
-                            src={imagePreviews.coverImage}
-                            alt="Cover preview"
-                            className="max-h-40 mx-auto rounded-lg"
-                          />
-                          <button
-                            onClick={() => handleRemoveImage('coverImage')}
-                            className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                          >
-                            <X className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <label
-                          htmlFor="coverImage"
-                          className="cursor-pointer flex flex-col items-center"
-                        >
-                          <Camera className="h-8 w-8 text-gray-400 mb-2" />
-                          <span className="text-sm text-gray-600">Upload Cover Image</span>
-                        </label>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Classroom Images */}
-                <div className="mb-8">
-                  <h3 className="text-lg font-medium text-gray-900 mb-4">Classroom Images</h3>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {imagePreviews.classroomImages.map((preview, index) => (
-                      <div key={index} className="relative">
+                    {imagePreviews.logo ? (
+                      <div className="relative">
                         <img
-                          src={preview}
-                          alt={`Classroom ${index + 1}`}
-                          className="w-full h-48 object-cover rounded-lg"
+                          src={imagePreviews.logo}
+                          alt="Logo preview"
+                          className="max-h-40 mx-auto rounded-lg"
                         />
                         <button
-                          onClick={() => handleRemoveImage('classroomImages', index)}
+                          onClick={() => handleRemoveImage('logo')}
                           className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
                         >
                           <X className="h-4 w-4" />
                         </button>
                       </div>
-                    ))}
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center">
-                      <input
-                        type="file"
-                        id="classroomImages"
-                        accept="image/*"
-                        multiple
-                        onChange={(e) => handleImageUpload(e, 'classroomImages')}
-                        className="hidden"
-                      />
+                    ) : (
                       <label
-                        htmlFor="classroomImages"
+                        htmlFor="logo"
                         className="cursor-pointer flex flex-col items-center"
                       >
-                        <Plus className="h-8 w-8 text-gray-400 mb-2" />
-                        <span className="text-sm text-gray-600">Add Classroom Images</span>
+                        <Camera className="h-8 w-8 text-gray-400 mb-2" />
+                        <span className="text-sm text-gray-600">Upload Logo</span>
                       </label>
-                    </div>
+                    )}
                   </div>
                 </div>
-              </section>
-            )}
 
-            {currentStep === 3 && (
-              <section className="facilities">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">Facilities</h2>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  {facilityOptions.map((facility) => (
-                    <label key={facility} className="flex items-center space-x-2">
-                      <input
-                        type="checkbox"
-                        checked={formData.facilities.includes(facility)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setFormData(prev => ({
-                              ...prev,
-                              facilities: [...prev.facilities, facility]
-                            }));
-                          } else {
-                            setFormData(prev => ({
-                              ...prev,
-                              facilities: prev.facilities.filter(f => f !== facility)
-                            }));
-                          }
-                        }}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <span className="text-sm text-gray-700">{facility}</span>
-                    </label>
-                  ))}
-                </div>
-              </section>
-            )}
-
-            {currentStep === 4 && (
-              <section className="batches">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Batches</h2>
-                  <button
-                    type="button"
-                    onClick={addBatch}
-                    className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Batch
-                  </button>
-                </div>
-
-                {formData.batches.map((batch, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-6 mb-4">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      
-                      {/* Batch Name */}
-                      <div>
-                        <label className={labelClasses}>
-                          Batch Name
-                        </label>
-                        <input
-                          type="text"
-                          value={batch.name}
-                          onChange={(e) => handleBatchChange(index, "name", e.target.value)}
-                          className={inputClasses}
-                          placeholder="e.g., Morning Batch"
+                {/* Cover Image Upload */}
+                <div className="relative">
+                  <div className={`border-2 border-dashed border-gray-300 rounded-lg p-6 text-center ${imagePreviews.coverImage ? 'bg-gray-50' : ''}`}>
+                    <input
+                      type="file"
+                      id="coverImage"
+                      accept="image/*"
+                      onChange={(e) => handleImageUpload(e, 'coverImage')}
+                      className="hidden"
+                    />
+                    {imagePreviews.coverImage ? (
+                      <div className="relative">
+                        <img
+                          src={imagePreviews.coverImage}
+                          alt="Cover preview"
+                          className="max-h-40 mx-auto rounded-lg"
                         />
-                      </div>
-
-                      {/* Subjects */}
-                      <div>
-                        <label className={labelClasses}>
-                          Subjects
-                        </label>
-                        <input
-                          type="text"
-                          value={batch.subjects}
-                          onChange={(e) => handleBatchChange(index, "subjects", e.target.value.split(","))}
-                          className={inputClasses}
-                          placeholder="e.g., Math, Physics"
-                        />
-                      </div>
-
-                      {/* Batch Timing */}
-                      <div>
-                        <label className={labelClasses}>
-                          Batch Timing
-                        </label>
-                        <input
-                          type="text"
-                          value={batch.timing}
-                          onChange={(e) => handleBatchChange(index, "timing", e.target.value)}
-                          className={inputClasses}
-                          placeholder="e.g., 10:00 AM - 12:00 PM"
-                        />
-                      </div>
-
-                      {/* Capacity */}
-                      <div>
-                        <label className={labelClasses}>
-                          Capacity
-                        </label>
-                        <input
-                          type="number"
-                          value={batch.capacity}
-                          onChange={(e) => handleBatchChange(index, "capacity", e.target.value)}
-                          className={inputClasses}
-                          placeholder="e.g., 30"
-                        />
-                      </div>
-
-                      {/* Available Seats */}
-                      <div>
-                        <label className={labelClasses}>
-                          Available Seats
-                        </label>
-                        <input
-                          type="number"
-                          value={batch.availableSeats}
-                          onChange={(e) => handleBatchChange(index, "availableSeats", e.target.value)}
-                          className={inputClasses}
-                          placeholder="e.g., 10"
-                        />
-                      </div>
-
-                      {/* Monthly Fee */}
-                      <div>
-                        <label className={labelClasses}>
-                          Monthly Fee (₹)
-                        </label>
-                        <input
-                          type="number"
-                          value={batch.monthlyFee}
-                          onChange={(e) => handleBatchChange(index, "monthlyFee", e.target.value)}
-                          className={inputClasses}
-                          placeholder="e.g., 2000"
-                        />
-                      </div>
-
-                      {/* Duration */}
-                      <div>
-                        <label className={labelClasses}>
-                          Duration (Months)
-                        </label>
-                        <input
-                          type="number"
-                          value={batch.duration}
-                          onChange={(e) => handleBatchChange(index, "duration", e.target.value)}
-                          className={inputClasses}
-                          placeholder="e.g., 6"
-                        />
-                      </div>
-
-                    </div>
-                  </div>
-                ))}
-              </section>
-            )}
-
-            {currentStep === 5 && (
-              <section className="faculty">
-                <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-semibold text-gray-900">Faculty</h2>
-                  <button
-                    type="button"
-                    onClick={addFaculty}
-                    className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Faculty
-                  </button>
-                </div>
-
-                {formData.faculty.map((faculty, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-6 mb-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {/* Faculty Name */}
-                      <div>
-                        <label className={labelClasses}>
-                          Name *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={faculty.name}
-                          onChange={(e) => handleFacultyChange(index, 'name', e.target.value)}
-                          className={inputClasses}
-                          placeholder="Enter faculty name"
-                        />
-                      </div>
-
-                      {/* Qualification */}
-                      <div>
-                        <label className={labelClasses}>
-                          Qualification *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={faculty.qualification}
-                          onChange={(e) => handleFacultyChange(index, 'qualification', e.target.value)}
-                          className={inputClasses}
-                          placeholder="e.g., PhD in Physics"
-                        />
-                      </div>
-
-                      {/* Experience */}
-                      <div>
-                        <label className={labelClasses}>
-                          Experience *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          value={faculty.experience}
-                          onChange={(e) => handleFacultyChange(index, 'experience', e.target.value)}
-                          className={inputClasses}
-                          placeholder="e.g., 5 years"
-                        />
-                      </div>
-
-                      {/* Subject */}
-                      <div>
-                        <label className={labelClasses}>
-                          Subject *
-                        </label>
-                        <select
-                          required
-                          value={faculty.subject}
-                          onChange={(e) => handleFacultyChange(index, 'subject', e.target.value)}
-                          className={inputClasses}
+                        <button
+                          onClick={() => handleRemoveImage('coverImage')}
+                          className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
                         >
-                          <option value="">Select Subject</option>
-                          {subjectOptions.map(subject => (
-                            <option key={subject} value={subject}>
-                              {subject}
-                            </option>
-                          ))}
-                        </select>
+                          <X className="h-4 w-4" />
+                        </button>
                       </div>
+                    ) : (
+                      <label
+                        htmlFor="coverImage"
+                        className="cursor-pointer flex flex-col items-center"
+                      >
+                        <Camera className="h-8 w-8 text-gray-400 mb-2" />
+                        <span className="text-sm text-gray-600">Upload Cover Image</span>
+                      </label>
+                    )}
+                  </div>
+                </div>
+              </div>
 
-                      {/* Bio */}
-                      <div className="md:col-span-2">
-                        <label className={labelClasses}>
-                          Bio
-                        </label>
-                        <textarea
-                          value={faculty.bio}
-                          onChange={(e) => handleFacultyChange(index, 'bio', e.target.value)}
-                          rows={3}
-                          className={inputClasses}
-                          placeholder="Enter faculty bio (optional)"
-                        />
-                      </div>
+              {/* Classroom Images */}
+              <div className="mb-8">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Classroom Images</h3>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {imagePreviews.classroomImages.map((preview, index) => (
+                    <div key={index} className="relative">
+                      <img
+                        src={preview}
+                        alt={`Classroom ${index + 1}`}
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                      <button
+                        onClick={() => handleRemoveImage('classroomImages', index)}
+                        className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center">
+                    <input
+                      type="file"
+                      id="classroomImages"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => handleImageUpload(e, 'classroomImages')}
+                      className="hidden"
+                    />
+                    <label
+                      htmlFor="classroomImages"
+                      className="cursor-pointer flex flex-col items-center"
+                    >
+                      <Plus className="h-8 w-8 text-gray-400 mb-2" />
+                      <span className="text-sm text-gray-600">Add Classroom Images</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </section>
+          )}
 
-                      {/* Faculty Image */}
-                      <div className="md:col-span-2">
-                        <label className={labelClasses}>
-                          Profile Image
-                        </label>
-                        <div className="flex items-center space-x-4">
-                          {faculty.image ? (
-                            <div className="relative">
-                              <img
-                                src={URL.createObjectURL(faculty.image)}
-                                alt={faculty.name}
-                                className="w-20 h-20 rounded-full object-cover"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleFacultyChange(index, 'image', null)}
-                                className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
-                              >
-                                <X className="h-4 w-4" />
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center">
-                              <input
-                                type="file"
-                                id={`faculty-image-${index}`}
-                                accept="image/*"
-                                onChange={(e) => {
-                                  if (e.target.files?.[0]) {
-                                    handleFacultyChange(index, 'image', e.target.files[0]);
-                                  }
-                                }}
-                                className="hidden"
-                              />
-                              <label
-                                htmlFor={`faculty-image-${index}`}
-                                className="cursor-pointer"
-                              >
-                                <Camera className="h-8 w-8 text-gray-400" />
-                              </label>
-                            </div>
-                          )}
-                        </div>
-                      </div>
+          {currentStep === 3 && (
+            <section className="facilities">
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Facilities</h2>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {facilityOptions.map((facility) => (
+                  <label key={facility} className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={formData.facilities.includes(facility)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData(prev => ({
+                            ...prev,
+                            facilities: [...prev.facilities, facility]
+                          }));
+                        } else {
+                          setFormData(prev => ({
+                            ...prev,
+                            facilities: prev.facilities.filter(f => f !== facility)
+                          }));
+                        }
+                      }}
+                      className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="text-sm text-gray-700">{facility}</span>
+                  </label>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {currentStep === 4 && (
+            <section className="batches">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Batches</h2>
+                <button
+                  type="button"
+                  onClick={addBatch}
+                  className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Batch
+                </button>
+              </div>
+
+              {formData.batches.map((batch, index) => (
+                <div key={index} className="bg-gray-50 rounded-lg p-6 mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    
+                    {/* Batch Name */}
+                    <div>
+                      <label className={labelClasses}>
+                        Batch Name
+                      </label>
+                      <input
+                        type="text"
+                        value={batch.name}
+                        onChange={(e) => handleBatchChange(index, "name", e.target.value)}
+                        className={inputClasses}
+                        placeholder="e.g., Morning Batch"
+                      />
                     </div>
 
-                    {/* Remove Faculty Button */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFormData(prev => ({
-                          ...prev,
-                          faculty: prev.faculty.filter((_, i) => i !== index)
-                        }));
-                      }}
-                      className="mt-4 text-red-600 hover:text-red-700"
-                    >
-                      Remove Faculty
-                    </button>
+                    {/* Subjects */}
+                    <div>
+                      <label className={labelClasses}>
+                        Subjects
+                      </label>
+                      <input
+                        type="text"
+                        value={batch.subjects}
+                        onChange={(e) => handleBatchChange(index, "subjects", e.target.value.split(","))}
+                        className={inputClasses}
+                        placeholder="e.g., Math, Physics"
+                      />
+                    </div>
+
+                    {/* Batch Timing */}
+                    <div>
+                      <label className={labelClasses}>
+                        Batch Timing
+                      </label>
+                      <input
+                        type="text"
+                        value={batch.timing}
+                        onChange={(e) => handleBatchChange(index, "timing", e.target.value)}
+                        className={inputClasses}
+                        placeholder="e.g., 10:00 AM - 12:00 PM"
+                      />
+                    </div>
+
+                    {/* Capacity */}
+                    <div>
+                      <label className={labelClasses}>
+                        Capacity
+                      </label>
+                      <input
+                        type="number"
+                        value={batch.capacity}
+                        onChange={(e) => handleBatchChange(index, "capacity", e.target.value)}
+                        className={inputClasses}
+                        placeholder="e.g., 30"
+                      />
+                    </div>
+
+                    {/* Available Seats */}
+                    <div>
+                      <label className={labelClasses}>
+                        Available Seats
+                      </label>
+                      <input
+                        type="number"
+                        value={batch.availableSeats}
+                        onChange={(e) => handleBatchChange(index, "availableSeats", e.target.value)}
+                        className={inputClasses}
+                        placeholder="e.g., 10"
+                      />
+                    </div>
+
+                    {/* Monthly Fee */}
+                    <div>
+                      <label className={labelClasses}>
+                        Monthly Fee (₹)
+                      </label>
+                      <input
+                        type="number"
+                        value={batch.monthlyFee}
+                        onChange={(e) => handleBatchChange(index, "monthlyFee", e.target.value)}
+                        className={inputClasses}
+                        placeholder="e.g., 2000"
+                      />
+                    </div>
+
+                    {/* Duration */}
+                    <div>
+                      <label className={labelClasses}>
+                        Duration (Months)
+                      </label>
+                      <input
+                        type="number"
+                        value={batch.duration}
+                        onChange={(e) => handleBatchChange(index, "duration", e.target.value)}
+                        className={inputClasses}
+                        placeholder="e.g., 6"
+                      />
+                    </div>
+
                   </div>
-                ))}
-              </section>
-            )}
-          </motion.div>
-        </AnimatePresence>
+                </div>
+              ))}
+            </section>
+          )}
+
+          {currentStep === 5 && (
+            <section className="faculty">
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">Faculty</h2>
+                <button
+                  type="button"
+                  onClick={addFaculty}
+                  className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Faculty
+                </button>
+              </div>
+
+              {formData.faculty.map((faculty, index) => (
+                <div key={index} className="bg-gray-50 rounded-lg p-6 mb-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Faculty Name */}
+                    <div>
+                      <label className={labelClasses}>
+                        Name *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={faculty.name}
+                        onChange={(e) => handleFacultyChange(index, 'name', e.target.value)}
+                        className={inputClasses}
+                        placeholder="Enter faculty name"
+                      />
+                    </div>
+
+                    {/* Qualification */}
+                    <div>
+                      <label className={labelClasses}>
+                        Qualification *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={faculty.qualification}
+                        onChange={(e) => handleFacultyChange(index, 'qualification', e.target.value)}
+                        className={inputClasses}
+                        placeholder="e.g., PhD in Physics"
+                      />
+                    </div>
+
+                    {/* Experience */}
+                    <div>
+                      <label className={labelClasses}>
+                        Experience *
+                      </label>
+                      <input
+                        type="text"
+                        required
+                        value={faculty.experience}
+                        onChange={(e) => handleFacultyChange(index, 'experience', e.target.value)}
+                        className={inputClasses}
+                        placeholder="e.g., 5 years"
+                      />
+                    </div>
+
+                    {/* Subject */}
+                    <div>
+                      <label className={labelClasses}>
+                        Subject *
+                      </label>
+                      <select
+                        required
+                        value={faculty.subject}
+                        onChange={(e) => handleFacultyChange(index, 'subject', e.target.value)}
+                        className={inputClasses}
+                      >
+                        <option value="">Select Subject</option>
+                        {subjectOptions.map(subject => (
+                          <option key={subject} value={subject}>
+                            {subject}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Bio */}
+                    <div className="md:col-span-2">
+                      <label className={labelClasses}>
+                        Bio
+                      </label>
+                      <textarea
+                        value={faculty.bio}
+                        onChange={(e) => handleFacultyChange(index, 'bio', e.target.value)}
+                        rows={3}
+                        className={inputClasses}
+                        placeholder="Enter faculty bio (optional)"
+                      />
+                    </div>
+
+                    {/* Faculty Image */}
+                    <div className="md:col-span-2">
+                      <label className={labelClasses}>
+                        Profile Image
+                      </label>
+                      <div className="flex items-center space-x-4">
+                        {faculty.image ? (
+                          <div className="relative">
+                            <img
+                              src={URL.createObjectURL(faculty.image)}
+                              alt={faculty.name}
+                              className="w-20 h-20 rounded-full object-cover"
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleFacultyChange(index, 'image', null)}
+                              className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                            >
+                              <X className="h-4 w-4" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center">
+                            <input
+                              type="file"
+                              id={`faculty-image-${index}`}
+                              accept="image/*"
+                              onChange={(e) => {
+                                if (e.target.files?.[0]) {
+                                  handleFacultyChange(index, 'image', e.target.files[0]);
+                                }
+                              }}
+                              className="hidden"
+                            />
+                            <label
+                              htmlFor={`faculty-image-${index}`}
+                              className="cursor-pointer"
+                            >
+                              <Camera className="h-8 w-8 text-gray-400" />
+                            </label>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Remove Faculty Button */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormData(prev => ({
+                        ...prev,
+                        faculty: prev.faculty.filter((_, i) => i !== index)
+                      }));
+                    }}
+                    className="mt-4 text-red-600 hover:text-red-700"
+                  >
+                    Remove Faculty
+                  </button>
+                </div>
+              ))}
+            </section>
+          )}
+        </div>
 
         <NavigationButtons 
           currentStep={currentStep}

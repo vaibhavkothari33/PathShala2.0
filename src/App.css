@@ -40,3 +40,28 @@
 .read-the-docs {
   color: #888;
 }
+
+
+/* Add to your global CSS file */
+/* input, textarea, select {
+  font-size: 16px !important;
+  -webkit-appearance: none;
+  appearance: none;
+} */
+
+/* Prevent unwanted behaviors */
+/* body {
+  overscroll-behavior-y: contain;
+} */
+
+/* Ensure proper touch targets */
+/* input, select, textarea, button {
+  min-height: 44px;
+} */
+
+/* Prevent iOS zoom */
+/* @supports (-webkit-touch-callout: none) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+} */
