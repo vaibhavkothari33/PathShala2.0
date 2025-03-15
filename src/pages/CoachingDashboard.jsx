@@ -15,8 +15,8 @@ import {
   CheckCircle,
   XCircle
 } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
-import { databases } from '../../config/appwrite';
+import { useAuth } from '../context/AuthContext';
+import { databases } from '../config/appwrite';
 import { Query } from 'appwrite';
 import { toast } from 'react-hot-toast';
 
