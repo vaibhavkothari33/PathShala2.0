@@ -60,6 +60,14 @@ const CoachingDetails = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    console.log('Environment variables:', {
+      endpoint: import.meta.env.VITE_APPWRITE_ENDPOINT,
+      projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID,
+      bucketId: import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID,
+      databaseId: import.meta.env.VITE_APPWRITE_DATABASE_ID,
+      collectionId: import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID
+    });
+
     const fetchCoachingDetails = async () => {
       try {
         setLoading(true);
@@ -154,7 +162,8 @@ const CoachingDetails = () => {
     }
     
     try {
-      // Use environment variables
+      // Use environment variables with fallbacks
+      const endpoint = import.meta.env.VITE_APPWRITE_ENDPOINT || 'https://cloud.appwrite.io/v1';
       const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
       const bucketId = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
 
@@ -163,8 +172,8 @@ const CoachingDetails = () => {
         return null;
       }
 
-      // Updated URL format
-      const imageUrl = `${import.meta.env.VITE_APPWRITE_ENDPOINT}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
+      // Hardcoded URL format as fallback
+      const imageUrl = `${endpoint}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
       console.log('Generated image URL:', imageUrl);
       return imageUrl;
     } catch (error) {
