@@ -37,12 +37,12 @@ const CoachingDashboard = () => {
     const fetchCoachingData = async () => {
       try {
         if (!user || !user.$id) {
-          console.log('No valid user data available');
           setLoading(false);
+          toast.error('Please login to access dashboard');
+          navigate('/login');
           return;
         }
-        
-        // Fetch coaching data
+
         const coachingData = await coachingService.getUserCoaching(user.$id);
         
         if (!coachingData) {
@@ -51,45 +51,13 @@ const CoachingDashboard = () => {
           return;
         }
 
-        // Calculate total students from batches
-        const totalStudents = coachingData.batches_capacity 
-          ? coachingData.batches_capacity.reduce((total, capacity) => total + (parseInt(capacity) || 0), 0) - 
-            coachingData.batches_availableSeats.reduce((total, seats) => total + (parseInt(seats) || 0), 0)
-          : 0;
-
         // Format the coaching data
         const formattedCoaching = {
           ...coachingData,
-          students: totalStudents,
-          batches: Array.isArray(coachingData.batches_name) 
-            ? coachingData.batches_name.map((name, i) => ({
-                name,
-                subjects: coachingData.batches_subjects?.[i] || [],
-                timing: coachingData.batches_timing?.[i] || '',
-                capacity: coachingData.batches_capacity?.[i] || '0',
-                availableSeats: coachingData.batches_availableSeats?.[i] || '0',
-                monthlyFee: coachingData.batches_monthlyFee?.[i] || '0',
-                duration: coachingData.batches_duration?.[i] || '',
-                enrolledStudents: parseInt(coachingData.batches_capacity?.[i] || 0) - 
-                                parseInt(coachingData.batches_availableSeats?.[i] || 0)
-              }))
-            : [],
-          faculty: Array.isArray(coachingData.faculty_name)
-            ? coachingData.faculty_name.map((name, i) => ({
-                name,
-                qualification: coachingData.faculty_qualification?.[i] || '',
-                experience: coachingData.faculty_experience?.[i] || '',
-                subject: coachingData.faculty_subject?.[i] || '',
-                bio: coachingData.faculty_bio?.[i] || '',
-                image: coachingData.faculty_image?.[i] 
-                  ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coachingData.faculty_image[i]}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`
-                  : null
-              }))
-            : [],
-          subjects: coachingData.subjects || 
-                   (coachingData.batches_subjects ? [...new Set(coachingData.batches_subjects.flat())] : []),
-          rating: calculateAverageRating(coachingData.reviews || []),
-          totalRevenue: calculateTotalRevenue(coachingData),
+          students: calculateTotalStudents(coachingData),
+          batches: formatBatches(coachingData),
+          faculty: formatFaculty(coachingData),
+          totalRevenue: calculateTotalRevenue(coachingData)
         };
 
         setCoaching(formattedCoaching);
@@ -101,7 +69,7 @@ const CoachingDashboard = () => {
 
       } catch (error) {
         console.error('Error fetching coaching data:', error);
-        handleError(error);
+        toast.error('Failed to load dashboard');
       } finally {
         setLoading(false);
       }
@@ -111,20 +79,49 @@ const CoachingDashboard = () => {
   }, [user, navigate]);
 
   // Helper functions
-  const calculateAverageRating = (reviews) => {
-    if (!reviews || reviews.length === 0) return 0;
-    const sum = reviews.reduce((acc, review) => acc + (review.rating || 0), 0);
-    return (sum / reviews.length).toFixed(1);
+  const calculateTotalStudents = (data) => {
+    if (!data.batches_capacity || !data.batches_availableSeats) return 0;
+    
+    return data.batches_capacity.reduce((total, capacity, index) => {
+      const available = parseInt(data.batches_availableSeats[index] || 0);
+      const total_capacity = parseInt(capacity || 0);
+      return total + (total_capacity - available);
+    }, 0);
   };
 
-  const calculateTotalRevenue = (coachingData) => {
-    if (!coachingData.batches_monthlyFee || !coachingData.batches_capacity || !coachingData.batches_availableSeats) {
-      return 0;
-    }
+  const formatBatches = (data) => {
+    if (!Array.isArray(data.batches_name)) return [];
 
-    return coachingData.batches_monthlyFee.reduce((total, fee, index) => {
-      const enrolledStudents = parseInt(coachingData.batches_capacity[index] || 0) - 
-                              parseInt(coachingData.batches_availableSeats[index] || 0);
+    return data.batches_name.map((name, i) => ({
+      name,
+      subjects: data.batches_subjects?.[i] || [],
+      timing: data.batches_timing?.[i] || '',
+      capacity: data.batches_capacity?.[i] || '0',
+      availableSeats: data.batches_availableSeats?.[i] || '0',
+      monthlyFee: data.batches_monthlyFee?.[i] || '0'
+    }));
+  };
+
+  const formatFaculty = (data) => {
+    if (!Array.isArray(data.faculty_name)) return [];
+
+    return data.faculty_name.map((name, i) => ({
+      name,
+      qualification: data.faculty_qualification?.[i] || '',
+      experience: data.faculty_experience?.[i] || '',
+      subject: data.faculty_subject?.[i] || '',
+      image: data.faculty_image?.[i] 
+        ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${data.faculty_image[i]}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`
+        : null
+    }));
+  };
+
+  const calculateTotalRevenue = (data) => {
+    if (!data.batches_monthlyFee || !data.batches_capacity || !data.batches_availableSeats) return 0;
+
+    return data.batches_monthlyFee.reduce((total, fee, index) => {
+      const enrolledStudents = parseInt(data.batches_capacity[index] || 0) - 
+                              parseInt(data.batches_availableSeats[index] || 0);
       return total + (enrolledStudents * parseInt(fee || 0));
     }, 0);
   };
@@ -318,69 +315,32 @@ const CoachingDashboard = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Overview Cards */}
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Students Card */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="bg-indigo-100 p-3 rounded-full">
-                <Users className="h-6 w-6 text-indigo-600" />
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-semibold text-gray-900">Total Students</h3>
-                <p className="text-2xl font-bold">{coaching?.students || 0}</p>
-                <p className="text-sm text-gray-500">Across all batches</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Batches Card with Active/Inactive count */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="bg-green-100 p-3 rounded-full">
-                <Calendar className="h-6 w-6 text-green-600" />
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-semibold text-gray-900">Active Batches</h3>
-                <p className="text-2xl font-bold">{coaching?.batches?.length || 0}</p>
-                <p className="text-sm text-gray-500">
-                  {coaching?.batches?.filter(batch => 
-                    parseInt(batch.availableSeats) > 0
-                  ).length || 0} with available seats
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Faculty Card with subject distribution */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="bg-yellow-100 p-3 rounded-full">
-                <User className="h-6 w-6 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-semibold text-gray-900">Faculty Members</h3>
-                <p className="text-2xl font-bold">{coaching?.faculty?.length || 0}</p>
-                <p className="text-sm text-gray-500">
-                  {new Set(coaching?.faculty?.map(f => f.subject)).size || 0} subjects covered
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Revenue Card */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center">
-              <div className="bg-purple-100 p-3 rounded-full">
-                <BookOpen className="h-6 w-6 text-purple-600" />
-              </div>
-              <div className="ml-4">
-                <h3 className="text-lg font-semibold text-gray-900">Monthly Revenue</h3>
-                <p className="text-2xl font-bold">₹{coaching?.totalRevenue?.toLocaleString() || 0}</p>
-                <p className="text-sm text-gray-500">From active enrollments</p>
-              </div>
-            </div>
-          </div>
+          <StatsCard 
+            icon={<Users className="h-6 w-6 text-indigo-600" />}
+            title="Students"
+            value={coaching.students}
+            bgColor="bg-indigo-100"
+          />
+          <StatsCard 
+            icon={<Calendar className="h-6 w-6 text-green-600" />}
+            title="Batches"
+            value={coaching.batches?.length || 0}
+            bgColor="bg-green-100"
+          />
+          <StatsCard 
+            icon={<User className="h-6 w-6 text-yellow-600" />}
+            title="Faculty"
+            value={coaching.faculty?.length || 0}
+            bgColor="bg-yellow-100"
+          />
+          <StatsCard 
+            icon={<BookOpen className="h-6 w-6 text-purple-600" />}
+            title="Monthly Revenue"
+            value={`₹${coaching.totalRevenue?.toLocaleString()}`}
+            bgColor="bg-purple-100"
+          />
         </div>
 
         {/* Add Requests Section here */}
@@ -587,5 +547,44 @@ const CoachingDashboard = () => {
     </div>
   );
 };
+
+// Helper Components
+const StatsCard = ({ icon, title, value, bgColor }) => (
+  <div className="bg-white rounded-lg shadow p-6">
+    <div className="flex items-center">
+      <div className={`${bgColor} p-3 rounded-full`}>
+        {icon}
+      </div>
+      <div className="ml-4">
+        <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
+        <p className="text-2xl font-bold">{value}</p>
+      </div>
+    </div>
+  </div>
+);
+
+const BatchesSection = ({ batches }) => (
+  <div className="bg-white rounded-lg shadow">
+    {/* Batches content */}
+  </div>
+);
+
+const FacultySection = ({ faculty }) => (
+  <div className="bg-white rounded-lg shadow">
+    {/* Faculty content */}
+  </div>
+);
+
+const PreviewCard = ({ coaching }) => (
+  <div className="bg-white rounded-lg shadow">
+    {/* Preview content */}
+  </div>
+);
+
+const QuickLinks = () => (
+  <div className="bg-white rounded-lg shadow">
+    {/* Quick links content */}
+  </div>
+);
 
 export default CoachingDashboard;
