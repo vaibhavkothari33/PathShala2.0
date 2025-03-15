@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Upload, Plus, Minus, Camera, X, Info, CheckCircle, Home } from 'lucide-react';
+import { Upload, Plus, Minus, Camera, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import coachingService from '../../services/coachingService';
 import { useAuth } from '../../context/AuthContext';
@@ -339,115 +339,153 @@ const CoachingRegistration = () => {
   if (error) return <div>Error: {error.message}</div>;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Header Section */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between"
-          >
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Register Your Coaching Center</h1>
-              <p className="mt-2 text-gray-600">Fill in the details to get started</p>
-            </div>
-            <div className="hidden sm:block">
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-500">Registration Progress</span>
-                <div className="w-48 h-2 bg-gray-200 rounded-full">
-                  <motion.div
-                    initial={{ width: 0 }}
-                    animate={{ width: '60%' }}
-                    className="h-full bg-gradient-to-r from-indigo-600 to-blue-600 rounded-full"
-                  />
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="py-12">
+    <form onSubmit={handleSubmit} className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="space-y-8">
-            {/* Basic Information Card */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl shadow-lg overflow-hidden"
-            >
-              <div className="p-8">
-                <div className="flex items-center space-x-3 mb-6">
-                  <div className="p-2 bg-indigo-100 rounded-lg">
-                    <Info className="h-6 w-6 text-indigo-600" />
-                  </div>
-                  <h2 className="text-xl font-semibold text-gray-900">Basic Information</h2>
-                </div>
+        <div className="bg-white rounded-2xl shadow-xl p-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-8">Coaching Registration</h1>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {/* Enhanced input fields with better styling */}
-                  <div className="space-y-6">
+          {/* Basic Information */}
+          <section className="mb-12">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Basic Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Name */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Coaching Name *
                 </label>
-                      <div className="relative">
                 <input
                   type="text"
                   name="name"
                   required
                   value={formData.basicInfo.name}
                   onChange={handleBasicInfoChange}
-                          className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-200"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                   placeholder="Enter coaching name"
                 />
-                        <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                          <motion.span
-                            initial={{ scale: 0 }}
-                            animate={{ scale: formData.basicInfo.name ? 1 : 0 }}
-                            className="text-green-500"
-                          >
-                            <CheckCircle className="h-5 w-5" />
-                          </motion.span>
-                        </div>
-              </div>
-              </div>
-                    {/* ... other input fields with similar styling ... */}
-              </div>
-              </div>
-              </div>
-            </motion.div>
-
-            {/* Images Section with Enhanced UI */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl shadow-lg overflow-hidden"
-            >
-              <div className="p-8">
-                <div className="flex items-center space-x-3 mb-6">
-                  <div className="p-2 bg-indigo-100 rounded-lg">
-                    <Camera className="h-6 w-6 text-indigo-600" />
-              </div>
-                  <h2 className="text-xl font-semibold text-gray-900">Images</h2>
               </div>
 
-                {/* Enhanced image upload areas */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-                  {/* Logo Upload */}
-              <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-4">
-                      Logo Image *
+              {/* Description */}
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description *
                 </label>
-                    <motion.div
-                      whileHover={{ scale: 1.02 }}
-                      className={`
-                        relative group cursor-pointer border-2 border-dashed rounded-xl p-8
-                        ${imagePreviews.logo ? 'border-indigo-300 bg-indigo-50' : 'border-gray-300 hover:border-indigo-400'}
-                        transition-all duration-200
-                      `}
-                    >
+                <textarea
+                  name="description"
+                  required
+                  value={formData.basicInfo.description}
+                  onChange={handleBasicInfoChange}
+                  rows={4}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Describe your coaching center"
+                />
+              </div>
+
+              {/* Address */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Address *
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  required
+                  value={formData.basicInfo.address}
+                  onChange={handleBasicInfoChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Enter complete address"
+                />
+              </div>
+
+              {/* City */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  City *
+                </label>
+                <input
+                  type="text"
+                  name="city"
+                  required
+                  value={formData.basicInfo.city}
+                  onChange={handleBasicInfoChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Enter city"
+                />
+              </div>
+
+              {/* Phone */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Phone *
+                </label>
+                <input
+                  type="tel"
+                  name="phone"
+                  required
+                  value={formData.basicInfo.phone}
+                  onChange={handleBasicInfoChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Enter contact number"
+                />
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Email *
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  required
+                  value={formData.basicInfo.email}
+                  onChange={handleBasicInfoChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Enter email address"
+                />
+              </div>
+
+              {/* Website */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Website
+                </label>
+                <input
+                  type="url"
+                  name="website"
+                  value={formData.basicInfo.website}
+                  onChange={handleBasicInfoChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Enter website URL (optional)"
+                />
+              </div>
+
+              {/* Established Year */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Established Year *
+                </label>
+                <input
+                  type="text"
+                  name="establishedYear"
+                  required
+                  value={formData.basicInfo.establishedYear}
+                  onChange={handleBasicInfoChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                  placeholder="Enter establishment year"
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Images Upload */}
+          <section className="mb-12">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Images</h2>
+
+            {/* Logo and Cover Image */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              {/* Logo Upload */}
+              <div className="relative">
+                <div className={`border-2 border-dashed border-gray-300 rounded-lg p-6 text-center ${imagePreviews.logo ? 'bg-gray-50' : ''}`}>
                   <input
                     type="file"
                     id="logo"
@@ -460,67 +498,110 @@ const CoachingRegistration = () => {
                       <img
                         src={imagePreviews.logo}
                         alt="Logo preview"
-                            className="max-h-48 mx-auto rounded-lg shadow-md"
+                        className="max-h-40 mx-auto rounded-lg"
                       />
-                          <motion.button
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
+                      <button
                         onClick={() => handleRemoveImage('logo')}
-                            className="absolute -top-3 -right-3 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 shadow-lg"
+                        className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
                       >
                         <X className="h-4 w-4" />
-                          </motion.button>
+                      </button>
                     </div>
                   ) : (
-                        <label htmlFor="logo" className="flex flex-col items-center">
-                          <div className="p-4 bg-indigo-100 rounded-full mb-4">
-                            <Upload className="h-8 w-8 text-indigo-600" />
-                          </div>
-                          <span className="text-sm font-medium text-gray-700">Upload Logo</span>
-                          <span className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</span>
+                    <label
+                      htmlFor="logo"
+                      className="cursor-pointer flex flex-col items-center"
+                    >
+                      <Camera className="h-8 w-8 text-gray-400 mb-2" />
+                      <span className="text-sm text-gray-600">Upload Logo</span>
                     </label>
                   )}
-                    </motion.div>
-                  </div>
-
-                  {/* Similar enhanced styling for cover image and classroom images */}
                 </div>
               </div>
-            </motion.div>
 
-            {/* Enhanced Facilities Section */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl shadow-lg overflow-hidden"
-            >
-              <div className="p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-indigo-100 rounded-lg">
-                      <Home className="h-6 w-6 text-indigo-600" />
+              {/* Cover Image Upload */}
+              <div className="relative">
+                <div className={`border-2 border-dashed border-gray-300 rounded-lg p-6 text-center ${imagePreviews.coverImage ? 'bg-gray-50' : ''}`}>
+                  <input
+                    type="file"
+                    id="coverImage"
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(e, 'coverImage')}
+                    className="hidden"
+                  />
+                  {imagePreviews.coverImage ? (
+                    <div className="relative">
+                      <img
+                        src={imagePreviews.coverImage}
+                        alt="Cover preview"
+                        className="max-h-40 mx-auto rounded-lg"
+                      />
+                      <button
+                        onClick={() => handleRemoveImage('coverImage')}
+                        className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
                     </div>
-                    <h2 className="text-xl font-semibold text-gray-900">Facilities</h2>
-                  </div>
-                  <span className="text-sm text-gray-500">
-                    {formData.facilities.length} selected
-                  </span>
+                  ) : (
+                    <label
+                      htmlFor="coverImage"
+                      className="cursor-pointer flex flex-col items-center"
+                    >
+                      <Camera className="h-8 w-8 text-gray-400 mb-2" />
+                      <span className="text-sm text-gray-600">Upload Cover Image</span>
+                    </label>
+                  )}
                 </div>
+              </div>
+            </div>
 
+            {/* Classroom Images */}
+            <div className="mb-8">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">Classroom Images</h3>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {imagePreviews.classroomImages.map((preview, index) => (
+                  <div key={index} className="relative">
+                    <img
+                      src={preview}
+                      alt={`Classroom ${index + 1}`}
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                    <button
+                      onClick={() => handleRemoveImage('classroomImages', index)}
+                      className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex items-center justify-center">
+                  <input
+                    type="file"
+                    id="classroomImages"
+                    accept="image/*"
+                    multiple
+                    onChange={(e) => handleImageUpload(e, 'classroomImages')}
+                    className="hidden"
+                  />
+                  <label
+                    htmlFor="classroomImages"
+                    className="cursor-pointer flex flex-col items-center"
+                  >
+                    <Plus className="h-8 w-8 text-gray-400 mb-2" />
+                    <span className="text-sm text-gray-600">Add Classroom Images</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Facilities */}
+          <section className="mb-12">
+            <h2 className="text-xl font-semibold text-gray-900 mb-6">Facilities</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {facilityOptions.map((facility) => (
-                    <motion.label
-                      key={facility}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`
-                        flex items-center p-4 rounded-xl cursor-pointer
-                        ${formData.facilities.includes(facility)
-                          ? 'bg-indigo-50 border-2 border-indigo-500'
-                          : 'bg-gray-50 border-2 border-gray-200 hover:border-indigo-300'}
-                        transition-all duration-200
-                      `}
-                    >
+                <label key={facility} className="flex items-center space-x-2">
                   <input
                     type="checkbox"
                     checked={formData.facilities.includes(facility)}
@@ -537,60 +618,323 @@ const CoachingRegistration = () => {
                         }));
                       }
                     }}
-                        className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 rounded"
-                      />
-                      <span className="ml-3 text-sm font-medium text-gray-700">{facility}</span>
-                    </motion.label>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
+                    className="h-4 w-4 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <span className="text-sm text-gray-700">{facility}</span>
+                </label>
+              ))}
+            </div>
+          </section>
 
-            {/* Enhanced Submit Button */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="flex justify-end"
-            >
+          {/* Batches */}
+          <section className="mb-12">
+  <div className="flex justify-between items-center mb-6">
+    <h2 className="text-xl font-semibold text-gray-900">Batches</h2>
+    <button
+      type="button"
+      onClick={addBatch}
+      className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+    >
+      <Plus className="h-4 w-4 mr-2" />
+      Add Batch
+    </button>
+  </div>
+
+  {formData.batches.map((batch, index) => (
+    <div key={index} className="bg-gray-50 rounded-lg p-6 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        {/* Batch Name */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Batch Name
+          </label>
+          <input
+            type="text"
+            value={batch.name}
+            onChange={(e) => handleBatchChange(index, "name", e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            placeholder="e.g., Morning Batch"
+          />
+        </div>
+
+        {/* Subjects */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Subjects
+          </label>
+          <input
+            type="text"
+            value={batch.subjects}
+            onChange={(e) => handleBatchChange(index, "subjects", e.target.value.split(","))}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            placeholder="e.g., Math, Physics"
+          />
+        </div>
+
+        {/* Batch Timing */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Batch Timing
+          </label>
+          <input
+            type="text"
+            value={batch.timing}
+            onChange={(e) => handleBatchChange(index, "timing", e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            placeholder="e.g., 10:00 AM - 12:00 PM"
+          />
+        </div>
+
+        {/* Capacity */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Capacity
+          </label>
+          <input
+            type="number"
+            value={batch.capacity}
+            onChange={(e) => handleBatchChange(index, "capacity", e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            placeholder="e.g., 30"
+          />
+        </div>
+
+        {/* Available Seats */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Available Seats
+          </label>
+          <input
+            type="number"
+            value={batch.availableSeats}
+            onChange={(e) => handleBatchChange(index, "availableSeats", e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            placeholder="e.g., 10"
+          />
+        </div>
+
+        {/* Monthly Fee */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Monthly Fee (₹)
+          </label>
+          <input
+            type="number"
+            value={batch.monthlyFee}
+            onChange={(e) => handleBatchChange(index, "monthlyFee", e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            placeholder="e.g., 2000"
+          />
+        </div>
+
+        {/* Duration */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Duration (Months)
+          </label>
+          <input
+            type="number"
+            value={batch.duration}
+            onChange={(e) => handleBatchChange(index, "duration", e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+            placeholder="e.g., 6"
+          />
+        </div>
+
+      </div>
+    </div>
+  ))}
+</section>
+
+
+
+          {/* Faculty */}
+          <section className="mb-12">
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-xl font-semibold text-gray-900">Faculty</h2>
+              <button
+                type="button"
+                onClick={addFaculty}
+                className="flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Faculty
+              </button>
+            </div>
+
+            {formData.faculty.map((faculty, index) => (
+              <div key={index} className="bg-gray-50 rounded-lg p-6 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Faculty Name */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Name *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={faculty.name}
+                      onChange={(e) => handleFacultyChange(index, 'name', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      placeholder="Enter faculty name"
+                    />
+                  </div>
+
+                  {/* Qualification */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Qualification *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={faculty.qualification}
+                      onChange={(e) => handleFacultyChange(index, 'qualification', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      placeholder="e.g., PhD in Physics"
+                    />
+                  </div>
+
+                  {/* Experience */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Experience *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={faculty.experience}
+                      onChange={(e) => handleFacultyChange(index, 'experience', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      placeholder="e.g., 5 years"
+                    />
+                  </div>
+
+                  {/* Subject */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Subject *
+                    </label>
+                    <select
+                      required
+                      value={faculty.subject}
+                      onChange={(e) => handleFacultyChange(index, 'subject', e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                    >
+                      <option value="">Select Subject</option>
+                      {subjectOptions.map(subject => (
+                        <option key={subject} value={subject}>
+                          {subject}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Bio */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Bio
+                    </label>
+                    <textarea
+                      value={faculty.bio}
+                      onChange={(e) => handleFacultyChange(index, 'bio', e.target.value)}
+                      rows={3}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                      placeholder="Enter faculty bio (optional)"
+                    />
+                  </div>
+
+                  {/* Faculty Image */}
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Profile Image
+                    </label>
+                    <div className="flex items-center space-x-4">
+                      {faculty.image ? (
+                        <div className="relative">
+                          <img
+                            src={URL.createObjectURL(faculty.image)}
+                            alt={faculty.name}
+                            className="w-20 h-20 rounded-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleFacultyChange(index, 'image', null)}
+                            className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
+                          >
+                            <X className="h-4 w-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="w-20 h-20 border-2 border-dashed border-gray-300 rounded-full flex items-center justify-center">
+                          <input
+                            type="file"
+                            id={`faculty-image-${index}`}
+                            accept="image/*"
+                            onChange={(e) => {
+                              if (e.target.files?.[0]) {
+                                handleFacultyChange(index, 'image', e.target.files[0]);
+                              }
+                            }}
+                            className="hidden"
+                          />
+                          <label
+                            htmlFor={`faculty-image-${index}`}
+                            className="cursor-pointer"
+                          >
+                            <Camera className="h-8 w-8 text-gray-400" />
+                          </label>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Remove Faculty Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFormData(prev => ({
+                      ...prev,
+                      faculty: prev.faculty.filter((_, i) => i !== index)
+                    }));
+                  }}
+                  className="mt-4 text-red-600 hover:text-red-700"
+                >
+                  Remove Faculty
+                </button>
+              </div>
+            ))}
+          </section>
+
+          {/* Submit Button */}
+          <div className="flex justify-end">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={loading}
-                className={`
-                  px-8 py-4 bg-gradient-to-r from-indigo-600 to-blue-600 
-                  text-white rounded-xl font-medium text-lg
-                  transition-all duration-200 shadow-lg hover:shadow-xl
-                  flex items-center space-x-3
-                  ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:from-indigo-700 hover:to-blue-700'}
-                `}
+              className={`px-8 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg 
+                transition-all duration-200 shadow-md hover:shadow-lg
+                ${loading ? 'opacity-70 cursor-not-allowed' : 'hover:from-indigo-700 hover:to-blue-700'}`}
             >
               {loading ? (
-                  <>
-                    <motion.div
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                      className="h-5 w-5 border-2 border-white border-t-transparent rounded-full"
-                    />
-                    <span>Registering...</span>
-                  </>
-                ) : (
-                  <>
-                    <span>Register Coaching Center</span>
-                    <motion.div
-                      animate={{ x: [0, 5, 0] }}
-                      transition={{ duration: 1, repeat: Infinity }}
-                    >
-                      →
-                    </motion.div>
-                  </>
+                <div className="flex items-center">
+                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  Registering...
+                </div>
+              ) : (
+                'Register Coaching Center'
               )}
             </motion.button>
-            </motion.div>
           </div>
         </div>
-      </form>
       </div>
+    </form>
   );
 };
 
