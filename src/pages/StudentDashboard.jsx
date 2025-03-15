@@ -40,101 +40,104 @@ const StudentDashboard = () => {
   }, []);
 
   const fetchCoachingCenters = async () => {
-    setLoading(true); // Set loading state before fetching
-
+    setLoading(true);
     try {
       const response = await databases.listDocuments(
         import.meta.env.VITE_APPWRITE_DATABASE_ID,
         import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID
       );
 
-      // console.log('Fetched coaching centers:', response.documents);
+      const formattedCenters = response.documents.map((coaching) => {
+        // Construct the base storage URL
+        const storageUrl = `https://cloud.appwrite.io/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files`;
+        
+        // Helper function to construct image URL
+        const getImageUrl = (fileId) => {
+          if (!fileId) return null;
+          return `${storageUrl}/${fileId}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`;
+        };
 
-      // console.log('Storage URL:', import.meta.env.VITE_APPWRITE_STORAGE_URL);
-      // console.log('Sample Image ID:', response.documents[0]?.images_coverImage);
-      // console.log('Processing center:', coaching.name, 'Image ID:', coaching.images_coverImage);
-      
-      const formattedCenters = response.documents.map((coaching) => ({
-        id: coaching.$id,
-        name: coaching.name || 'Unnamed Center',
-
-        description: coaching.description || '',
-        subjects: coaching.subjects && Array.isArray(coaching.subjects)
-          ? coaching.subjects
-          : coaching.batches_subjects && Array.isArray(coaching.batches_subjects)
-            ? [...new Set(coaching.batches_subjects.flat())]
-            : [],
-        rating: coaching.rating || 4.5,
-        reviews: coaching.reviews || 0,
-        price: coaching.batches_monthlyFee && Array.isArray(coaching.batches_monthlyFee)
-          ? `₹${coaching.batches_monthlyFee[0]}`
-          : "₹2000",
-        students: coaching.totalStudents || 0,
-
-        image: coaching.images_coverImage 
-          ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.images_coverImage}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`
-          : coaching.images_logo 
-            ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.images_logo}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`
-            : "/default-coaching.jpg",
-
-        logo: coaching.images_logo
-          ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.images_logo}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`
-          : null,
-
-        location: coaching.address || "Address not available",
-        city: coaching.city || "",
-        availability: coaching.batches_timing?.length
-          ? coaching.batches_timing[0]
-          : "Mon-Sat, 9 AM - 7 PM",
-        contact: {
-          phone: coaching.phone || "",
-          email: coaching.email || "",
-          website: coaching.website || ""
-        },
-        facilities: coaching.facilities || [],
-        batches: Array.isArray(coaching.batches_name)
-          ? coaching.batches_name.map((name, i) => ({
-            name,
-            subjects: coaching.batches_subjects && Array.isArray(coaching.batches_subjects)
-              ? coaching.batches_subjects[i] || []
+        return {
+          id: coaching.$id,
+          name: coaching.name || 'Unnamed Center',
+          description: coaching.description || '',
+          subjects: coaching.subjects && Array.isArray(coaching.subjects)
+            ? coaching.subjects
+            : coaching.batches_subjects && Array.isArray(coaching.batches_subjects)
+              ? [...new Set(coaching.batches_subjects.flat())]
               : [],
-            timing: coaching.batches_timing?.[i] || '',
-            capacity: coaching.batches_capacity?.[i] || '',
-            availableSeats: coaching.batches_availableSeats?.[i] || '',
-            monthlyFee: coaching.batches_monthlyFee?.[i] || '',
-            duration: coaching.batches_duration?.[i] || '',
-          }))
-          : [],
-        faculty: Array.isArray(coaching.faculty_name)
-          ? coaching.faculty_name.map((name, i) => ({
-            name,
-            qualification: coaching.faculty_qualification?.[i] || '',
-            experience: coaching.faculty_experience?.[i] || '',
-            subject: coaching.faculty_subject?.[i] || '',
-            bio: coaching.faculty_bio?.[i] || '',
-            image: coaching.faculty_image?.[i]
-              ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${coaching.faculty_image[i]}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`
-              : null,
-          }))
-          : [],
-        establishedYear: coaching.establishedYear || '',
-        classroomImages: Array.isArray(coaching.images_classroomImages)
-          ? coaching.images_classroomImages.map(imgId =>
-            `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${imgId}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`
-          )
-          : [],
-        slug: coaching.slug || coaching.name?.toLowerCase().replace(/\s+/g, '-') || coaching.$id
-      }));
+          rating: coaching.rating || 4.5,
+          reviews: coaching.reviews || 0,
+          price: coaching.batches_monthlyFee && Array.isArray(coaching.batches_monthlyFee)
+            ? `₹${coaching.batches_monthlyFee[0]}`
+            : "₹2000",
+          students: coaching.totalStudents || 0,
 
-      // // console.log('Formatted centers:', formattedCenters);
+          // Update image handling
+          image: getImageUrl(coaching.images_coverImage) || 
+                 getImageUrl(coaching.images_logo) || 
+                 "/default-coaching.jpg",
+
+          // Update logo handling
+          logo: getImageUrl(coaching.images_logo),
+
+          location: coaching.address || "Address not available",
+          city: coaching.city || "",
+          availability: coaching.batches_timing?.length
+            ? coaching.batches_timing[0]
+            : "Mon-Sat, 9 AM - 7 PM",
+          contact: {
+            phone: coaching.phone || "",
+            email: coaching.email || "",
+            website: coaching.website || ""
+          },
+          facilities: coaching.facilities || [],
+          batches: Array.isArray(coaching.batches_name)
+            ? coaching.batches_name.map((name, i) => ({
+              name,
+              subjects: coaching.batches_subjects && Array.isArray(coaching.batches_subjects)
+                ? coaching.batches_subjects[i] || []
+                : [],
+              timing: coaching.batches_timing?.[i] || '',
+              capacity: coaching.batches_capacity?.[i] || '',
+              availableSeats: coaching.batches_availableSeats?.[i] || '',
+              monthlyFee: coaching.batches_monthlyFee?.[i] || '',
+              duration: coaching.batches_duration?.[i] || '',
+            }))
+            : [],
+          faculty: Array.isArray(coaching.faculty_name)
+            ? coaching.faculty_name.map((name, i) => ({
+              name,
+              qualification: coaching.faculty_qualification?.[i] || '',
+              experience: coaching.faculty_experience?.[i] || '',
+              subject: coaching.faculty_subject?.[i] || '',
+              bio: coaching.faculty_bio?.[i] || '',
+              image: getImageUrl(coaching.faculty_image?.[i]),
+            }))
+            : [],
+          establishedYear: coaching.establishedYear || '',
+          classroomImages: Array.isArray(coaching.images_classroomImages)
+            ? coaching.images_classroomImages.map(imgId => getImageUrl(imgId))
+            : [],
+          slug: coaching.slug || coaching.name?.toLowerCase().replace(/\s+/g, '-') || coaching.$id
+        };
+      });
+
       setCoachingCenters(formattedCenters);
+      
+      // Debug logging
+      console.log('First coaching data:', {
+        raw: response.documents[0],
+        formatted: formattedCenters[0],
+        imageUrl: formattedCenters[0]?.image,
+        logoUrl: formattedCenters[0]?.logo
+      });
 
-      console.log('Raw coaching data:', response.documents[0]);
     } catch (error) {
       console.error('Error fetching coaching centers:', error);
       toast.error('Failed to load coaching centers');
     } finally {
-      setLoading(false); // Ensure loading state is cleared
+      setLoading(false);
     }
   };
 
