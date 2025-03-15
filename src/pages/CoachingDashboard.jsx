@@ -10,7 +10,10 @@ import {
   MessageCircle,
   BarChart2,
   User,
-  Plus
+  Plus,
+  Bell,
+  CheckCircle,
+  XCircle
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import coachingService from '../services/coachingService';
@@ -21,6 +24,8 @@ const CoachingDashboard = () => {
   const [coaching, setCoaching] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const [requests, setRequests] = useState([]);
+  const [showRequests, setShowRequests] = useState(false);
 
   // Fetch the coaching center data
   useEffect(() => {
@@ -66,7 +71,136 @@ const CoachingDashboard = () => {
     
     fetchCoachingData();
   }, [user, navigate]);
-  
+
+  // Add this function to fetch requests
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        const response = await databases.listDocuments(
+          import.meta.env.VITE_APPWRITE_DATABASE_ID,
+          import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID, // Add this collection ID to .env
+          [
+            Query.equal('coachingId', coaching.$id),
+            Query.orderDesc('$createdAt')
+          ]
+        );
+        setRequests(response.documents);
+      } catch (error) {
+        console.error('Error fetching requests:', error);
+        toast.error('Failed to load requests');
+      }
+    };
+
+    if (coaching?.$id) {
+      fetchRequests();
+    }
+  }, [coaching]);
+
+  // Add these functions to handle requests
+  const handleRequest = async (requestId, status) => {
+    try {
+      await databases.updateDocument(
+        import.meta.env.VITE_APPWRITE_DATABASE_ID,
+        import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID,
+        requestId,
+        { status }
+      );
+      
+      // Update local state
+      setRequests(requests.map(req => 
+        req.$id === requestId ? { ...req, status } : req
+      ));
+
+      toast.success(`Request ${status === 'accepted' ? 'accepted' : 'rejected'} successfully`);
+    } catch (error) {
+      console.error('Error handling request:', error);
+      toast.error('Failed to process request');
+    }
+  };
+
+  // Add this section after the Overview Cards
+  const RequestsSection = () => (
+    <div className="mb-8">
+      <div className="bg-white rounded-lg shadow">
+        <div className="flex items-center justify-between p-6 border-b">
+          <h2 className="text-xl font-semibold text-gray-900">Recent Requests</h2>
+          <div className="flex items-center">
+            {requests.length > 0 && (
+              <span className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-sm mr-2">
+                {requests.filter(req => req.status === 'pending').length} new
+              </span>
+            )}
+            <button
+              onClick={() => setShowRequests(!showRequests)}
+              className="text-gray-500 hover:text-gray-700"
+            >
+              <Bell className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+        
+        {showRequests && (
+          <div className="p-6">
+            {requests.length > 0 ? (
+              <div className="divide-y">
+                {requests.map((request) => (
+                  <div key={request.$id} className="py-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-medium text-gray-900">
+                          {request.studentName}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {request.type === 'batch' ? 'Batch Join Request' : 'Demo Class Request'} - {request.batchName}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          {new Date(request.$createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      
+                      {request.status === 'pending' ? (
+                        <div className="flex space-x-2">
+                          <button
+                            onClick={() => handleRequest(request.$id, 'accepted')}
+                            className="p-2 bg-green-100 text-green-600 rounded-full hover:bg-green-200 transition-colors duration-200"
+                          >
+                            <CheckCircle className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => handleRequest(request.$id, 'rejected')}
+                            className="p-2 bg-red-100 text-red-600 rounded-full hover:bg-red-200 transition-colors duration-200"
+                          >
+                            <XCircle className="h-5 w-5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className={`px-3 py-1 rounded-full text-sm ${
+                          request.status === 'accepted' 
+                            ? 'bg-green-100 text-green-600' 
+                            : 'bg-red-100 text-red-600'
+                        }`}>
+                          {request.status}
+                        </span>
+                      )}
+                    </div>
+                    {request.message && (
+                      <p className="mt-2 text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                        {request.message}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-4 text-gray-500">
+                No requests yet
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 
   if (loading) {
     return (
@@ -168,6 +302,9 @@ const CoachingDashboard = () => {
             </div>
           </div>
         </div>
+
+        {/* Add Requests Section here */}
+        <RequestsSection />
 
         {/* Main Dashboard Sections */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
