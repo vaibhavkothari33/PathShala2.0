@@ -28,48 +28,72 @@ const CoachingDashboard = () => {
   const { user } = useAuth();
   const [coaching, setCoaching] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
   const [requests, setRequests] = useState([]);
   const [showRequests, setShowRequests] = useState(false);
 
-  // Enhanced data fetching
+  // Updated data fetching with better error handling
   useEffect(() => {
     const fetchCoachingData = async () => {
       try {
+        setLoading(true);
+        setError(null);
+
+        // Check for user authentication
         if (!user || !user.$id) {
-          setLoading(false);
-          toast.error('Please login to access dashboard');
-          navigate('/login');
-          return;
+          throw new Error('Please login to access dashboard');
         }
 
-        const coachingData = await coachingService.getUserCoaching(user.$id);
-        
-        if (!coachingData) {
-          toast.error('Please register your coaching center first');
-          navigate('/coaching/register');
-          return;
+        console.log('Fetching coaching data for user:', user.$id);
+
+        // Fetch coaching data
+        const response = await databases.listDocuments(
+          import.meta.env.VITE_APPWRITE_DATABASE_ID,
+          import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID,
+          [Query.equal('owner_id', user.$id)]
+        );
+
+        console.log('Raw coaching data:', response);
+
+        if (!response.documents || response.documents.length === 0) {
+          throw new Error('No coaching center found');
         }
 
-        // Format the coaching data
+        const coachingData = response.documents[0];
+
+        // Format the coaching data with null checks
         const formattedCoaching = {
           ...coachingData,
+          name: coachingData.name || 'Unnamed Coaching',
           students: calculateTotalStudents(coachingData),
           batches: formatBatches(coachingData),
           faculty: formatFaculty(coachingData),
-          totalRevenue: calculateTotalRevenue(coachingData)
+          totalRevenue: calculateTotalRevenue(coachingData),
+          images: {
+            logo: getImageUrl(coachingData.images_logo),
+            coverImage: getImageUrl(coachingData.images_coverImage),
+          },
+          slug: coachingData.slug || coachingData.$id
         };
 
+        console.log('Formatted coaching data:', formattedCoaching);
         setCoaching(formattedCoaching);
-        
-        // Fetch requests for this coaching center
+
+        // Fetch requests if coaching ID exists
         if (formattedCoaching.$id) {
           fetchRequests(formattedCoaching.$id);
         }
 
       } catch (error) {
-        console.error('Error fetching coaching data:', error);
-        toast.error('Failed to load dashboard');
+        console.error('Dashboard error:', error);
+        setError(error.message);
+        toast.error(error.message || 'Failed to load dashboard');
+        
+        // Redirect to registration if no coaching found
+        if (error.message === 'No coaching center found') {
+          navigate('/coaching/register');
+        }
       } finally {
         setLoading(false);
       }
@@ -78,42 +102,60 @@ const CoachingDashboard = () => {
     fetchCoachingData();
   }, [user, navigate]);
 
-  // Helper functions
+  // Helper function to get image URL
+  const getImageUrl = (fileId) => {
+    if (!fileId) return null;
+    return `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${fileId}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`;
+  };
+
+  // Updated helper functions with null checks
   const calculateTotalStudents = (data) => {
     if (!data.batches_capacity || !data.batches_availableSeats) return 0;
-    
-    return data.batches_capacity.reduce((total, capacity, index) => {
-      const available = parseInt(data.batches_availableSeats[index] || 0);
-      const total_capacity = parseInt(capacity || 0);
-      return total + (total_capacity - available);
-    }, 0);
+    try {
+      return data.batches_capacity.reduce((total, capacity, index) => {
+        const available = parseInt(data.batches_availableSeats[index] || 0);
+        const total_capacity = parseInt(capacity || 0);
+        return total + (total_capacity - available);
+      }, 0);
+    } catch (error) {
+      console.error('Error calculating students:', error);
+      return 0;
+    }
   };
 
   const formatBatches = (data) => {
     if (!Array.isArray(data.batches_name)) return [];
-
-    return data.batches_name.map((name, i) => ({
-      name,
-      subjects: data.batches_subjects?.[i] || [],
-      timing: data.batches_timing?.[i] || '',
-      capacity: data.batches_capacity?.[i] || '0',
-      availableSeats: data.batches_availableSeats?.[i] || '0',
-      monthlyFee: data.batches_monthlyFee?.[i] || '0'
-    }));
+    try {
+      return data.batches_name.map((name, i) => ({
+        name: name || `Batch ${i + 1}`,
+        subjects: Array.isArray(data.batches_subjects?.[i]) 
+          ? data.batches_subjects[i] 
+          : [],
+        timing: data.batches_timing?.[i] || 'Schedule not set',
+        capacity: data.batches_capacity?.[i] || '0',
+        availableSeats: data.batches_availableSeats?.[i] || '0',
+        monthlyFee: data.batches_monthlyFee?.[i] || '0'
+      }));
+    } catch (error) {
+      console.error('Error formatting batches:', error);
+      return [];
+    }
   };
 
   const formatFaculty = (data) => {
     if (!Array.isArray(data.faculty_name)) return [];
-
-    return data.faculty_name.map((name, i) => ({
-      name,
-      qualification: data.faculty_qualification?.[i] || '',
-      experience: data.faculty_experience?.[i] || '',
-      subject: data.faculty_subject?.[i] || '',
-      image: data.faculty_image?.[i] 
-        ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/v1/storage/buckets/${import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID}/files/${data.faculty_image[i]}/view?project=${import.meta.env.VITE_APPWRITE_PROJECT_ID}`
-        : null
-    }));
+    try {
+      return data.faculty_name.map((name, i) => ({
+        name: name || `Faculty ${i + 1}`,
+        qualification: data.faculty_qualification?.[i] || '',
+        experience: data.faculty_experience?.[i] || '',
+        subject: data.faculty_subject?.[i] || '',
+        image: data.faculty_image?.[i] ? getImageUrl(data.faculty_image[i]) : null
+      }));
+    } catch (error) {
+      console.error('Error formatting faculty:', error);
+      return [];
+    }
   };
 
   const calculateTotalRevenue = (data) => {
@@ -269,10 +311,32 @@ const CoachingDashboard = () => {
     </div>
   );
 
+  // Show loading state
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500"></div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Something went wrong</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <Link 
+            to="/coaching/register" 
+            className="inline-block bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
+          >
+            Register Your Coaching
+          </Link>
+        </div>
       </div>
     );
   }
