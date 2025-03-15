@@ -4,7 +4,7 @@ import { Search, MapPin, Filter, Star, Clock, Users, BookOpen, ChevronDown, X, A
 import { Link } from 'react-router-dom';
 import { databases } from '../config/appwrite'; // Import Appwrite databases
 import { toast } from 'react-hot-toast';
-import coachingService from '../services/coachingService';
+// import coachingService from '../services/coachingService';
 const StudentDashboard = () => {
   const [coachingCenters, setCoachingCenters] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -16,7 +16,7 @@ const StudentDashboard = () => {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
-  const [coaching, setCoaching] = useState(null);
+  // const [coaching, setCoaching] = useState(null);
   const [userLocation, setUserLocation] = useState(null);
 
   // Fetch coaching centers from Appwrite
@@ -48,11 +48,16 @@ const StudentDashboard = () => {
         import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID
       );
 
-      console.log('Fetched coaching centers:', response.documents);
+      // console.log('Fetched coaching centers:', response.documents);
 
+      // console.log('Storage URL:', import.meta.env.VITE_APPWRITE_STORAGE_URL);
+      // console.log('Sample Image ID:', response.documents[0]?.images_coverImage);
+      // console.log('Processing center:', coaching.name, 'Image ID:', coaching.images_coverImage);
+      
       const formattedCenters = response.documents.map((coaching) => ({
         id: coaching.$id,
         name: coaching.name || 'Unnamed Center',
+
         description: coaching.description || '',
         subjects: coaching.subjects && Array.isArray(coaching.subjects)
           ? coaching.subjects
@@ -65,9 +70,13 @@ const StudentDashboard = () => {
           ? `₹${coaching.batches_monthlyFee[0]}`
           : "₹2000",
         students: coaching.totalStudents || 0,
+
         image: coaching.images_coverImage
-          ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${coaching.images_coverImage}`
+          ? (coaching.images_coverImage.startsWith('http')
+            ? coaching.images_coverImage  // If it's already a URL, use it directly
+            : `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${coaching.images_coverImage}`)
           : "https://upload.wikimedia.org/wikipedia/commons/b/b0/Bennett_University_.jpg",
+
         location: coaching.address || "Address not available",
         city: coaching.city || "",
         availability: coaching.batches_timing?.length
@@ -113,7 +122,7 @@ const StudentDashboard = () => {
         slug: coaching.slug || coaching.name?.toLowerCase().replace(/\s+/g, '-') || coaching.$id
       }));
 
-      console.log('Formatted centers:', formattedCenters);
+      // // console.log('Formatted centers:', formattedCenters);
       setCoachingCenters(formattedCenters);
     } catch (error) {
       console.error('Error fetching coaching centers:', error);
