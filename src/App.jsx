@@ -41,7 +41,8 @@ function App() {
           <div className="min-h-screen bg-gray-50">
             <Navbar />
             <Routes>
-              <Route path="/" element={<LandingPage />} />
+              {/* <Route path="/" element={<LandingPage />} /> */}
+              <Route path="/" element={<CoachingRegistration />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/auth/callback" element={<AuthCallback />} />
