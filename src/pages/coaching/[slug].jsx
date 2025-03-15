@@ -4,12 +4,43 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Star, Clock, Users, Phone, Mail, Globe, Home,
   BookOpen, Award, CheckCircle, ChevronLeft, Calendar, Camera,
-  Info, Briefcase, GraduationCap, X, ZoomIn, ArrowLeft, ArrowRight
+  Info, Briefcase, GraduationCap, X, ZoomIn, ArrowLeft, ArrowRight, User
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { databases } from '../../config/appwrite';
 import { useAuth } from '../../context/AuthContext';
 import { Query } from 'appwrite';
+
+const ImageWithFallback = ({ src, alt, className, fallbackSrc }) => {
+  const [error, setError] = useState(false);
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    setError(false);
+    setLoaded(false);
+  }, [src]);
+
+  return (
+    <>
+      {!loaded && !error && (
+        <div className={`${className} bg-gray-200 animate-pulse flex items-center justify-center`}>
+          <span className="text-gray-400">Loading...</span>
+        </div>
+      )}
+      <img
+        src={error ? fallbackSrc : src}
+        alt={alt}
+        className={`${className} ${!loaded ? 'hidden' : ''}`}
+        onError={(e) => {
+          console.error(`Image load error for ${alt}:`, e);
+          setError(true);
+          setLoaded(true);
+        }}
+        onLoad={() => setLoaded(true)}
+      />
+    </>
+  );
+};
 
 const CoachingDetails = () => {
   const { slug } = useParams();
@@ -26,14 +57,14 @@ const CoachingDetails = () => {
     const fetchCoachingDetails = async () => {
       try {
         setLoading(true);
-        console.log('Fetching details for slug:', slug);
-
-        // Log environment variables
         console.log('Environment variables:', {
           databaseId: import.meta.env.VITE_APPWRITE_DATABASE_ID,
           projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID,
           bucketId: import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID,
+          collectionId: import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID
         });
+
+        console.log('Fetching details for slug:', slug);
 
         const response = await databases.listDocuments(
           import.meta.env.VITE_APPWRITE_DATABASE_ID,
@@ -78,7 +109,7 @@ const CoachingDetails = () => {
         console.log('Formatted coaching data:', formattedCoaching);
         setCoaching(formattedCoaching);
       } catch (error) {
-        console.error('Error:', error);
+        console.error('Error fetching coaching details:', error);
         toast.error('Failed to load coaching details');
       } finally {
         setLoading(false);
@@ -89,13 +120,29 @@ const CoachingDetails = () => {
   }, [slug, navigate]);
 
   const getImageUrl = (fileId) => {
-    if (!fileId) return null;
+    if (!fileId) {
+      console.log('No fileId provided for image');
+      return null;
+    }
     
-    const storageUrl = import.meta.env.VITE_APPWRITE_STORAGE_URL || 'https://cloud.appwrite.io/v1';
-    const bucketId = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
-    const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
+    try {
+      // Hardcode the storage URL
+      const storageUrl = 'https://cloud.appwrite.io/v1';
+      const bucketId = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
+      const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
 
-    return `${storageUrl}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
+      if (!bucketId || !projectId) {
+        console.error('Missing storage configuration:', { bucketId, projectId });
+        return null;
+      }
+
+      const imageUrl = `${storageUrl}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
+      console.log('Generated image URL:', imageUrl);
+      return imageUrl;
+    } catch (error) {
+      console.error('Error constructing image URL:', error);
+      return null;
+    }
   };
 
   const formatFaculty = (data) => {
@@ -215,6 +262,42 @@ const CoachingDetails = () => {
         </div>
       </div>
     </motion.div>
+  );
+
+  const FacultyCard = ({ teacher }) => (
+    <div className="border rounded-lg p-4">
+      <div className="flex items-center">
+        {teacher.image ? (
+          <ImageWithFallback
+            src={teacher.image}
+            alt={teacher.name}
+            className="w-10 h-10 rounded-full object-cover mr-3"
+            fallbackSrc="/default-faculty.jpg"
+          />
+        ) : (
+          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
+            <User className="h-6 w-6 text-gray-500" />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">{teacher.name}</h3>
+          <div className="space-y-1 text-sm">
+            <div className="flex items-center text-gray-700">
+              <BookOpen className="h-4 w-4 mr-2 text-indigo-500" />
+              <span className="truncate">{teacher.subject}</span>
+            </div>
+            <div className="flex items-center text-gray-700">
+              <Award className="h-4 w-4 mr-2 text-indigo-500" />
+              <span className="truncate">{teacher.qualification}</span>
+            </div>
+            <div className="flex items-center text-gray-700">
+              <Briefcase className="h-4 w-4 mr-2 text-indigo-500" />
+              <span>{teacher.experience} experience</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 
   if (loading) {
@@ -472,37 +555,7 @@ const CoachingDetails = () => {
                     className="space-y-4"
                   >
                     {coaching.faculty && coaching.faculty.map((teacher, index) => (
-                      <div
-                        key={index}
-                        className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm"
-                      >
-                        <div className="flex items-center space-x-4">
-                          {teacher.image && (
-                            <img
-                              src={teacher.image}
-                              alt={teacher.name}
-                              className="h-16 w-16 rounded-full object-cover border-2 border-indigo-100"
-                            />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-1">{teacher.name}</h3>
-                            <div className="space-y-1 text-sm">
-                              <div className="flex items-center text-gray-700">
-                                <BookOpen className="h-4 w-4 mr-2 text-indigo-500" />
-                                <span className="truncate">{teacher.subject}</span>
-                              </div>
-                              <div className="flex items-center text-gray-700">
-                                <Award className="h-4 w-4 mr-2 text-indigo-500" />
-                                <span className="truncate">{teacher.qualification}</span>
-                              </div>
-                              <div className="flex items-center text-gray-700">
-                                <Briefcase className="h-4 w-4 mr-2 text-indigo-500" />
-                                <span>{teacher.experience} experience</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <FacultyCard key={index} teacher={teacher} />
                     ))}
                   </motion.div>
                 )}
@@ -514,7 +567,7 @@ const CoachingDetails = () => {
                     className="space-y-6"
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {coaching.classroomImages && coaching.classroomImages.map((image, index) => (
+                      {coaching.classroomImages?.map((image, index) => (
                         <motion.div
                           key={index}
                           className="group relative aspect-[4/3] rounded-xl overflow-hidden shadow-lg cursor-pointer"
@@ -522,10 +575,11 @@ const CoachingDetails = () => {
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
-                          <img
+                          <ImageWithFallback
                             src={image}
                             alt={`Classroom ${index + 1}`}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                            fallbackSrc="/default-classroom.jpg"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                             <div className="absolute bottom-0 left-0 right-0 p-4">
