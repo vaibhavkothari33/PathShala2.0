@@ -71,11 +71,11 @@ const StudentDashboard = () => {
           : "₹2000",
         students: coaching.totalStudents || 0,
 
-        image: coaching.images_coverImage
-          ? (coaching.images_coverImage.startsWith('http')
-            ? coaching.images_coverImage  // If it's already a URL, use it directly
-            : `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/${coaching.images_coverImage}`)
-          : "https://upload.wikimedia.org/wikipedia/commons/b/b0/Bennett_University_.jpg",
+        image: coaching.images_coverImage 
+          ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/files/${coaching.images_coverImage}`
+          : coaching.images_logo 
+            ? `${import.meta.env.VITE_APPWRITE_STORAGE_URL}/files/${coaching.images_logo}`
+            : "/default-coaching.jpg",
 
         location: coaching.address || "Address not available",
         city: coaching.city || "",
@@ -192,17 +192,22 @@ const StudentDashboard = () => {
     });
   };
 
+  useEffect(() => {
+    console.log('Storage URL:', import.meta.env.VITE_APPWRITE_STORAGE_URL);
+    console.log('Sample coaching center:', coachingCenters[0]);
+  }, [coachingCenters]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
       {/* Enhanced Header */}
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div className="flex items-center space-x-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+          <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col space-y-2 sm:flex-row sm:items-center sm:space-y-0 sm:space-x-4">
               <motion.h1
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent"
+                className="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent"
               >
                 Find Coaching Centers
               </motion.h1>
@@ -210,30 +215,28 @@ const StudentDashboard = () => {
                 <motion.div
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center px-3 py-1 bg-blue-50 rounded-full text-blue-600"
+                  className="inline-flex items-center px-3 py-1 bg-blue-50 rounded-full text-blue-600"
                 >
                   <MapPin className="h-4 w-4 mr-1" />
                   <span className="text-sm font-medium">Near you</span>
                 </motion.div>
               )}
             </div>
-            <div className="mt-4 md:mt-0">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="inline-flex items-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg"
-              >
-                <BookOpen className="h-5 w-5 mr-2" />
-                My Enrolled Courses
-              </motion.button>
-            </div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg"
+            >
+              <BookOpen className="h-5 w-5 mr-2" />
+              My Enrolled Courses
+            </motion.button>
           </div>
         </div>
       </div>
 
       {/* Enhanced Search and Filters */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex flex-col md:flex-row md:items-center space-y-4 md:space-y-0 md:space-x-4">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+        <div className="flex flex-col space-y-4 sm:space-y-0 sm:flex-row sm:items-center sm:space-x-4">
           <div className="relative flex-1">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
@@ -246,12 +249,11 @@ const StudentDashboard = () => {
               />
             </div>
           </div>
-
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center justify-center px-4 py-3 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md"
+            className="w-full sm:w-auto flex items-center justify-center px-4 py-3 border border-gray-200 rounded-xl bg-white hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow-md"
           >
             <Filter className="h-5 w-5 mr-2 text-indigo-600" />
             <span className="font-medium text-gray-700">Filters</span>
@@ -266,9 +268,9 @@ const StudentDashboard = () => {
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="mt-4 p-6 bg-white rounded-xl shadow-lg border border-gray-100"
+              className="mt-4 p-4 sm:p-6 bg-white rounded-xl shadow-lg border border-gray-100"
             >
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {/* Subject Filter */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Subject</label>
@@ -330,12 +332,12 @@ const StudentDashboard = () => {
                 </div>
               </div>
 
-              <div className="mt-6 flex justify-end space-x-4">
+              <div className="mt-6 flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-4">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={clearFilters}
-                  className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors duration-200"
+                  className="flex items-center justify-center px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors duration-200"
                 >
                   <X className="h-4 w-4 mr-1" />
                   Clear Filters
@@ -343,7 +345,7 @@ const StudentDashboard = () => {
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
-                  className="flex items-center px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg"
+                  className="flex items-center justify-center px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg"
                 >
                   Apply Filters
                 </motion.button>
@@ -369,7 +371,7 @@ const StudentDashboard = () => {
             <p className="mt-1 text-gray-500">Try adjusting your filters or search query</p>
           </div>
         ) : (
-          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="mt-6 sm:mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
             {filteredCenters.map((coaching, index) => (
               <motion.div
                 key={coaching.id}
@@ -378,16 +380,17 @@ const StudentDashboard = () => {
                 transition={{ delay: index * 0.1 }}
                 className="group bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300"
               >
-                <div className="relative h-48 rounded-t-xl overflow-hidden">
+                <div className="relative h-40 sm:h-48 rounded-t-xl overflow-hidden">
                   <img
                     src={coaching.image}
                     alt={coaching.name}
                     className="w-full h-full object-cover"
                     onError={(e) => {
-                      e.target.src = "https://upload.wikimedia.org/wikipedia/commons/b/b0/Bennett_University_.jpg";
+                      console.error(`Failed to load image for ${coaching.name}:`, e);
+                      e.target.src = "/default-coaching.jpg";
                     }}
                   />
-                  <div className="absolute inset-0 duration-300" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
                   <div className="absolute bottom-4 left-4 right-4 flex justify-between items-center">
                     <h3 className="text-lg font-semibold text-white">{coaching.name}</h3>
                     <div className="px-3 py-1 bg-white rounded-full text-indigo-600 font-medium text-sm">
@@ -396,72 +399,75 @@ const StudentDashboard = () => {
                   </div>
                 </div>
 
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                      <span className="ml-1 text-2xl font-medium">{coaching.name}</span>
+                <div className="p-4 sm:p-6">
+                  <div className="flex flex-col space-y-2 sm:space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xl sm:text-2xl font-medium truncate">{coaching.name}</h3>
                     </div>
-                  </div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center">
-                      <Star className="h-5 w-5 text-yellow-400" />
-                      <span className="ml-1 font-medium">{coaching.rating}</span>
+                    
+                    <div className="flex flex-wrap items-center gap-2">
+                      <div className="flex items-center">
+                        <Star className="h-4 w-4 sm:h-5 sm:w-5 text-yellow-400" />
+                        <span className="ml-1 font-medium">{coaching.rating}</span>
+                      </div>
                       {coaching.reviews > 0 && (
-                        <>
-                          <span className="mx-2 text-gray-300">•</span>
-                          <span className="text-gray-600">{coaching.reviews} reviews</span>
-                        </>
+                        <span className="text-sm text-gray-600">({coaching.reviews} reviews)</span>
+                      )}
+                      {coaching.students > 0 && (
+                        <div className="flex items-center text-gray-600">
+                          <Users className="h-4 w-4 sm:h-5 sm:w-5 mr-1" />
+                          <span className="text-sm">{coaching.students} students</span>
+                        </div>
                       )}
                     </div>
-                    {coaching.students > 0 && (
-                      <div className="flex items-center text-gray-600">
-                        <Users className="h-5 w-5 mr-1" />
-                        <span>{coaching.students} students</span>
-                      </div>
-                    )}
-                  </div>
 
-                  <div className="space-y-2 mb-4">
-                    {coaching.location && (
-                      <div className="flex items-center text-gray-600">
-                        <MapPin className="h-4 w-4 mr-2 text-indigo-500" />
-                        <span className="text-sm">{coaching.location}</span>
-                      </div>
-                    )}
-                    {coaching.availability && (
-                      <div className="flex items-center text-gray-600">
-                        <Clock className="h-4 w-4 mr-2 text-indigo-500" />
-                        <span className="text-sm">{coaching.availability}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {coaching.subjects.length > 0 && (
-                    <div className="flex flex-wrap gap-2 mb-6">
-                      {coaching.subjects.map((subject, index) => (
-                        <span
-                          key={index}
-                          className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-medium hover:bg-indigo-100 transition-colors duration-200"
-                        >
-                          {subject}
-                        </span>
-                      ))}
+                    <div className="space-y-2">
+                      {coaching.location && (
+                        <div className="flex items-center text-gray-600">
+                          <MapPin className="h-4 w-4 mr-2 text-indigo-500 flex-shrink-0" />
+                          <span className="text-sm truncate">{coaching.location}</span>
+                        </div>
+                      )}
+                      {coaching.availability && (
+                        <div className="flex items-center text-gray-600">
+                          <Clock className="h-4 w-4 mr-2 text-indigo-500 flex-shrink-0" />
+                          <span className="text-sm truncate">{coaching.availability}</span>
+                        </div>
+                      )}
                     </div>
-                  )}
 
-                  <Link
-                    to={`/coaching/${coaching.slug}`}
-                    className="block"
-                  >
-                    <motion.button
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full flex items-center justify-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg group"
+                    {coaching.subjects.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {coaching.subjects.slice(0, 3).map((subject, index) => (
+                          <span
+                            key={index}
+                            className="px-2 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-medium"
+                          >
+                            {subject}
+                          </span>
+                        ))}
+                        {coaching.subjects.length > 3 && (
+                          <span className="px-2 py-1 bg-gray-50 text-gray-600 rounded-full text-xs font-medium">
+                            +{coaching.subjects.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    <Link
+                      to={`/coaching/${coaching.slug}`}
+                      className="block mt-2"
                     >
-                      View Details
-                      <ArrowRight className="ml-2 h-5 w-5 transform group-hover:translate-x-1 transition-transform duration-200" />
-                    </motion.button>
-                  </Link>
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        className="w-full flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg group"
+                      >
+                        View Details
+                        <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5 transform group-hover:translate-x-1 transition-transform duration-200" />
+                      </motion.button>
+                    </Link>
+                  </div>
                 </div>
               </motion.div>
             ))}

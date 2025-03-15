@@ -225,21 +225,23 @@ const CoachingRegistration = () => {
   const handleBasicInfoChange = (e) => {
     const { name, value } = e.target;
     
-    // Special handling for phone number
-    if (name === 'phone') {
-      // Only allow numbers and limit to 10 digits
-      const phoneValue = value.replace(/\D/g, '').slice(0, 10);
+    try {
+      if (name === 'phone') {
+        const phoneValue = value.replace(/\D/g, '').slice(0, 10);
+        setFormData(prev => ({
+          ...prev,
+          basicInfo: { ...prev.basicInfo, [name]: phoneValue }
+        }));
+        return;
+      }
+
       setFormData(prev => ({
         ...prev,
-        basicInfo: { ...prev.basicInfo, [name]: phoneValue }
+        basicInfo: { ...prev.basicInfo, [name]: value }
       }));
-      return;
+    } catch (error) {
+      console.error('Error updating form:', error);
     }
-
-    setFormData(prev => ({
-      ...prev,
-      basicInfo: { ...prev.basicInfo, [name]: value }
-    }));
   };
 
   // Enhanced image upload handler
@@ -480,6 +482,16 @@ const CoachingRegistration = () => {
     }
   };
 
+  useEffect(() => {
+    const handleError = (error) => {
+      console.error('Runtime error:', error);
+      toast.error('Something went wrong. Please try again.');
+    };
+
+    window.addEventListener('error', handleError);
+    return () => window.removeEventListener('error', handleError);
+  }, []);
+
   if (isLoading) return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
@@ -572,7 +584,7 @@ const CoachingRegistration = () => {
 
   const ContentWrapper = ({ children }) => (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8">
+      <div className="bg-white rounded-2xl shadow-xl p-4 md:p-6">
         {children}
       </div>
     </div>
@@ -620,16 +632,17 @@ const CoachingRegistration = () => {
   );
 
   // Update the input field to show error messages
-  const InputField = ({ label, name, type = 'text', value, onChange, error, ...props }) => (
+  const InputField = ({ label, name, type = 'text', value, onChange, error, required, ...props }) => (
     <div>
       <label className={labelClasses}>
-        {label} {props.required && '*'}
+        {label} {required && <span className="text-red-500">*</span>}
       </label>
       <input
         type={type}
         name={name}
         value={value}
         onChange={onChange}
+        required={required}
         className={`${inputClasses} ${error ? 'border-red-500' : ''}`}
         {...props}
       />
@@ -640,7 +653,7 @@ const CoachingRegistration = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-indigo-50/20 to-blue-50/20">
+    <div className="min-h-screen bg-gray-50">
       <Header currentStep={currentStep} steps={steps} />
       
       <ContentWrapper>
@@ -649,24 +662,16 @@ const CoachingRegistration = () => {
             <section className="basic-info">
               <h2 className="text-xl font-semibold text-gray-900 mb-6">Basic Information</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className={labelClasses}>
-                    Coaching Name {required && '*'}
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={formData.basicInfo.name}
-                    onChange={handleBasicInfoChange}
-                    className={`${inputClasses} ${formErrors.basicInfo?.name ? 'border-red-500' : ''}`}
-                    placeholder="Enter coaching name"
-                    autoComplete="off"
-                    style={{ WebkitAppearance: 'none' }}
-                  />
-                  {formErrors.basicInfo?.name && (
-                    <p className="mt-1 text-sm text-red-500">{formErrors.basicInfo.name}</p>
-                  )}
-                </div>
+                <InputField
+                  label="Coaching Name"
+                  name="name"
+                  required={true}
+                  value={formData.basicInfo.name}
+                  onChange={handleBasicInfoChange}
+                  error={formErrors.basicInfo?.name}
+                  placeholder="Enter coaching name"
+                  autoComplete="off"
+                />
 
                 <div className="md:col-span-2">
                   <label className={labelClasses}>
