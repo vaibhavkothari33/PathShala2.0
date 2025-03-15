@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Star, Clock, Users, Phone, Mail, Globe, Home,
   BookOpen, Award, CheckCircle, ChevronLeft, Calendar, Camera,
-  Info, Briefcase, GraduationCap, X, ZoomIn, ArrowLeft, ArrowRight
+  Info, Briefcase, GraduationCap, X, ZoomIn, ArrowLeft, ArrowRight, User
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { databases } from '../../config/appwrite';
@@ -76,13 +76,28 @@ const CoachingDetails = () => {
   }, [slug, navigate]);
 
   const getImageUrl = (fileId) => {
-    if (!fileId) return null;
+    if (!fileId) {
+      console.log('No fileId provided for image');
+      return null;
+    }
     
-    const storageUrl = import.meta.env.VITE_APPWRITE_STORAGE_URL || 'https://cloud.appwrite.io/v1';
-    const bucketId = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
-    const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
+    try {
+      const storageUrl = import.meta.env.VITE_APPWRITE_STORAGE_URL;
+      const bucketId = import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID;
+      const projectId = import.meta.env.VITE_APPWRITE_PROJECT_ID;
 
-    return `${storageUrl}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
+      if (!bucketId || !projectId) {
+        console.error('Missing storage configuration:', { bucketId, projectId });
+        return null;
+      }
+
+      const imageUrl = `${storageUrl}/storage/buckets/${bucketId}/files/${fileId}/view?project=${projectId}`;
+      console.log('Generated image URL:', imageUrl);
+      return imageUrl;
+    } catch (error) {
+      console.error('Error constructing image URL:', error);
+      return null;
+    }
   };
 
   const formatFaculty = (data) => {
@@ -149,6 +164,22 @@ const CoachingDetails = () => {
     } finally {
       setIsBookingDemo(false);
     }
+  };
+
+  const ImageWithFallback = ({ src, alt, className, fallbackSrc }) => {
+    const [error, setError] = useState(false);
+
+    return (
+      <img
+        src={error ? fallbackSrc : src}
+        alt={alt}
+        className={className}
+        onError={(e) => {
+          console.error(`Image load error for ${alt}:`, e);
+          setError(true);
+        }}
+      />
+    );
   };
 
   const ImageModal = ({ images, currentImage, onClose, onNext, onPrevious }) => (
@@ -251,16 +282,55 @@ const CoachingDetails = () => {
     </motion.div>
   );
 
+  const FacultyCard = ({ teacher }) => (
+    <div className="border rounded-lg p-4">
+      <div className="flex items-center">
+        {teacher.image ? (
+          <ImageWithFallback
+            src={teacher.image}
+            alt={teacher.name}
+            className="w-10 h-10 rounded-full object-cover mr-3"
+            fallbackSrc="/default-faculty.jpg"
+          />
+        ) : (
+          <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
+            <User className="h-6 w-6 text-gray-500" />
+          </div>
+        )}
+        <div className="flex-1 min-w-0">
+          <h3 className="text-lg font-semibold text-gray-900 mb-1">{teacher.name}</h3>
+          <div className="space-y-1 text-sm">
+            <div className="flex items-center text-gray-700">
+              <BookOpen className="h-4 w-4 mr-2 text-indigo-500" />
+              <span className="truncate">{teacher.subject}</span>
+            </div>
+            <div className="flex items-center text-gray-700">
+              <Award className="h-4 w-4 mr-2 text-indigo-500" />
+              <span className="truncate">{teacher.qualification}</span>
+            </div>
+            <div className="flex items-center text-gray-700">
+              <Briefcase className="h-4 w-4 mr-2 text-indigo-500" />
+              <span>{teacher.experience} experience</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section with Improved Styling */}
       <div className="relative h-[200px] sm:h-[300px]"> {/* Adjust height for mobile */}
-        {coaching.images.coverImage && (
-          <img
+        {coaching.images.coverImage ? (
+          <ImageWithFallback
             src={coaching.images.coverImage}
-            alt={coaching.name}
+            alt={`${coaching.name} cover`}
             className="w-full h-full object-cover"
+            fallbackSrc="/default-cover.jpg"
           />
+        ) : (
+          <div className="w-full h-full bg-gradient-to-r from-indigo-500 to-purple-500" />
         )}
         <div className="absolute inset-0 bg-gradient-to-b from-black/70 to-black/40" />
         <div className="absolute inset-0 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col justify-end pb-6"> {/* Changed to justify-end */}
@@ -273,10 +343,11 @@ const CoachingDetails = () => {
           </Link>
           <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-8">
             {coaching.images.logo && (
-              <img
+              <ImageWithFallback
                 src={coaching.images.logo}
                 alt={`${coaching.name} logo`}
                 className="h-16 w-16 sm:h-20 sm:w-20 rounded-lg shadow-xl border-2 border-white/20 mb-4 sm:mb-0"
+                fallbackSrc="/default-logo.jpg"
               />
             )}
             <div>
@@ -449,37 +520,7 @@ const CoachingDetails = () => {
                     className="space-y-4"
                   >
                     {coaching.faculty && coaching.faculty.map((teacher, index) => (
-                      <div
-                        key={index}
-                        className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm"
-                      >
-                        <div className="flex items-center space-x-4">
-                          {teacher.image && (
-                            <img
-                              src={teacher.image}
-                              alt={teacher.name}
-                              className="h-16 w-16 rounded-full object-cover border-2 border-indigo-100"
-                            />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-1">{teacher.name}</h3>
-                            <div className="space-y-1 text-sm">
-                              <div className="flex items-center text-gray-700">
-                                <BookOpen className="h-4 w-4 mr-2 text-indigo-500" />
-                                <span className="truncate">{teacher.subject}</span>
-                              </div>
-                              <div className="flex items-center text-gray-700">
-                                <Award className="h-4 w-4 mr-2 text-indigo-500" />
-                                <span className="truncate">{teacher.qualification}</span>
-                              </div>
-                              <div className="flex items-center text-gray-700">
-                                <Briefcase className="h-4 w-4 mr-2 text-indigo-500" />
-                                <span>{teacher.experience} experience</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <FacultyCard key={index} teacher={teacher} />
                     ))}
                   </motion.div>
                 )}
@@ -491,7 +532,7 @@ const CoachingDetails = () => {
                     className="space-y-6"
                   >
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {coaching.classroomImages && coaching.classroomImages.map((image, index) => (
+                      {coaching.classroomImages?.map((image, index) => (
                         <motion.div
                           key={index}
                           className="group relative aspect-[4/3] rounded-xl overflow-hidden shadow-lg cursor-pointer"
@@ -499,10 +540,11 @@ const CoachingDetails = () => {
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                         >
-                          <img
+                          <ImageWithFallback
                             src={image}
                             alt={`Classroom ${index + 1}`}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                            fallbackSrc="/default-classroom.jpg"
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                             <div className="absolute bottom-0 left-0 right-0 p-4">
