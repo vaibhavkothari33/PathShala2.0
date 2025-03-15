@@ -119,7 +119,7 @@ const CoachingDetails = () => {
               <div className="sticky top-0 bg-white z-10 border-b border-gray-100">
                 <div className="overflow-x-auto scrollbar-hide">
                   <nav className="flex min-w-full">
-                    {['overview', 'batches', 'faculty', 'gallery'].map((tab) => (
+                    {['Overview', 'Batches', 'Faculty', 'Gallery'].map((tab) => (
                       <button
                         key={tab}
                         onClick={() => setActiveTab(tab)}
@@ -129,10 +129,10 @@ const CoachingDetails = () => {
                             : 'border-transparent text-gray-500'
                         } flex-1 min-w-[120px] flex items-center justify-center px-3 py-4 border-b-2 text-sm font-medium transition-colors duration-200`}
                       >
-                        {tab === 'overview' && <Info className="h-4 w-4 mr-2" />}
-                        {tab === 'batches' && <Calendar className="h-4 w-4 mr-2" />}
-                        {tab === 'faculty' && <GraduationCap className="h-4 w-4 mr-2" />}
-                        {tab === 'gallery' && <Camera className="h-4 w-4 mr-2" />}
+                        {tab === 'Overview' && <Info className="h-4 w-4 mr-2" />}
+                        {tab === 'Batches' && <Calendar className="h-4 w-4 mr-2" />}
+                        {tab === 'Faculty' && <GraduationCap className="h-4 w-4 mr-2" />}
+                        {tab === 'Gallery' && <Camera className="h-4 w-4 mr-2" />}
                         {tab}
                       </button>
                     ))}
@@ -142,7 +142,7 @@ const CoachingDetails = () => {
 
               {/* Enhanced Tab Content */}
               <div className="p-4 sm:p-6 md:p-8">
-                {activeTab === 'overview' && (
+                {activeTab === 'Overview' && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -200,7 +200,7 @@ const CoachingDetails = () => {
                   </motion.div>
                 )}
 
-                {activeTab === 'batches' && (
+                {activeTab === 'Batches' && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -250,7 +250,7 @@ const CoachingDetails = () => {
                   </motion.div>
                 )}
 
-                {activeTab === 'faculty' && (
+                {activeTab === 'Faculty' && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
@@ -292,7 +292,7 @@ const CoachingDetails = () => {
                   </motion.div>
                 )}
 
-                {activeTab === 'gallery' && (
+                {activeTab === 'Gallery' && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
