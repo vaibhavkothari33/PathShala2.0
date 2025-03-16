@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
@@ -22,6 +22,7 @@ const Register = () => {
   });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState(null);
 
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
@@ -54,6 +55,13 @@ const Register = () => {
       throw error;
     }
   };
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -318,21 +326,76 @@ const Register = () => {
                   </div>
                 </div>
 
-                <div>
-                  <label htmlFor="profilePicture" className="block text-sm font-medium text-gray-700">
-                    Profile Picture (optional)
-                  </label>
-                  <div className="mt-1 relative">
-                    <input
-                      id="profilePicture"
-                      name="profilePicture"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleInputChange}
-                      className="appearance-none rounded-lg relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    />
-                  </div>
-                </div>
+                <div className="space-y-2">
+  <label htmlFor="profilePicture" className="block text-sm font-medium text-gray-700">
+    Profile Picture (optional)
+  </label>
+  <div className="mt-1 flex items-center space-x-6">
+    {/* Preview area */}
+    <div className="flex-shrink-0">
+      {previewUrl ? (
+        <div className="relative">
+          <img 
+            src={previewUrl} 
+            alt="Profile preview" 
+            className="h-20 w-20 rounded-full object-cover border-2 border-indigo-500"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              setPreviewUrl(null);
+              setFormData(prev => ({ ...prev, profilePicture: null }));
+            }}
+            className="absolute -top-2 -right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-400"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+            </svg>
+          </button>
+        </div>
+      ) : (
+        <div className="h-20 w-20 rounded-full bg-gray-100 flex items-center justify-center border-2 border-dashed border-gray-300">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+          </svg>
+        </div>
+      )}
+    </div>
+    
+    {/* Upload button and file input */}
+    <div className="flex-grow">
+      <label 
+        htmlFor="profilePicture"
+        className="cursor-pointer inline-flex items-center px-4 py-2 border border-indigo-300 rounded-md shadow-sm text-sm font-medium text-indigo-600 bg-white hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-200"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12" />
+        </svg>
+        {previewUrl ? 'Change Photo' : 'Upload Photo'}
+      </label>
+      <input
+        id="profilePicture"
+        name="profilePicture"
+        type="file"
+        accept="image/*"
+        onChange={(e) => {
+          handleInputChange(e);
+          
+          // Add preview functionality
+          if (e.target.files?.[0]) {
+            const file = e.target.files[0];
+            const url = URL.createObjectURL(file);
+            setPreviewUrl(url);
+          }
+        }}
+        className="sr-only" // Hide the actual input
+      />
+      <p className="mt-1 text-xs text-gray-500">
+        JPEG, PNG or GIF up to 5MB
+      </p>
+    </div>
+  </div>
+</div>
               </div>
 
               <motion.button
