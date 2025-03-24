@@ -4,7 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   MapPin, Star, Clock, Users, Phone, Mail, Globe, Home,
   BookOpen, Award, CheckCircle, ChevronLeft, Calendar, Camera,
-  Info, Briefcase, GraduationCap, X, ZoomIn, ArrowLeft, ArrowRight, User, MessageCircle
+  Info, Briefcase, GraduationCap, X, ZoomIn, ArrowLeft, ArrowRight, User, MessageCircle,
+  Bot, Download, Share, Eraser, BookmarkPlus, ThumbsUp, ThumbsDown, Loader2, Send, Square
 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import coachingService from '../../services/coachingService';
@@ -710,7 +711,10 @@ const CoachingDetails = () => {
               animate={{ opacity: 1, y: 0 }}
               className="bg-gradient-to-br from-indigo-600 to-indigo-800 rounded-xl sm:rounded-2xl shadow-xl p-6 sm:p-8 text-white"
             >
-              <h3 className="text-xl font-semibold mb-4">Quick Actions</h3>
+              <h3 className="text-xl font-semibold mb-4 flex items-center">
+                <Bot className="h-5 w-5 mr-2" />
+                Quick Actions
+              </h3>
               <div className="space-y-3">
                 <button 
                   onClick={() => setShowBookDemoModal(true)}
@@ -719,22 +723,20 @@ const CoachingDetails = () => {
                   <Calendar className="h-4 w-4 mr-2" />
                   Book Free Demo
                 </button>
-                {coaching.brochureUrl ? (
-                  <a 
-                    href={coaching.brochureUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full bg-indigo-500 text-white px-4 py-3 rounded-lg hover:bg-indigo-400 transition-colors duration-200 font-medium flex items-center justify-center"
-                  >
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Download Brochure
-                  </a>
-                ) : (
-                  <button className="w-full bg-indigo-500 text-white px-4 py-3 rounded-lg hover:bg-indigo-400 transition-colors duration-200 font-medium flex items-center justify-center">
-                    <MessageCircle className="h-4 w-4 mr-2" />
-                    Contact Coaching
-                  </button>
-                )}
+                <button 
+                  onClick={downloadChat}
+                  className="w-full bg-indigo-500 text-white px-4 py-3 rounded-lg hover:bg-indigo-400 transition-colors duration-200 font-medium flex items-center justify-center"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download Details
+                </button>
+                <button 
+                  onClick={shareChat}
+                  className="w-full bg-indigo-500 text-white px-4 py-3 rounded-lg hover:bg-indigo-400 transition-colors duration-200 font-medium flex items-center justify-center"
+                >
+                  <Share className="h-4 w-4 mr-2" />
+                  Share
+                </button>
               </div>
             </motion.div>
 
@@ -745,7 +747,10 @@ const CoachingDetails = () => {
               transition={{ delay: 0.2 }}
               className="bg-white rounded-xl shadow-lg p-4 sm:p-6"
             >
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Contact Information</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <MessageCircle className="h-5 w-5 mr-2 text-indigo-500" />
+                Contact Information
+              </h3>
               <div className="space-y-4">
                 {/* Address */}
                 {coaching.address && (
@@ -807,7 +812,10 @@ const CoachingDetails = () => {
               transition={{ delay: 0.3 }}
               className="bg-white rounded-xl shadow-lg p-6"
             >
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">Additional Information</h3>
+              <h3 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <Info className="h-5 w-5 mr-2 text-indigo-500" />
+                Additional Information
+              </h3>
               <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">Established</span>
