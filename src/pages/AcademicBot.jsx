@@ -148,16 +148,22 @@ Choose a subject above or just ask me anything! I'm here to help you learn.`
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/chat', {
+      // Using Google's Gemini API (make sure to add your API key to .env)
+      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_GEMINI_API_KEY}`
         },
         body: JSON.stringify({
-          message: userMessage,
-          subject: selectedSubject?.id,
-          history: messages.slice(-6),
-        }),
+          contents: [{
+            parts: [{
+              text: `You are a helpful academic tutor. The student is asking about ${selectedSubject?.name || 'a topic'}. 
+              Their question is: ${userMessage}
+              Please provide a clear, educational response with examples if relevant.`
+            }]
+          }]
+        })
       });
 
       if (!response.ok) {
@@ -165,10 +171,16 @@ Choose a subject above or just ask me anything! I'm here to help you learn.`
       }
 
       const data = await response.json();
-      setMessages(prev => [...prev, { role: 'assistant', content: data.response }]);
+      const botResponse = data.candidates[0].content.parts[0].text;
+
+      setMessages(prev => [...prev, { 
+        role: 'assistant', 
+        content: botResponse 
+      }]);
     } catch (error) {
       console.error('Chat error:', error);
       toast.error('Failed to get response. Please try again.');
+      // Remove the user's message if the request failed
       setMessages(prev => prev.slice(0, -1));
     } finally {
       setIsLoading(false);
