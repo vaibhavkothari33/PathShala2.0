@@ -2,203 +2,130 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 
 // Initialize the Gemini AI model
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+const model = genAI.getGenerativeModel({ 
+  model: "gemini--flash",
+  systemInstruction: `You are an expert academic tutor with deep knowledge across multiple subjects. Your goal is to provide clear, engaging, and educational responses that help students learn.
 
-// Improved system prompt for better academic assistance
-const SYSTEM_PROMPT = `You are an expert academic tutor with deep knowledge across multiple subjects. Your role is to:
+Key Principles:
+- Explain concepts in a clear, step-by-step manner
+- Adapt explanations to the student's academic level
+- Use relevant examples and analogies
+- Encourage critical thinking
+- Provide practical insights and context
+- Break down complex ideas into digestible parts
 
-1. Provide clear, detailed explanations tailored to the student's academic level
-2. Break down complex concepts into understandable parts
-3. Use relevant examples and analogies to illustrate points
-4. Guide students through problem-solving steps
-5. Encourage critical thinking and deeper understanding
-6. Provide practice problems when appropriate
-7. Correct misconceptions gently and constructively
+Response Guidelines:
+1. Begin with a concise, direct answer
+2. Provide a detailed, structured explanation
+3. Include practical examples or real-world applications
+4. Suggest practice problems or further exploration
+5. Maintain an encouraging and supportive tone`
+});
 
-When responding:
-- Start with a brief, direct answer
-- Follow with a detailed explanation
-- Include relevant examples or diagrams when helpful
-- End with a quick summary or key takeaway
-- If relevant, suggest related concepts to explore
+// Subject-specific context mapping
+const SUBJECT_CONTEXTS = {
+  math: "Focus on clear mathematical reasoning, step-by-step problem-solving, and breaking down complex mathematical concepts into understandable parts.",
+  physics: "Emphasize real-world applications, provide clear explanations of physical principles, and use diagrams or thought experiments to illustrate concepts.",
+  chemistry: "Explain molecular interactions, chemical processes, and theoretical concepts with clear, visual explanations.",
+  biology: "Highlight interconnections in biological systems, explain processes with clarity, and relate concepts to broader ecological or health contexts.",
+  computer: "Provide clear code explanations, best practices, debugging insights, and practical programming concepts.",
+  literature: "Analyze texts deeply, explain literary techniques, provide contextual insights, and encourage critical interpretation.",
+  history: "Provide historical context, explain cause-and-effect relationships, and connect historical events to broader societal understanding.",
+  general: "Provide a comprehensive, interdisciplinary approach to understanding the topic."
+};
 
-Subject expertise includes:
-- Mathematics (Algebra, Geometry, Calculus)
-- Sciences (Physics, Chemistry, Biology)
-- Literature and Language Arts
-- History and Social Studies
-- Computer Science and Programming
-
-Remember to:
-- Use age-appropriate language and explanations
-- Encourage problem-solving skills
-- Provide step-by-step guidance when needed
-- Include practice questions when relevant
-- Be encouraging and supportive`;
-
-export async function chat(userMessage, chatHistory = []) {
-  try {
-    // Format the chat history for context
-    const formattedHistory = chatHistory.map(msg => ({
-      role: msg.role,
-      parts: msg.content,
-    }));
-
-    // Create a chat instance with history
-    const chat = model.startChat({
-      history: formattedHistory,
-      generationConfig: {
-        maxOutputTokens: 2048,
-        temperature: 0.7,
-        topP: 0.8,
-        topK: 40,
-      },
-    });
-
-    // Enhance the user's question with academic context
-    const enhancedPrompt = `${SYSTEM_PROMPT}
-
-Question from student: ${userMessage}
-
-Please provide a helpful, educational response that:
-1. Addresses the specific question
-2. Explains the underlying concepts
-3. Includes relevant examples
-4. Offers practice opportunities if applicable
-5. Suggests related topics to explore`;
-
-    // Generate response
-    const result = await chat.sendMessage(enhancedPrompt);
-    const response = await result.response;
-    
-    // Format the response for better readability
-    let formattedResponse = response.text();
-    
-    // Add markdown formatting if not present
-    if (!formattedResponse.includes('#') && !formattedResponse.includes('*')) {
-      formattedResponse = formatResponse(formattedResponse);
-    }
-
-    return formattedResponse;
-  } catch (error) {
-    console.error('Chat API error:', error);
-    throw new Error('Failed to generate response. Please try again.');
-  }
-}
-
-// Helper function to format the response with markdown
-function formatResponse(text) {
-  // Split response into sections
-  const sections = text.split('\n\n');
-  
-  let formatted = [];
-  
-  sections.forEach((section, index) => {
-    if (index === 0) {
-      // Main answer
-      formatted.push(`**${section.trim()}**\n`);
-    } else if (section.toLowerCase().includes('example')) {
-      // Example section
-      formatted.push(`### Example:\n${section.trim()}\n`);
-    } else if (section.toLowerCase().includes('practice')) {
-      // Practice problems
-      formatted.push(`### Practice:\n${section.trim()}\n`);
-    } else if (section.toLowerCase().includes('key takeaway') || section.toLowerCase().includes('summary')) {
-      // Summary section
-      formatted.push(`### Key Takeaway:\n${section.trim()}\n`);
-    } else if (section.toLowerCase().includes('related topics')) {
-      // Related topics
-      formatted.push(`### Related Topics to Explore:\n${section.trim()}\n`);
-    } else {
-      // Regular explanation
-      formatted.push(section.trim() + '\n');
-    }
-  });
-
-  return formatted.join('\n');
-}
-
-// Helper function to detect subject area
+// Detect subject based on keywords
 function detectSubject(message) {
-  const subjects = {
-    math: ['math', 'algebra', 'geometry', 'calculus', 'equation', 'number'],
-    physics: ['physics', 'force', 'energy', 'motion', 'gravity'],
-    chemistry: ['chemistry', 'reaction', 'molecule', 'atom', 'element'],
-    biology: ['biology', 'cell', 'organism', 'gene', 'evolution'],
-    literature: ['literature', 'book', 'poem', 'writing', 'author'],
-    history: ['history', 'war', 'civilization', 'period', 'century'],
-    programming: ['code', 'programming', 'function', 'algorithm', 'variable']
+  const lowercaseMessage = message.toLowerCase();
+  const subjectKeywords = {
+    math: ['math', 'algebra', 'geometry', 'calculus', 'equation', 'theorem'],
+    physics: ['physics', 'force', 'energy', 'motion', 'gravity', 'newton'],
+    chemistry: ['chemistry', 'molecule', 'atom', 'element', 'reaction', 'compound'],
+    biology: ['biology', 'cell', 'organism', 'gene', 'evolution', 'ecosystem'],
+    computer: ['code', 'programming', 'algorithm', 'software', 'computer', 'python'],
+    literature: ['book', 'poem', 'literature', 'novel', 'writing', 'story'],
+    history: ['history', 'war', 'civilization', 'event', 'period', 'historical']
   };
 
-  const lowercaseMessage = message.toLowerCase();
-  
-  for (const [subject, keywords] of Object.entries(subjects)) {
+  for (const [subject, keywords] of Object.entries(subjectKeywords)) {
     if (keywords.some(keyword => lowercaseMessage.includes(keyword))) {
       return subject;
     }
   }
-  
+
   return 'general';
 }
 
-// Helper function to get subject-specific prompts
-function getSubjectPrompt(subject) {
-  const subjectPrompts = {
-    math: `As a math tutor, focus on:
-- Breaking down problems step-by-step
-- Explaining mathematical concepts clearly
-- Providing visual representations when possible
-- Including practice problems with solutions`,
-    
-    physics: `As a physics tutor, focus on:
-- Connecting concepts to real-world applications
-- Using diagrams and illustrations
-- Explaining formulas and their derivations
-- Walking through problem-solving strategies`,
-    
-    chemistry: `As a chemistry tutor, focus on:
-- Explaining molecular interactions
-- Using molecular diagrams
-- Breaking down chemical reactions
-- Connecting to real-world applications`,
-    
-    biology: `As a biology tutor, focus on:
-- Explaining biological processes clearly
-- Using diagrams and illustrations
-- Connecting concepts to real-life examples
-- Explaining cause-and-effect relationships`,
-    
-    literature: `As a literature tutor, focus on:
-- Analyzing themes and literary devices
-- Providing textual evidence
-- Explaining writing techniques
-- Helping with essay structure`,
-    
-    history: `As a history tutor, focus on:
-- Explaining historical context
-- Making connections between events
-- Analyzing cause and effect
-- Providing relevant primary sources`,
-    
-    programming: `As a programming tutor, focus on:
-- Explaining code concepts clearly
-- Providing code examples
-- Following best practices
-- Debugging common issues`,
-    
-    general: `As a general tutor, focus on:
-- Breaking down concepts clearly
-- Providing relevant examples
-- Encouraging critical thinking
-- Checking understanding`
-  };
+// Format response with markdown
+function formatResponse(text) {
+  // Basic markdown formatting
+  const formatted = text
+    .replace(/^(.*?)$/gm, (match) => {
+      if (match.toLowerCase().includes('example')) return `### Example\n${match}`;
+      if (match.toLowerCase().includes('key point')) return `**${match}**`;
+      if (match.toLowerCase().includes('tip')) return `*Tip:* ${match}`;
+      return match;
+    });
 
-  return subjectPrompts[subject] || subjectPrompts.general;
+  return formatted;
 }
 
-// Export helper functions for potential future use
+// Main chat function
+export async function chat(userMessage, chatHistory = [], subject = 'general') {
+  try {
+    // Validate and prepare chat history
+    const validHistory = chatHistory
+      .filter(msg => msg.content && ['user', 'assistant'].includes(msg.role))
+      .map(msg => ({
+        role: msg.role === 'assistant' ? 'model' : 'user',
+        parts: [{ text: msg.content }]
+      }));
+
+    // Determine subject context
+    const subjectContext = SUBJECT_CONTEXTS[subject] || SUBJECT_CONTEXTS.general;
+
+    // Enhanced prompt with subject context
+    const enhancedPrompt = `Subject Context: ${subjectContext}
+
+Student's Question: ${userMessage}
+
+Provide a comprehensive response that:
+- Directly answers the question
+- Breaks down complex concepts
+- Includes relevant examples
+- Suggests learning strategies or practice
+- Maintains an engaging, educational tone`;
+
+    // Configure generation settings
+    const generationConfig = {
+      temperature: 0.7,
+      topP: 0.9,
+      topK: 40,
+      maxOutputTokens: 2048
+    };
+
+    // Start chat with history
+    const chat = model.startChat({
+      history: validHistory,
+      generationConfig
+    });
+
+    // Send message and get response
+    const result = await chat.sendMessage(enhancedPrompt);
+    const response = result.response;
+    
+    // Format and return response
+    let formattedResponse = formatResponse(response.text());
+    return formattedResponse;
+
+  } catch (error) {
+    console.error('Chat Generation Error:', error);
+    throw new Error('Failed to generate academic response. Please try again.');
+  }
+}
+
+// Helper functions export
 export const helpers = {
   detectSubject,
-  getSubjectPrompt,
   formatResponse
-}; 
+};
