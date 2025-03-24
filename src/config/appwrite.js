@@ -1,73 +1,57 @@
-import { Client, Databases, Storage, Account } from 'appwrite';
+import { Client, Account, Databases, Storage } from 'appwrite';
 import { getConfig } from '../utils/config';
 
 const config = getConfig();
 
-// Get environment variables
-const env = {
-    endpoint: import.meta.env.VITE_APPWRITE_ENDPOINT,
-    projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID,
+// Initialize Appwrite Client
+const client = new Client();
+
+// Set endpoint and project ID
+client
+    .setEndpoint('https://cloud.appwrite.io/v1')
+    .setProject(import.meta.env.VITE_APPWRITE_PROJECT_ID);
+
+// Initialize Appwrite services
+export const account = new Account(client);
+export const databases = new Databases(client);
+export const storage = new Storage(client);
+
+// Export configuration object
+export const appwriteConfig = {
     databaseId: import.meta.env.VITE_APPWRITE_DATABASE_ID,
     requestsCollectionId: import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID,
-    imagesBucketId: import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID
+    coachingCollectionId: import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID,
+    imagesBucketId: import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID,
 };
 
-// Validate environment variables
-const validateEnv = () => {
-    const required = [
-        'endpoint',
-        'projectId',
-        'databaseId',
-        'requestsCollectionId',
-        'imagesBucketId'
-    ];
+export default client;
 
-    const missing = required.filter(key => !env[key]);
+// Helper function to validate environment variables
+export const validateConfig = () => {
+    const required = {
+        'VITE_APPWRITE_ENDPOINT': config.endpoint,
+        'VITE_APPWRITE_PROJECT_ID': config.projectId,
+        'VITE_APPWRITE_DATABASE_ID': config.databaseId,
+        'VITE_APPWRITE_REQUESTS_COLLECTION_ID': config.requestsCollectionId,
+        'VITE_APPWRITE_IMAGES_BUCKET_ID': config.imagesBucketId
+    };
+
+    const missing = Object.entries(required)
+        .filter(([_, value]) => !value)
+        .map(([key]) => key);
 
     if (missing.length > 0) {
-        throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+        throw new Error(`Missing environment variables: ${missing.join(', ')}`);
     }
 
     return true;
 };
 
-// Initialize Appwrite
-const initializeAppwrite = () => {
-    validateEnv();
-
-    const client = new Client()
-        .setEndpoint(env.endpoint)
-        .setProject(env.projectId);
-
-    return {
-        client,
-        account: new Account(client),
-        databases: new Databases(client),
-        env
-    };
-};
-
-const appwrite = initializeAppwrite();
-
-// Initialize services
-export const { databases, storage } = appwrite;
-export const account = appwrite.account;
-
 // Add this for debugging
 console.log('Appwrite Configuration:', {
-    endpoint: env.endpoint,
-    projectId: env.projectId
+    endpoint: config.endpoint,
+    projectId: config.projectId
 });
-
-// Export the client as both default and named export
-export { appwrite.client };
-export default appwrite.client;
-
-export const appwriteConfig = {
-    databaseId: env.databaseId,
-    coachingCollectionId: config.VITE_APPWRITE_COACHING_COLLECTION_ID,
-    imagesBucketId: env.imagesBucketId
-};
 
 // Add this function to check auth status
 export const checkAuthStatus = async () => {

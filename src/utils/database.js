@@ -1,4 +1,5 @@
-import { databases, env } from '../config/appwrite';
+import { databases } from '../config/appwrite';
+import { config } from '../config/appwrite';
 import { Query } from 'appwrite';
 
 export const databaseService = {
@@ -6,8 +7,8 @@ export const databaseService = {
     getRequests: async (coachingId) => {
         try {
             const response = await databases.listDocuments(
-                env.databaseId,
-                env.requestsCollectionId,
+                config.databaseId,
+                config.requestsCollectionId,
                 [
                     Query.equal('coaching_id', coachingId),
                     Query.orderDesc('$createdAt'),
@@ -25,8 +26,8 @@ export const databaseService = {
     createRequest: async (requestData) => {
         try {
             return await databases.createDocument(
-                env.databaseId,
-                env.requestsCollectionId,
+                config.databaseId,
+                config.requestsCollectionId,
                 'unique()',
                 requestData
             );
@@ -40,8 +41,8 @@ export const databaseService = {
     updateRequest: async (requestId, data) => {
         try {
             return await databases.updateDocument(
-                env.databaseId,
-                env.requestsCollectionId,
+                config.databaseId,
+                config.requestsCollectionId,
                 requestId,
                 data
             );

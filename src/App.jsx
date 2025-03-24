@@ -15,28 +15,17 @@ import AuthCallback from './components/AuthCallback';
 import ErrorBoundary from './components/ErrorBoundary';
 import AcademicBot from './pages/AcademicBot';
 import { useState, useEffect } from 'react';
+import { validateConfig } from './config/appwrite';
 
 function App() {
     const [error, setError] = useState(null);
 
     useEffect(() => {
         try {
-            // Check if all required environment variables are present
-            const required = [
-                'VITE_APPWRITE_ENDPOINT',
-                'VITE_APPWRITE_PROJECT_ID',
-                'VITE_APPWRITE_DATABASE_ID',
-                'VITE_APPWRITE_REQUESTS_COLLECTION_ID',
-                'VITE_APPWRITE_IMAGES_BUCKET_ID'
-            ];
-
-            const missing = required.filter(key => !import.meta.env[key]);
-
-            if (missing.length > 0) {
-                throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
-            }
+            validateConfig();
         } catch (err) {
             setError(err.message);
+            console.error('Configuration error:', err);
         }
     }, []);
 
