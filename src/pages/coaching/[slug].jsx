@@ -10,6 +10,7 @@ import { toast } from 'react-hot-toast';
 import coachingService from '../../services/coachingService';
 import { useAuth } from '../../context/AuthContext';
 import { databases } from '../../config/appwrite';
+import { ID } from 'appwrite';
 
 const CoachingDetails = () => {
   const { slug } = useParams();
@@ -159,107 +160,43 @@ const CoachingDetails = () => {
         databaseId,
         requestsCollectionId,
         userId: user.$id,
-        coachingId: coaching?.$id
+        coachingId: coaching?.id
       });
 
       if (!databaseId || !requestsCollectionId) {
         throw new Error('Missing database configuration. Please check your environment variables.');
       }
 
-      if (!coaching || !coaching.$id) {
+      if (!coaching || !coaching.id) {
         throw new Error('Coaching data is missing or invalid.');
       }
 
       // Create request data object
       const requestData = {
-          student_id: user.$id,
-          studentName: user.name || 'Student',
-          coaching_id: coaching.$id,
-          coachingName: coaching.name,
-          type: 'demo',
-          status: 'pending',
-          message: bookingMessage,
-          createdAt: new Date().toISOString()
+        user_id: user.$id,
+        coaching_id: coaching.id,
+        type: 'demo',
+        status: 'pending',
+        message: bookingMessage || 'Demo class request',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
 
-      console.log('Creating demo request with data:', requestData);
-
-      // Create a new demo request document
+      // Create the request document
       const response = await databases.createDocument(
         databaseId,
         requestsCollectionId,
-        'unique()',
+        ID.unique(),
         requestData
       );
 
-      console.log('Demo request created successfully:', response);
-
-      // Show success message with more details
-      toast.success(
-        <div>
-          <p className="font-medium">Demo request sent!</p>
-          <p className="text-sm">The coaching center will contact you soon with class details.</p>
-        </div>,
-        { duration: 5000 }
-      );
-      
-      setBookingMessage('');
-      
-      // Create a notification for the student
-      try {
-        const notificationResponse = await databases.createDocument(
-          databaseId,
-          'notifications', // Make sure this collection exists
-          'unique()',
-          {
-            user_id: user.$id,
-            title: 'Demo Class Request Sent',
-            message: `Your demo class request for ${coaching.name} has been sent. We will notify you once it's approved.`,
-            type: 'demo_request',
-            status: 'unread',
-            createdAt: new Date().toISOString()
-          }
-        );
-        console.log('Notification created:', notificationResponse);
-      } catch (notificationError) {
-        console.error('Error creating notification:', notificationError);
-        // Continue even if notification fails
-      }
-
-      // Show success confirmation
+      console.log('Demo request created:', response);
+      toast.success('Demo class request submitted successfully!');
+      setShowBookDemoModal(false);
       setShowSuccessConfirmation(true);
-      setTimeout(() => setShowSuccessConfirmation(false), 5000);
     } catch (error) {
       console.error('Error booking demo:', error);
-      
-      // More detailed error message
-      let errorMessage = 'Failed to book demo class. ';
-      
-      if (error.message) {
-        errorMessage += error.message;
-      } else if (error.response) {
-        errorMessage += `Server responded with: ${error.response.message || 'Unknown error'}`;
-      } else {
-        errorMessage += 'Please check your connection and try again.';
-      }
-      
-      toast.error(errorMessage, { duration: 6000 });
-      
-      // Add a retry button to the toast
-      toast((t) => (
-        <div>
-          <p>Failed to book demo class</p>
-          <button 
-            onClick={() => {
-              toast.dismiss(t.id);
-              setShowBookDemoModal(true);
-            }}
-            className="mt-2 px-3 py-1 bg-indigo-600 text-white text-sm rounded"
-          >
-            Try Again
-          </button>
-        </div>
-      ), { duration: 10000 });
+      toast.error(error.message || 'Failed to submit demo class request');
     } finally {
       setIsBookingDemo(false);
     }
@@ -305,6 +242,16 @@ const CoachingDetails = () => {
     
     if (!isOpen) return null;
     
+    const handleSubmit = (e) => {
+      e.preventDefault(); // Prevent form refresh
+      if (useAlternativeMethod) {
+        handleBookDemoFallback();
+      } else {
+        handleBookDemo();
+      }
+      onClose();
+    };
+    
     return (
       <motion.div
         initial={{ opacity: 0 }}
@@ -328,7 +275,7 @@ const CoachingDetails = () => {
             </button>
           </div>
           
-          <div className="mb-6">
+          <form onSubmit={handleSubmit} className="mb-6">
             <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4 rounded-r">
               <p className="text-sm text-blue-700">
                 Your request will be sent to the coaching center. Once approved, they will contact you with the class details.
@@ -366,40 +313,34 @@ const CoachingDetails = () => {
                 Use alternative booking method (if you're experiencing issues)
               </label>
             </div>
-          </div>
-          
-          <div className="flex justify-end space-x-3">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={() => {
-                if (useAlternativeMethod) {
-                  handleBookDemoFallback();
-                } else {
-                handleBookDemo();
-                }
-                onClose();
-              }}
-              disabled={isBookingDemo}
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center"
-            >
-              {isBookingDemo ? (
-                <>
-                  <div className="h-4 w-4 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
-                  Sending...
-                </>
-              ) : (
-                <>
-                  <Calendar className="h-4 w-4 mr-2" />
-                  Send Request
-                </>
-              )}
-            </button>
-          </div>
+            
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isBookingDemo}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 flex items-center"
+              >
+                {isBookingDemo ? (
+                  <>
+                    <div className="h-4 w-4 border-t-2 border-b-2 border-white rounded-full animate-spin mr-2"></div>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Send Request
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
         </motion.div>
       </motion.div>
     );
