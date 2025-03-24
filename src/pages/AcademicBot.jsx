@@ -384,15 +384,15 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50">
-      {/* Enhanced Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10 backdrop-blur-sm bg-white/80">
+    <div className="min-h-screen bg-gray-50">
+      {/* Improved Header */}
+      <header className="bg-white shadow-sm sticky top-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
               <Link
                 to="/student/dashboard"
-                className="flex items-center text-gray-600 hover:text-gray-900 transition-colors"
+                className="flex items-center text-gray-600 hover:text-gray-900"
               >
                 <ChevronLeft className="h-5 w-5 mr-1" />
                 <span className="hidden sm:inline">Back to Dashboard</span>
@@ -401,14 +401,14 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setShowHistory(!showHistory)}
-                className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 transition-colors"
+                className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
                 title="Chat history"
               >
                 <History className="h-5 w-5" />
               </button>
               <button
                 onClick={saveCurrentChat}
-                className="hidden sm:flex items-center px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700 transition-colors shadow-sm hover:shadow-md"
+                className="hidden sm:flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
               >
                 <BookmarkPlus className="h-4 w-4 mr-2" />
                 Save Chat
@@ -418,14 +418,14 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
         </div>
       </header>
 
-      {/* Main Content with Enhanced Layout */}
+      {/* Main Content with Improved Layout */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Enhanced Sidebar */}
+          {/* Responsive Sidebar */}
           <div className={`lg:col-span-1 ${isSidebarOpen ? 'block' : 'hidden lg:block'}`}>
             <div className="sticky top-20 space-y-6">
-              {/* Subject Selection Card with Enhanced Design */}
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+              {/* Subject Selection Card */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                 <div className="p-4 bg-gradient-to-r from-indigo-500 to-purple-600">
                   <h2 className="text-lg font-semibold text-white flex items-center">
                     <BookOpen className="h-5 w-5 mr-2" />
@@ -437,21 +437,21 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
                     <button
                       key={subject.id}
                       onClick={() => handleSubjectSelect(subject)}
-                      className={`w-full text-left px-4 py-3 rounded-xl flex items-center transition-all duration-200 ${
+                      className={`w-full text-left px-3 py-2 rounded-lg flex items-center transition-colors ${
                         selectedSubject?.id === subject.id
-                          ? 'bg-indigo-50 text-indigo-600 font-medium shadow-sm'
-                          : 'hover:bg-gray-50 text-gray-700 hover:shadow-sm'
+                          ? 'bg-indigo-50 text-indigo-600 font-medium'
+                          : 'hover:bg-gray-50 text-gray-700'
                       }`}
                     >
-                      <span className="text-2xl mr-3">{subject.icon}</span>
+                      <span className="text-xl mr-2">{subject.icon}</span>
                       <span className="text-sm">{subject.name}</span>
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Quick Prompts Card with Enhanced Design */}
-              <div className="bg-white rounded-2xl shadow-lg border border-gray-100">
+              {/* Quick Prompts Card */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
                 <div className="p-4 bg-gradient-to-r from-cyan-500 to-blue-600">
                   <h2 className="text-lg font-semibold text-white flex items-center">
                     <Lightbulb className="h-5 w-5 mr-2" />
@@ -463,7 +463,7 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
                     <button
                       key={index}
                       onClick={() => handleQuickPrompt(prompt)}
-                      className="w-full text-left px-4 py-3 rounded-xl text-sm text-gray-700 hover:bg-gray-50 transition-all duration-200 hover:shadow-sm"
+                      className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                     >
                       {prompt}
                     </button>
@@ -473,10 +473,10 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
             </div>
           </div>
 
-          {/* Enhanced Chat Container */}
+          {/* Chat Container with Improved UI */}
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-2xl shadow-lg border border-gray-100 flex flex-col h-[calc(100vh-8rem)]">
-              {/* Messages Area with Enhanced Styling */}
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-[calc(100vh-8rem)]">
+              {/* Messages Area */}
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 <div className="space-y-4">
                   {messages.map((message, index) => (
@@ -488,7 +488,7 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
                       className={`flex ${message.role === 'assistant' ? 'justify-start' : 'justify-end'}`}
                     >
                       <div className={`flex max-w-[80%] ${message.role === 'assistant' ? 'flex-row' : 'flex-row-reverse'}`}>
-                        <div className={`relative group px-6 py-4 rounded-2xl ${
+                        <div className={`relative group px-4 py-3 rounded-lg ${
                           message.role === 'assistant' 
                             ? 'bg-white border border-gray-200 shadow-sm' 
                             : 'bg-indigo-600 text-white'
@@ -498,7 +498,7 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
                             components={{
                               code({node, inline, className, children, ...props}) {
                                 return inline ? (
-                                  <code className="px-1.5 py-0.5 rounded-md bg-gray-100 text-gray-800" {...props}>
+                                  <code className="px-1 py-0.5 rounded-md bg-gray-100 text-gray-800" {...props}>
                                     {children}
                                   </code>
                                 ) : (
@@ -517,12 +517,13 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
                             {message.content}
                           </ReactMarkdown>
 
-                          {/* Enhanced Action Buttons */}
+                          {/* Action buttons for assistant messages */}
                           {message.role === 'assistant' && (
                             <div className="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {/* Copy button */}
                               <button
                                 onClick={() => handleCopy(message.content, index)}
-                                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+                                className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
                                 title="Copy message"
                               >
                                 {copiedIndex === index ? (
@@ -532,18 +533,19 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
                                 )}
                               </button>
 
+                              {/* Feedback buttons */}
                               {feedbackMessage !== index && (
                                 <>
                                   <button
                                     onClick={() => handleFeedback(index, true)}
-                                    className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-green-500 transition-colors"
+                                    className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-green-500 transition-colors"
                                     title="Helpful"
                                   >
                                     <ThumbsUp className="h-4 w-4" />
                                   </button>
                                   <button
                                     onClick={() => handleFeedback(index, false)}
-                                    className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500 hover:text-red-500 transition-colors"
+                                    className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-red-500 transition-colors"
                                     title="Not helpful"
                                   >
                                     <ThumbsDown className="h-4 w-4" />
@@ -551,8 +553,9 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
                                 </>
                               )}
 
+                              {/* Feedback confirmation */}
                               {feedbackMessage === index && (
-                                <span className="text-xs text-green-500 bg-green-50 px-2 py-1 rounded-lg">
+                                <span className="text-xs text-green-500 bg-green-50 px-2 py-1 rounded">
                                   Thanks for your feedback!
                                 </span>
                               )}
@@ -568,9 +571,9 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
                       animate={{ opacity: 1 }}
                       className="flex justify-start"
                     >
-                      <div className="bg-white border border-gray-200 rounded-2xl px-6 py-4 shadow-sm">
-                        <div className="flex items-center space-x-3">
-                          <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
+                      <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 shadow-sm">
+                        <div className="flex items-center space-x-2">
+                          <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
                           <span className="text-sm text-gray-500">Thinking...</span>
                         </div>
                       </div>
@@ -580,10 +583,10 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Enhanced Input Area */}
+              {/* Input Area */}
               <div className="border-t p-4">
-                <form onSubmit={handleSubmit} className="flex space-x-3">
-                  <div className="flex-1 flex items-center space-x-2 px-4 py-3 border border-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 bg-white shadow-sm">
+                <form onSubmit={handleSubmit} className="flex space-x-2">
+                  <div className="flex-1 flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 bg-white">
                     <input
                       ref={inputRef}
                       type="text"
@@ -596,26 +599,26 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
                     <button
                       type="button"
                       onClick={isRecording ? stopRecording : startRecording}
-                      className={`p-2 rounded-lg transition-colors ${
+                      className={`p-1.5 rounded-full transition-colors ${
                         isRecording 
                           ? 'text-red-500 hover:text-red-600 bg-red-50'
                           : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
                       }`}
                     >
-                      {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                      {isRecording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                     </button>
                   </div>
                   <button
                     type="submit"
                     disabled={isLoading || !input.trim()}
-                    className={`px-6 py-3 rounded-xl flex items-center space-x-2 transition-all duration-200 ${
+                    className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
                       isLoading || !input.trim()
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-md'
+                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
                     }`}
                   >
                     <span className="hidden sm:inline">Send</span>
-                    <Send className="h-5 w-5" />
+                    <Send className="h-4 w-4" />
                   </button>
                 </form>
               </div>

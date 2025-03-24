@@ -618,7 +618,7 @@ const CoachingDashboard = () => {
         } catch (error) {
           console.error('Error fetching messages:', error);
         } finally {
-          setLoading(false);
+      setLoading(false);
         }
       };
       
@@ -791,20 +791,20 @@ const CoachingDashboard = () => {
                 <button className="bg-indigo-600 text-white px-3 py-1 rounded-md hover:bg-indigo-700 transition-colors duration-200 flex items-center">
                   <Plus className="h-4 w-4 mr-1" />
                   Add Batch
-                </button>
+                    </button>
               </div>
               <div className="p-6">
                 {coaching.batches && coaching.batches.length > 0 ? (
                   <div className="divide-y">
                     {coaching.batches.map((batch, index) => (
                       <div key={index} className="py-4 flex items-center justify-between">
-                        <div>
+                    <div>
                           <h3 className="font-semibold">{batch.name}</h3>
                           <div className="text-sm text-gray-500">
                             {batch.subjects?.join(', ')} • {batch.timing}
-                          </div>
-                        </div>
-                        <div>
+                    </div>
+                  </div>
+                          <div>
                           <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
                             {batch.availableSeats} seats available
                           </span>
