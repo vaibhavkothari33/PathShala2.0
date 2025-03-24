@@ -66,7 +66,6 @@ const CoachingDashboard = () => {
     } catch (error) {
       console.error('Error fetching requests:', error);
       toast.error('Failed to load requests');
-      // Don't throw the error, just log it
       setRequests([]);
     }
   };
@@ -233,6 +232,10 @@ const CoachingDashboard = () => {
     try {
       console.log('Handling request:', requestId, status);
 
+      if (!DATABASE_ID || !REQUESTS_COLLECTION_ID) {
+        throw new Error('Missing database configuration');
+      }
+
       // Update the request status in the database
       const updatedRequest = await databases.updateDocument(
         DATABASE_ID,
@@ -254,7 +257,7 @@ const CoachingDashboard = () => {
         try {
           const notification = await databases.createDocument(
             DATABASE_ID,
-            'notifications', // Make sure this collection exists
+            'notifications',
             'unique()',
             {
               user_id: request.student_id,

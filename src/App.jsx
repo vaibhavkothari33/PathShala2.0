@@ -11,28 +11,28 @@ import Navbar from './components/Navbar';
 import CoachingDetails from './pages/coaching/[slug]';
 import NotFound from './pages/NotFound';
 import { Toaster } from 'react-hot-toast';
-import AuthCallback from './pages/AuthCallback';
+import AuthCallback from './components/AuthCallback';
 import ErrorBoundary from './components/ErrorBoundary';
+import AcademicBot from './pages/AcademicBot';
 
 function App() {
 
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <Toaster
+        <Toaster 
           position="top-right"
           toastOptions={{
             duration: 5000,
-            success: {
-              style: {
-                background: 'green',
-                color: 'white',
-              },
+            style: {
+              background: '#363636',
+              color: '#fff',
             },
-            error: {
-              style: {
-                background: 'red',
-                color: 'white',
+            success: {
+              duration: 3000,
+              theme: {
+                primary: '#4CAF50',
+                secondary: '#131313',
               },
             },
           }}
@@ -70,6 +70,7 @@ function App() {
                 }
               />
               <Route path="/coaching/:slug" element={<CoachingDetails />} />
+              <Route path="/student/academic-bot" element={<AcademicBot />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, MapPin, Filter, Star, Clock, Users, BookOpen, ChevronDown, X, ArrowRight } from 'lucide-react';
+import { Search, MapPin, Filter, Star, Clock, Users, BookOpen, ChevronDown, X, ArrowRight, Bot } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { databases } from '../config/appwrite'; // Import Appwrite databases
 import { toast } from 'react-hot-toast';
@@ -513,6 +513,17 @@ const StudentDashboard = () => {
           </div>
         )}
       </div>
+
+      <Link
+        to="/student/academic-bot"
+        className="flex items-center p-3 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+      >
+        <Bot className="h-6 w-6 text-indigo-600 mr-3" />
+        <div>
+          <h3 className="font-medium">Academic Assistant</h3>
+          <p className="text-sm text-gray-500">Get help with your studies</p>
+        </div>
+      </Link>
     </div>
   );
 };

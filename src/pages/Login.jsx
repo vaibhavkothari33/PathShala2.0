@@ -1,16 +1,18 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useNavigate, useSearchParams, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'framer-motion';
 import { FcGoogle } from 'react-icons/fc';
 import { ArrowRight, Mail, Lock, User, CheckCircle, School, BookOpen, Users } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { account } from '../config/appwrite';
 
 const Login = () => {
   const [searchParams] = useSearchParams();
   const userType = searchParams.get('role') || 'student';
   const navigate = useNavigate();
-  const { login, loginWithGoogle, user } = useAuth();
+  const location = useLocation();
+  const { login, loginWithGoogle, user, setUser } = useAuth();
   
   const [formData, setFormData] = useState({
     email: '',
@@ -35,21 +37,34 @@ const Login = () => {
     setError(''); // Clear error when user types
   };
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
     setLoading(true);
 
     try {
-      if (!formData.email || !formData.password) {
-        throw new Error('Please fill in all required fields');
-      }
+      // Create email session
+      const session = await account.createEmailSession(formData.email, formData.password);
+      console.log('Session created:', session);
 
-      await login(formData.email, formData.password);
-      // Navigation will be handled by the useEffect above
+      // Get user data
+      const userData = await account.get();
+      console.log('User data:', userData);
+
+      setUser(userData);
+      toast.success('Login successful!');
+
+      // Navigate to the intended destination or dashboard
+      const destination = location.state?.from || '/student/dashboard';
+      navigate(destination);
     } catch (error) {
-      console.error('Auth error:', error);
-      setError(error.message || 'Authentication failed');
+      console.error('Login error:', error);
+      
+      // Show specific error messages
+      if (error.code === 401) {
+        toast.error('Invalid email or password');
+      } else {
+        toast.error('Login failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -197,7 +212,7 @@ const Login = () => {
               </motion.div>
             )}
 
-            <form className="space-y-6" onSubmit={handleSubmit}>
+            <form className="space-y-6" onSubmit={handleLogin}>
               <div className="rounded-md shadow-sm space-y-4">
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700">

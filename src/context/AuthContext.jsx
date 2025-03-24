@@ -5,37 +5,119 @@ import { toast } from 'react-hot-toast';
 
 const AuthContext = createContext();
 
-export function AuthProvider({ children }) {
+export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
+    checkUser();
+  }, []);
+
   const checkUser = async () => {
     try {
-      // First check if we have a valid JWT in localStorage
-      const jwt = localStorage.getItem('jwt');
-      if (!jwt) {
-        setUser(null);
-        setLoading(false);
-        return null;
-      }
-
       const currentUser = await account.get();
-      console.log("Current user:", currentUser);
       setUser(currentUser);
-      return currentUser;
     } catch (error) {
-      console.log('Session check error:', error);
-      localStorage.removeItem('jwt'); // Clear invalid JWT
+      console.error('Check user error:', error);
       setUser(null);
-      return null;
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    checkUser();
-  }, []);
+  const register = async (email, password, name) => {
+    try {
+      // Show loading toast
+      const loadingToast = toast.loading('Creating your account...');
+
+      // Create user account
+      const response = await account.create(
+        ID.unique(),
+        email,
+        password,
+        name
+      );
+
+      // Create email session
+      await account.createEmailSession(email, password);
+      
+      // Get user data
+      const userData = await account.get();
+      
+      // Update state
+      setUser(userData);
+
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToast);
+      toast.success('Registration successful! Welcome aboard!');
+
+      return userData;
+    } catch (error) {
+      console.error('Registration error:', error);
+      
+      // Show appropriate error message
+      let errorMessage = 'Registration failed. Please try again.';
+      
+      if (error.message.includes('email already exists')) {
+        errorMessage = 'This email is already registered. Please try logging in.';
+      } else if (error.message.includes('invalid email')) {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.message.includes('password')) {
+        errorMessage = 'Password must be at least 8 characters long.';
+      }
+      
+      toast.error(errorMessage);
+      throw error;
+    }
+  };
+
+  const login = async (email, password) => {
+    try {
+      // Show loading toast
+      const loadingToast = toast.loading('Logging you in...');
+
+      // Create email session
+      await account.createEmailSession(email, password);
+      
+      // Get user data
+      const userData = await account.get();
+      
+      // Update state
+      setUser(userData);
+
+      // Dismiss loading toast and show success
+      toast.dismiss(loadingToast);
+      toast.success('Welcome back!');
+
+      return userData;
+    } catch (error) {
+      console.error('Login error:', error);
+      
+      // Show appropriate error message
+      let errorMessage = 'Login failed. Please check your credentials.';
+      
+      if (error.message.includes('invalid email')) {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (error.message.includes('invalid credentials')) {
+        errorMessage = 'Invalid email or password.';
+      }
+      
+      toast.error(errorMessage);
+      throw error;
+    }
+  };
+
+  const logout = async () => {
+    try {
+      await account.deleteSession('current');
+      setUser(null);
+      toast.success('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Failed to logout. Please try again.');
+      throw error;
+    }
+  };
 
   const loginWithGoogle = async () => {
     try {
@@ -55,70 +137,6 @@ export function AuthProvider({ children }) {
     } catch (error) {
       console.error('Google login error:', error);
       toast.error('Failed to login with Google');
-      throw error;
-    }
-  };
-
-  const login = async (email, password) => {
-    try {
-      const session = await account.createEmailSession(email, password);
-      localStorage.setItem('jwt', session.providerAccessToken || session.$id);
-      
-      const currentUser = await account.get();
-      setUser(currentUser);
-      toast.success('Login successful!');
-      return currentUser;
-    } catch (error) {
-      console.error('Login error:', error);
-      
-      if (error.code === 401) {
-        toast.error('Invalid credentials. Please check your email and password.');
-      } else {
-        toast.error('Login failed. Please try again.');
-      }
-      
-      throw error;
-    }
-  };
-
-  const register = async (email, password, name) => {
-    try {
-      // First try to create the account
-      try {
-        await account.create(ID.unique(), email, password, name);
-        console.log("Account created successfully");
-        
-        // If creation successful, proceed with login
-        const session = await account.createEmailSession(email, password);
-        localStorage.setItem('jwt', session.providerAccessToken || session.$id);
-        
-        const currentUser = await account.get();
-        setUser(currentUser);
-        toast.success('Registration successful!');
-        return currentUser;
-      } catch (error) {
-        if (error.code === 409) { // User already exists
-          // Try to login instead
-          toast.info("Account already exists, logging in...");
-          return await login(email, password);
-        } else {
-          throw error; // Re-throw other errors
-        }
-      }
-    } catch (error) {
-      console.error('Registration/Login error:', error);
-      
-      // Handle specific error cases
-      if (error.code === 409) {
-        toast.error('Account already exists. Please login instead.');
-      } else if (error.code === 401) {
-        toast.error('Invalid credentials. Please check your email and password.');
-      } else if (error.message) {
-        toast.error(error.message);
-      } else {
-        toast.error('Registration failed. Please try again.');
-      }
-      
       throw error;
     }
   };
@@ -146,21 +164,6 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const logout = async () => {
-    try {
-      await account.deleteSession('current');
-      localStorage.removeItem('jwt');
-      setUser(null);
-      toast.success('Logged out successfully');
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Still clear local storage even if API call fails
-      localStorage.removeItem('jwt');
-      setUser(null);
-      toast.error('Failed to logout properly');
-    }
-  };
-
   const value = {
     user,
     setUser,
@@ -169,8 +172,8 @@ export function AuthProvider({ children }) {
     register,
     logout,
     loading,
-    checkUser,
-    addUserRole
+    addUserRole,
+    checkUser
   };
 
   return (
@@ -178,8 +181,12 @@ export function AuthProvider({ children }) {
       {!loading && children}
     </AuthContext.Provider>
   );
-}
+};
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
