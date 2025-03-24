@@ -1,26 +1,6 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-// Initialize the Gemini AI model
-const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ 
-  model: "gemini--flash",
-  systemInstruction: `You are an expert academic tutor with deep knowledge across multiple subjects. Your goal is to provide clear, engaging, and educational responses that help students learn.
-
-Key Principles:
-- Explain concepts in a clear, step-by-step manner
-- Adapt explanations to the student's academic level
-- Use relevant examples and analogies
-- Encourage critical thinking
-- Provide practical insights and context
-- Break down complex ideas into digestible parts
-
-Response Guidelines:
-1. Begin with a concise, direct answer
-2. Provide a detailed, structured explanation
-3. Include practical examples or real-world applications
-4. Suggest practice problems or further exploration
-5. Maintain an encouraging and supportive tone`
-});
+// Remove the GoogleGenerativeAI import since we're using fetch directly
+const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
 // Subject-specific context mapping
 const SUBJECT_CONTEXTS = {
@@ -58,74 +38,103 @@ function detectSubject(message) {
 
 // Format response with markdown
 function formatResponse(text) {
-  // Basic markdown formatting
-  const formatted = text
+  if (!text) return "I apologize, but I couldn't generate a response. Please try again.";
+  
+  return text
     .replace(/^(.*?)$/gm, (match) => {
       if (match.toLowerCase().includes('example')) return `### Example\n${match}`;
       if (match.toLowerCase().includes('key point')) return `**${match}**`;
       if (match.toLowerCase().includes('tip')) return `*Tip:* ${match}`;
       return match;
     });
-
-  return formatted;
 }
 
 // Main chat function
 export async function chat(userMessage, chatHistory = [], subject = 'general') {
   try {
-    // Validate and prepare chat history
-    const validHistory = chatHistory
-      .filter(msg => msg.content && ['user', 'assistant'].includes(msg.role))
-      .map(msg => ({
-        role: msg.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: msg.content }]
-      }));
+    // Validate inputs
+    if (!userMessage?.trim()) {
+      throw new Error('Please provide a question');
+    }
 
-    // Determine subject context
-    const subjectContext = SUBJECT_CONTEXTS[subject] || SUBJECT_CONTEXTS.general;
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('API key is not configured');
+    }
 
-    // Enhanced prompt with subject context
-    const enhancedPrompt = `Subject Context: ${subjectContext}
+    // Create the prompt
+    const prompt = `As an academic tutor, ${SUBJECT_CONTEXTS[subject] || SUBJECT_CONTEXTS.general}
 
-Student's Question: ${userMessage}
+Question: ${userMessage}
 
-Provide a comprehensive response that:
-- Directly answers the question
-- Breaks down complex concepts
-- Includes relevant examples
-- Suggests learning strategies or practice
-- Maintains an engaging, educational tone`;
+Please provide a clear, educational response using markdown formatting with:
+- A direct answer
+- Step-by-step explanation
+- Relevant examples
+- Practice suggestions`;
 
-    // Configure generation settings
-    const generationConfig = {
-      temperature: 0.7,
-      topP: 0.9,
-      topK: 40,
-      maxOutputTokens: 2048
-    };
+    // Make API request
+    const response = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: prompt
+            }]
+          }]
+        })
+      }
+    );
 
-    // Start chat with history
-    const chat = model.startChat({
-      history: validHistory,
-      generationConfig
-    });
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('API Error:', errorData);
+      throw new Error(errorData.error?.message || 'Failed to get response');
+    }
 
-    // Send message and get response
-    const result = await chat.sendMessage(enhancedPrompt);
-    const response = result.response;
+    const data = await response.json();
     
-    // Format and return response
-    let formattedResponse = formatResponse(response.text());
-    return formattedResponse;
+    if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
+      throw new Error('Invalid response format');
+    }
+
+    return formatResponse(data.candidates[0].content.parts[0].text);
 
   } catch (error) {
-    console.error('Chat Generation Error:', error);
-    throw new Error('Failed to generate academic response. Please try again.');
+    console.error('Chat Error:', error);
+    return `### Error
+I apologize, but I encountered an error: ${error.message}
+
+Please try:
+- Rephrasing your question
+- Checking your internet connection
+- Trying again in a moment`;
   }
 }
 
-// Helper functions export
+// Helper functions
 export const helpers = {
   detectSubject,
-  formatResponse
+  formatResponse,
+  
+  // New helper function to validate API key
+  validateConfig: () => {
+    if (!GEMINI_API_KEY) {
+      throw new Error('Missing API key. Please check your environment variables.');
+    }
+    return true;
+  },
+  
+  // New helper function to get subject info
+  getSubjectInfo: (subjectId) => {
+    return {
+      context: SUBJECT_CONTEXTS[subjectId] || SUBJECT_CONTEXTS.general,
+      isValid: Object.keys(SUBJECT_CONTEXTS).includes(subjectId)
+    };
+  }
 };

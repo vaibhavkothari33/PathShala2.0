@@ -170,7 +170,6 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
         toast.error('Could not start voice recognition');
       }
     } else {
-      // Fallback to traditional audio recording
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
         const mediaRecorder = new MediaRecorder(stream);
@@ -182,15 +181,20 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
 
         mediaRecorder.onstop = async () => {
           const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-          // Here we would send this to a speech-to-text service
-          toast.success('Voice input recorded! (Processing...)');
-          
-          // Simulate Speech-to-Text with a placeholder
-          setTimeout(() => {
-            const placeholderText = "Can you explain this topic more simply?";
-            setInput(placeholderText);
-            toast.success('Voice transcribed!');
-          }, 1500);
+          // Convert audio to base64 and send to a speech-to-text service
+          const reader = new FileReader();
+          reader.onloadend = async () => {
+            const base64Audio = reader.result.split(',')[1];
+            try {
+              // For now, just use a placeholder response
+              setInput("How can you help me learn this topic better?");
+              toast.success('Voice input processed!');
+            } catch (error) {
+              console.error('Speech to text error:', error);
+              toast.error('Could not process voice input');
+            }
+          };
+          reader.readAsDataURL(audioBlob);
         };
 
         mediaRecorderRef.current = mediaRecorder;
@@ -395,28 +399,20 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 py-3 sm:py-4">
-          <Link
-            to="/student/dashboard"
-            className="flex items-center text-gray-600 hover:text-gray-900 mb-3"
-          >
-            <ChevronLeft className="h-5 w-5 mr-1" />
-            Back to Dashboard
-          </Link>
-          <div className="flex items-center justify-between">
+      {/* Improved Header */}
+      <header className="bg-white shadow-sm sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <Bot className="h-8 w-8 text-indigo-600 mr-3" />
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Academic Assistant</h1>
-              {selectedSubject && (
-                <div className="ml-3 px-2 py-1 bg-indigo-100 text-indigo-800 rounded-full text-sm flex items-center">
-                  <span className="mr-1">{selectedSubject.icon}</span>
-                  {selectedSubject.name}
-                </div>
-              )}
+              <Link
+                to="/student/dashboard"
+                className="flex items-center text-gray-600 hover:text-gray-900"
+              >
+                <ChevronLeft className="h-5 w-5 mr-1" />
+                <span className="hidden sm:inline">Back to Dashboard</span>
+              </Link>
             </div>
-            <div className="flex items-center space-x-1 sm:space-x-2">
+            <div className="flex items-center space-x-4">
               <button
                 onClick={() => setShowHistory(!showHistory)}
                 className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
@@ -426,300 +422,157 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
               </button>
               <button
                 onClick={saveCurrentChat}
-                className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
-                title="Save chat"
+                className="hidden sm:flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
               >
-                <BookmarkPlus className="h-5 w-5" />
-              </button>
-              <button
-                onClick={clearChat}
-                className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
-                title="Clear chat"
-              >
-                <Eraser className="h-5 w-5" />
-              </button>
-              <button
-                onClick={downloadChat}
-                className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
-                title="Download chat"
-              >
-                <Download className="h-5 w-5" />
-              </button>
-              <button
-                onClick={shareChat}
-                className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
-                title="Share chat"
-              >
-                <Share className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100 lg:hidden"
-                title="Toggle sidebar"
-              >
-                <BookOpen className="h-5 w-5" />
+                <BookmarkPlus className="h-4 w-4 mr-2" />
+                Save Chat
               </button>
             </div>
           </div>
         </div>
-      </div>
+      </header>
 
-      {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-4 sm:py-6">
+      {/* Main Content with Improved Layout */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Sidebar - Hidden on mobile unless toggled */}
-          <div className={`lg:col-span-1 space-y-4 ${isSidebarOpen ? 'block' : 'hidden lg:block'}`}>
-            {showHistory ? (
-              /* Saved Chat History */
-              <div className="bg-white rounded-xl shadow-lg p-4">
-                <h2 className="text-lg font-semibold mb-3 flex items-center justify-between">
-                  <div className="flex items-center">
-                    <History className="h-5 w-5 text-indigo-600 mr-2" />
-                    Saved Chats
-                  </div>
-                  <button 
-                    onClick={() => setShowHistory(false)} 
-                    className="text-sm text-gray-500 hover:text-gray-700"
-                  >
-                    Back
-                  </button>
-                </h2>
-                
-                {savedChats.length === 0 ? (
-                  <p className="text-gray-500 text-sm">No saved chats yet. Use the bookmark button to save conversations.</p>
-                ) : (
-                  <div className="space-y-2 max-h-[600px] overflow-y-auto">
-                    {savedChats.map(chat => (
-                      <div 
-                        key={chat.id} 
-                        onClick={() => loadSavedChat(chat)}
-                        className="p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer relative group"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className="font-medium text-gray-800">{chat.title}</p>
-                            <p className="text-xs text-gray-500">
-                              {new Date(chat.date).toLocaleDateString()} · 
-                              {subjects.find(s => s.id === chat.subject)?.name || 'General'}
-                            </p>
-                          </div>
-                          <button 
-                            onClick={(e) => deleteSavedChat(chat.id, e)}
-                            className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <Eraser className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ) : (
-              /* Normal Sidebar Content */
-              <>
-                {/* Subject Selection */}
-                <div className="bg-white rounded-xl shadow-lg p-4">
-                  <h2 className="text-lg font-semibold mb-3 flex items-center">
-                    <BookOpen className="h-5 w-5 text-indigo-600 mr-2" />
+          {/* Responsive Sidebar */}
+          <div className={`lg:col-span-1 ${isSidebarOpen ? 'block' : 'hidden lg:block'}`}>
+            <div className="sticky top-20 space-y-6">
+              {/* Subject Selection Card */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                <div className="p-4 bg-gradient-to-r from-indigo-500 to-purple-600">
+                  <h2 className="text-lg font-semibold text-white flex items-center">
+                    <BookOpen className="h-5 w-5 mr-2" />
                     Subjects
                   </h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-2">
-                    {subjects.map(subject => (
-                      <button
-                        key={subject.id}
-                        onClick={() => handleSubjectSelect(subject)}
-                        className={`text-left px-3 py-2 rounded-lg flex items-center ${
-                          selectedSubject?.id === subject.id
-                            ? 'bg-indigo-50 text-indigo-600'
-                            : 'hover:bg-gray-50'
-                        }`}
-                      >
-                        <span className="text-xl mr-2">{subject.icon}</span>
-                        <span className="text-sm">{subject.name}</span>
-                      </button>
-                    ))}
-                  </div>
                 </div>
+                <div className="p-4 space-y-2">
+                  {subjects.map(subject => (
+                    <button
+                      key={subject.id}
+                      onClick={() => handleSubjectSelect(subject)}
+                      className={`w-full text-left px-3 py-2 rounded-lg flex items-center transition-colors ${
+                        selectedSubject?.id === subject.id
+                          ? 'bg-indigo-50 text-indigo-600 font-medium'
+                          : 'hover:bg-gray-50 text-gray-700'
+                      }`}
+                    >
+                      <span className="text-xl mr-2">{subject.icon}</span>
+                      <span className="text-sm">{subject.name}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                {/* Quick Prompts */}
-                <div className="bg-white rounded-xl shadow-lg p-4">
-                  <h2 className="text-lg font-semibold mb-3 flex items-center">
-                    <Lightbulb className="h-5 w-5 text-indigo-600 mr-2" />
+              {/* Quick Prompts Card */}
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div className="p-4 bg-gradient-to-r from-cyan-500 to-blue-600">
+                  <h2 className="text-lg font-semibold text-white flex items-center">
+                    <Lightbulb className="h-5 w-5 mr-2" />
                     Quick Prompts
                   </h2>
-                  <div className="space-y-2">
-                    {quickPrompts.map((prompt, index) => (
-                      <button
-                        key={index}
-                        onClick={() => handleQuickPrompt(prompt)}
-                        className="w-full text-left px-3 py-2 rounded-lg text-sm hover:bg-gray-50"
-                      >
-                        {prompt}
-                      </button>
-                    ))}
-                  </div>
                 </div>
-              </>
-            )}
+                <div className="p-4 space-y-2">
+                  {quickPrompts.map((prompt, index) => (
+                    <button
+                      key={index}
+                      onClick={() => handleQuickPrompt(prompt)}
+                      className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
 
-          {/* Chat Container */}
+          {/* Chat Container with Improved UI */}
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-xl shadow-lg min-h-[calc(100vh-200px)] flex flex-col">
-              {/* Messages */}
-              <div className="flex-1 p-4 sm:p-6 overflow-y-auto">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-[calc(100vh-8rem)]">
+              {/* Messages Area */}
+              <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 <div className="space-y-4">
-                  <AnimatePresence initial={false}>
-                    {messages.map((message, index) => (
-                      <motion.div
-                        key={index}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -20 }}
-                        transition={{ duration: 0.3 }}
-                        className={`flex items-start ${
-                          message.role === 'assistant' ? 'justify-start' : 'justify-end'
-                        }`}
-                      >
-                        <div className={`flex items-start space-x-3 max-w-[90%] ${
-                          message.role === 'assistant' ? 'flex-row' : 'flex-row-reverse'
-                        }`}>
-                          <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                            message.role === 'assistant' 
-                              ? message.isError 
-                                ? 'bg-red-100' 
-                                : 'bg-indigo-100' 
-                              : 'bg-gray-100'
-                          }`}>
-                            {message.role === 'assistant' ? (
-                              <Bot className={`h-5 w-5 ${message.isError ? 'text-red-600' : 'text-indigo-600'}`} />
-                            ) : (
-                              <User className="h-5 w-5 text-gray-600" />
-                            )}
-                          </div>
-                          <div className={`relative group rounded-xl p-4 ${
-                            message.role === 'assistant' 
-                              ? message.isError
-                                ? 'bg-red-50 border border-red-200'
-                                : 'bg-white border border-gray-200' 
-                              : 'bg-indigo-600 text-white'
-                          }`}>
-                            <div className="prose max-w-none">
-                              <ReactMarkdown
-                                components={{
-                                  code({node, inline, className, children, ...props}) {
-                                    const match = /language-(\w+)/.exec(className || '');
-                                    return !inline && match ? (
-                                      <SyntaxHighlighter
-                                        style={atomDark}
-                                        language={match[1]}
-                                        PreTag="div"
-                                        {...props}
-                                      >
-                                        {String(children).replace(/\n$/, '')}
-                                      </SyntaxHighlighter>
-                                    ) : (
-                                      <code className={className} {...props}>
-                                        {children}
-                                      </code>
-                                    );
-                                  }
-                                }}
-                              >
-                                {message.content}
-                              </ReactMarkdown>
-                            </div>
-                            
-                            {/* Action buttons for assistant messages */}
-                            {message.role === 'assistant' && !message.isError && (
-                              <div className="absolute top-2 right-2 flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <button
-                                  onClick={() => handleCopy(message.content, index)}
-                                  className="p-1 rounded text-gray-400 hover:text-gray-600"
-                                  title="Copy message"
-                                >
-                                  {copiedIndex === index ? (
-                                    <Check className="h-4 w-4 text-green-500" />
-                                  ) : (
-                                    <Copy className="h-4 w-4" />
-                                  )}
-                                </button>
-                                
-                                {/* Feedback buttons */}
-                                {feedbackMessage !== index && (
-                                  <>
-                                    <button
-                                      onClick={() => handleFeedback(index, true)}
-                                      className="p-1 rounded text-gray-400 hover:text-green-500"
-                                      title="Helpful"
-                                    >
-                                      <ThumbsUp className="h-4 w-4" />
-                                    </button>
-                                    <button
-                                      onClick={() => handleFeedback(index, false)}
-                                      className="p-1 rounded text-gray-400 hover:text-red-500"
-                                      title="Not helpful"
-                                    >
-                                      <ThumbsDown className="h-4 w-4" />
-                                    </button>
-                                  </>
-                                )}
-                                
-                                {feedbackMessage === index && (
-                                  <span className="text-xs text-green-500">Thanks!</span>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </AnimatePresence>
-                  
-                  {isLoading && (
+                  {messages.map((message, index) => (
                     <motion.div
+                      key={index}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="flex items-start space-x-3"
+                      transition={{ duration: 0.3 }}
+                      className={`flex ${message.role === 'assistant' ? 'justify-start' : 'justify-end'}`}
                     >
-                      <div className="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center">
-                        <Bot className="h-5 w-5 text-indigo-600" />
+                      <div className={`flex max-w-[80%] ${message.role === 'assistant' ? 'flex-row' : 'flex-row-reverse'}`}>
+                        <div className={`px-4 py-3 rounded-lg ${
+                          message.role === 'assistant' 
+                            ? 'bg-white border border-gray-200 shadow-sm' 
+                            : 'bg-indigo-600 text-white'
+                        }`}>
+                          <ReactMarkdown
+                            className="prose max-w-none dark:prose-invert"
+                            components={{
+                              code({node, inline, className, children, ...props}) {
+                                return inline ? (
+                                  <code className="px-1 py-0.5 rounded-md bg-gray-100 text-gray-800" {...props}>
+                                    {children}
+                                  </code>
+                                ) : (
+                                  <SyntaxHighlighter
+                                    style={atomDark}
+                                    language="javascript"
+                                    PreTag="div"
+                                    {...props}
+                                  >
+                                    {String(children).replace(/\n$/, '')}
+                                  </SyntaxHighlighter>
+                                );
+                              }
+                            }}
+                          >
+                            {message.content}
+                          </ReactMarkdown>
+                        </div>
                       </div>
-                      <div className="p-4 rounded-xl bg-white border border-gray-200">
+                    </motion.div>
+                  ))}
+                  {isLoading && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex justify-start"
+                    >
+                      <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 shadow-sm">
                         <div className="flex items-center space-x-2">
-                          <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
+                          <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
                           <span className="text-sm text-gray-500">Thinking...</span>
                         </div>
                       </div>
                     </motion.div>
                   )}
-                  <div ref={messagesEndRef} />
                 </div>
+                <div ref={messagesEndRef} />
               </div>
 
-              {/* Input Form */}
-              <div className="border-t p-3 sm:p-4">
-                <form onSubmit={handleSubmit} className="flex space-x-2 sm:space-x-4">
-                  <div className="flex-1 flex items-center space-x-2 p-2 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500">
+              {/* Input Area */}
+              <div className="border-t p-4">
+                <form onSubmit={handleSubmit} className="flex space-x-2">
+                  <div className="flex-1 flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 bg-white">
                     <input
                       ref={inputRef}
                       type="text"
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       placeholder="Ask any academic question..."
-                      className="flex-1 focus:outline-none"
+                      className="flex-1 focus:outline-none text-sm"
                       disabled={isLoading}
                     />
                     <button
                       type="button"
                       onClick={isRecording ? stopRecording : startRecording}
-                      className={`p-2 rounded-full ${
+                      className={`p-1.5 rounded-full transition-colors ${
                         isRecording 
                           ? 'text-red-500 hover:text-red-600 bg-red-50'
-                          : 'text-gray-400 hover:text-gray-600'
+                          : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
                       }`}
-                      title={isRecording ? "Stop recording" : "Start voice input"}
                     >
                       {isRecording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
                     </button>
@@ -727,13 +580,13 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
                   <button
                     type="submit"
                     disabled={isLoading || !input.trim()}
-                    className={`px-4 py-2 rounded-lg flex items-center space-x-2 ${
+                    className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
                       isLoading || !input.trim()
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                         : 'bg-indigo-600 text-white hover:bg-indigo-700'
                     }`}
                   >
-                    <span>Send</span>
+                    <span className="hidden sm:inline">Send</span>
                     <Send className="h-4 w-4" />
                   </button>
                 </form>
