@@ -171,10 +171,12 @@ const CoachingDetails = () => {
         throw new Error('Coaching data is missing or invalid.');
       }
 
-      // Create request data object
+      // Create request data object with correct attribute names
       const requestData = {
-        user_id: user.$id,
+        student_id: user.$id,
+        studentName: user.name || 'Student',
         coaching_id: coaching.id,
+        coachingName: coaching.name,
         type: 'demo',
         status: 'pending',
         message: bookingMessage || 'Demo class request',
