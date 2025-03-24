@@ -12,7 +12,7 @@ import { toast } from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { chat, helpers } from '../api/chat'; // Import the enhanced chat service
+import { chat, helpers } from '../api/chat';
 
 const AcademicBot = () => {
   const { user } = useAuth();
@@ -384,49 +384,56 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Improved Header */}
-      <header className="bg-white shadow-sm sticky top-0 z-10">
+    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
+      {/* Header with modern design */}
+      <header className="bg-white shadow-md sticky top-0 z-20 border-b border-gray-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
+            <div className="flex items-center space-x-4">
               <Link
                 to="/student/dashboard"
-                className="flex items-center text-gray-600 hover:text-gray-900"
+                className="group flex items-center text-gray-600 hover:text-indigo-600 transition-all"
               >
-                <ChevronLeft className="h-5 w-5 mr-1" />
-                <span className="hidden sm:inline">Back to Dashboard</span>
+                <ChevronLeft className="h-5 w-5 mr-1 group-hover:-translate-x-1 transition-transform" />
+                <span className="hidden sm:inline font-medium">Dashboard</span>
               </Link>
+              <div className="h-6 w-px bg-gray-200" />
+              <div className="flex items-center space-x-3">
+                <Bot className="h-6 w-6 text-indigo-600 animate-pulse" />
+                <span className="font-semibold text-gray-900 tracking-tight">Academic AI</span>
+              </div>
             </div>
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => setShowHistory(!showHistory)}
-                className="p-2 text-gray-500 hover:text-gray-700 rounded-full hover:bg-gray-100"
-                title="Chat history"
+                className="p-2 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-all group"
+                title="Chat History"
               >
-                <History className="h-5 w-5" />
+                <History className="h-5 w-5 group-hover:rotate-6 transition-transform" />
               </button>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
                 onClick={saveCurrentChat}
-                className="hidden sm:flex items-center px-3 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700"
+                className="hidden sm:flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
               >
                 <BookmarkPlus className="h-4 w-4 mr-2" />
                 Save Chat
-              </button>
+              </motion.button>
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content with Improved Layout */}
+      {/* Main Content with Enhanced Layout */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Responsive Sidebar */}
+          {/* Enhanced Sidebar */}
           <div className={`lg:col-span-1 ${isSidebarOpen ? 'block' : 'hidden lg:block'}`}>
             <div className="sticky top-20 space-y-6">
-              {/* Subject Selection Card */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                <div className="p-4 bg-gradient-to-r from-indigo-500 to-purple-600">
+              {/* Subject Selection Card with Enhanced Design */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="p-4 bg-gradient-to-r from-indigo-600 to-purple-600">
                   <h2 className="text-lg font-semibold text-white flex items-center">
                     <BookOpen className="h-5 w-5 mr-2" />
                     Subjects
@@ -434,25 +441,27 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
                 </div>
                 <div className="p-4 space-y-2">
                   {subjects.map(subject => (
-                    <button
+                    <motion.button
                       key={subject.id}
                       onClick={() => handleSubjectSelect(subject)}
-                      className={`w-full text-left px-3 py-2 rounded-lg flex items-center transition-colors ${
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className={`w-full text-left px-4 py-3 rounded-xl flex items-center transition-all ${
                         selectedSubject?.id === subject.id
-                          ? 'bg-indigo-50 text-indigo-600 font-medium'
+                          ? 'bg-indigo-50 text-indigo-600 font-medium shadow-sm'
                           : 'hover:bg-gray-50 text-gray-700'
                       }`}
                     >
-                      <span className="text-xl mr-2">{subject.icon}</span>
-                      <span className="text-sm">{subject.name}</span>
-                    </button>
+                      <span className="text-2xl mr-3">{subject.icon}</span>
+                      <span className="text-sm font-medium">{subject.name}</span>
+                    </motion.button>
                   ))}
                 </div>
               </div>
 
-              {/* Quick Prompts Card */}
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-                <div className="p-4 bg-gradient-to-r from-cyan-500 to-blue-600">
+              {/* Quick Prompts Card with Enhanced Design */}
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
+                <div className="p-4 bg-gradient-to-r from-cyan-600 to-blue-600">
                   <h2 className="text-lg font-semibold text-white flex items-center">
                     <Lightbulb className="h-5 w-5 mr-2" />
                     Quick Prompts
@@ -460,25 +469,27 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
                 </div>
                 <div className="p-4 space-y-2">
                   {quickPrompts.map((prompt, index) => (
-                    <button
+                    <motion.button
                       key={index}
                       onClick={() => handleQuickPrompt(prompt)}
-                      className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      className="w-full text-left px-4 py-3 rounded-xl text-sm text-gray-700 hover:bg-gray-50 transition-all"
                     >
                       {prompt}
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Chat Container with Improved UI */}
+          {/* Enhanced Chat Container */}
           <div className="lg:col-span-3">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-[calc(100vh-8rem)]">
-              {/* Messages Area */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                <div className="space-y-4">
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[calc(100vh-8rem)]">
+              {/* Messages Area with Enhanced Styling */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                <div className="space-y-6">
                   {messages.map((message, index) => (
                     <motion.div
                       key={index}
@@ -571,9 +582,9 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
                       animate={{ opacity: 1 }}
                       className="flex justify-start"
                     >
-                      <div className="bg-white border border-gray-200 rounded-lg px-4 py-2 shadow-sm">
-                        <div className="flex items-center space-x-2">
-                          <Loader2 className="h-4 w-4 animate-spin text-indigo-600" />
+                      <div className="bg-white border border-gray-100 rounded-2xl px-6 py-4 shadow-sm">
+                        <div className="flex items-center space-x-3">
+                          <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
                           <span className="text-sm text-gray-500">Thinking...</span>
                         </div>
                       </div>
@@ -583,10 +594,10 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
                 <div ref={messagesEndRef} />
               </div>
 
-              {/* Input Area */}
-              <div className="border-t p-4">
-                <form onSubmit={handleSubmit} className="flex space-x-2">
-                  <div className="flex-1 flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 bg-white">
+              {/* Enhanced Input Area */}
+              <div className="border-t border-gray-100 p-6">
+                <form onSubmit={handleSubmit} className="flex space-x-4">
+                  <div className="flex-1 flex items-center space-x-3 px-4 py-3 border border-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 bg-white shadow-sm">
                     <input
                       ref={inputRef}
                       type="text"
@@ -599,26 +610,26 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
                     <button
                       type="button"
                       onClick={isRecording ? stopRecording : startRecording}
-                      className={`p-1.5 rounded-full transition-colors ${
+                      className={`p-2 rounded-lg transition-colors ${
                         isRecording 
                           ? 'text-red-500 hover:text-red-600 bg-red-50'
-                          : 'text-gray-400 hover:text-gray-600 hover:bg-gray-100'
+                          : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50'
                       }`}
                     >
-                      {isRecording ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                      {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
                     </button>
                   </div>
                   <button
                     type="submit"
                     disabled={isLoading || !input.trim()}
-                    className={`px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors ${
+                    className={`px-6 py-3 rounded-xl flex items-center space-x-2 transition-all ${
                       isLoading || !input.trim()
                         ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-indigo-600 text-white hover:bg-indigo-700'
+                        : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm hover:shadow-md'
                     }`}
                   >
-                    <span className="hidden sm:inline">Send</span>
-                    <Send className="h-4 w-4" />
+                    <span className="hidden sm:inline font-medium">Send</span>
+                    <Send className="h-5 w-5" />
                   </button>
                 </form>
               </div>
