@@ -1,14 +1,11 @@
 import { Client, Account, Databases, Storage } from 'appwrite';
-import { getConfig } from '../utils/config';
-
-const config = getConfig();
 
 // Initialize Appwrite Client
 const client = new Client();
 
-// Set endpoint and project ID
+// Set endpoint and project ID using environment variables
 client
-    .setEndpoint('https://cloud.appwrite.io/v1')
+    .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT)
     .setProject(import.meta.env.VITE_APPWRITE_PROJECT_ID);
 
 // Initialize Appwrite services
@@ -16,24 +13,23 @@ export const account = new Account(client);
 export const databases = new Databases(client);
 export const storage = new Storage(client);
 
-// Export configuration object
+// Export configuration object using environment variables
 export const appwriteConfig = {
+    endpoint: import.meta.env.VITE_APPWRITE_ENDPOINT,
+    projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID,
     databaseId: import.meta.env.VITE_APPWRITE_DATABASE_ID,
     requestsCollectionId: import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID,
-    coachingCollectionId: import.meta.env.VITE_APPWRITE_COACHING_COLLECTION_ID,
     imagesBucketId: import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID,
 };
 
-export default client;
-
-// Helper function to validate environment variables
+// Helper function to validate config
 export const validateConfig = () => {
     const required = {
-        'VITE_APPWRITE_ENDPOINT': config.endpoint,
-        'VITE_APPWRITE_PROJECT_ID': config.projectId,
-        'VITE_APPWRITE_DATABASE_ID': config.databaseId,
-        'VITE_APPWRITE_REQUESTS_COLLECTION_ID': config.requestsCollectionId,
-        'VITE_APPWRITE_IMAGES_BUCKET_ID': config.imagesBucketId
+        'VITE_APPWRITE_ENDPOINT': import.meta.env.VITE_APPWRITE_ENDPOINT,
+        'VITE_APPWRITE_PROJECT_ID': import.meta.env.VITE_APPWRITE_PROJECT_ID,
+        'VITE_APPWRITE_DATABASE_ID': import.meta.env.VITE_APPWRITE_DATABASE_ID,
+        'VITE_APPWRITE_REQUESTS_COLLECTION_ID': import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID,
+        'VITE_APPWRITE_IMAGES_BUCKET_ID': import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID
     };
 
     const missing = Object.entries(required)
@@ -47,10 +43,12 @@ export const validateConfig = () => {
     return true;
 };
 
+export default client;
+
 // Add this for debugging
 console.log('Appwrite Configuration:', {
-    endpoint: config.endpoint,
-    projectId: config.projectId
+    endpoint: appwriteConfig.endpoint,
+    projectId: appwriteConfig.projectId
 });
 
 // Add this function to check auth status

@@ -16,27 +16,32 @@ import ErrorBoundary from './components/ErrorBoundary';
 import AcademicBot from './pages/AcademicBot';
 import { useState, useEffect } from 'react';
 import { validateConfig } from './config/appwrite';
+// import Routes from './Routes';
 
 function App() {
-    const [error, setError] = useState(null);
+    const [configError, setConfigError] = useState(null);
 
     useEffect(() => {
         try {
             validateConfig();
         } catch (err) {
-            setError(err.message);
             console.error('Configuration error:', err);
+            setConfigError(err.message);
         }
     }, []);
 
-    if (error) {
+    if (configError) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="max-w-md w-full px-6 py-8 bg-white shadow-lg rounded-lg">
-                    <h1 className="text-xl font-bold text-red-600 mb-4">Configuration Error</h1>
-                    <p className="text-gray-600">{error}</p>
-                    <p className="mt-4 text-sm text-gray-500">
-                        Please check your environment variables and try again.
+            <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+                <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-6">
+                    <h1 className="text-2xl font-bold text-red-600 mb-4">
+                        Configuration Error
+                    </h1>
+                    <p className="text-gray-700 mb-4">
+                        {configError}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                        Please check your environment variables and restart the application.
                     </p>
                 </div>
             </div>
