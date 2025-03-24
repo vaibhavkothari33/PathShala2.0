@@ -227,24 +227,10 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
 
   const handleFeedback = (messageIndex, isPositive) => {
     setFeedbackMessage(messageIndex);
-    
-    // In a real app, you would send this feedback to your backend
-    const feedbackType = isPositive ? 'positive' : 'negative';
-    console.log(`Feedback for message ${messageIndex}: ${feedbackType}`);
-    
     toast.success(`Thank you for your ${isPositive ? 'positive' : 'negative'} feedback!`);
     
-    // Optionally ask for more detailed feedback if negative
-    if (!isPositive) {
-      // You could show a modal or form here
-      setTimeout(() => {
-        const reason = prompt('How could this response be improved?');
-        if (reason) {
-          console.log(`Improvement feedback: ${reason}`);
-          // Send this to your backend
-        }
-      }, 500);
-    }
+    // Optional: Reset feedback message after a delay
+    setTimeout(() => setFeedbackMessage(null), 3000);
   };
 
   const handleSubmit = async (e) => {
@@ -502,7 +488,7 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
                       className={`flex ${message.role === 'assistant' ? 'justify-start' : 'justify-end'}`}
                     >
                       <div className={`flex max-w-[80%] ${message.role === 'assistant' ? 'flex-row' : 'flex-row-reverse'}`}>
-                        <div className={`px-4 py-3 rounded-lg ${
+                        <div className={`relative group px-4 py-3 rounded-lg ${
                           message.role === 'assistant' 
                             ? 'bg-white border border-gray-200 shadow-sm' 
                             : 'bg-indigo-600 text-white'
@@ -530,6 +516,51 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
                           >
                             {message.content}
                           </ReactMarkdown>
+
+                          {/* Action buttons for assistant messages */}
+                          {message.role === 'assistant' && (
+                            <div className="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              {/* Copy button */}
+                              <button
+                                onClick={() => handleCopy(message.content, index)}
+                                className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
+                                title="Copy message"
+                              >
+                                {copiedIndex === index ? (
+                                  <Check className="h-4 w-4 text-green-500" />
+                                ) : (
+                                  <Copy className="h-4 w-4" />
+                                )}
+                              </button>
+
+                              {/* Feedback buttons */}
+                              {feedbackMessage !== index && (
+                                <>
+                                  <button
+                                    onClick={() => handleFeedback(index, true)}
+                                    className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-green-500 transition-colors"
+                                    title="Helpful"
+                                  >
+                                    <ThumbsUp className="h-4 w-4" />
+                                  </button>
+                                  <button
+                                    onClick={() => handleFeedback(index, false)}
+                                    className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-red-500 transition-colors"
+                                    title="Not helpful"
+                                  >
+                                    <ThumbsDown className="h-4 w-4" />
+                                  </button>
+                                </>
+                              )}
+
+                              {/* Feedback confirmation */}
+                              {feedbackMessage === index && (
+                                <span className="text-xs text-green-500 bg-green-50 px-2 py-1 rounded">
+                                  Thanks for your feedback!
+                                </span>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     </motion.div>

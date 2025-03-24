@@ -2,16 +2,16 @@
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
 
-// Subject-specific context mapping
+// Subject-specific context mapping with more focused prompts
 const SUBJECT_CONTEXTS = {
-  math: "Focus on clear mathematical reasoning, step-by-step problem-solving, and breaking down complex mathematical concepts into understandable parts.",
-  physics: "Emphasize real-world applications, provide clear explanations of physical principles, and use diagrams or thought experiments to illustrate concepts.",
-  chemistry: "Explain molecular interactions, chemical processes, and theoretical concepts with clear, visual explanations.",
-  biology: "Highlight interconnections in biological systems, explain processes with clarity, and relate concepts to broader ecological or health contexts.",
-  computer: "Provide clear code explanations, best practices, debugging insights, and practical programming concepts.",
-  literature: "Analyze texts deeply, explain literary techniques, provide contextual insights, and encourage critical interpretation.",
-  history: "Provide historical context, explain cause-and-effect relationships, and connect historical events to broader societal understanding.",
-  general: "Provide a comprehensive, interdisciplinary approach to understanding the topic."
+  math: "You are a math tutor. Focus on clear explanations, step-by-step solutions, and practical examples. Use markdown for equations and formulas.",
+  physics: "You are a physics tutor. Explain concepts with real-world examples and simple analogies. Use markdown for formulas and scientific notation.",
+  chemistry: "You are a chemistry tutor. Break down complex reactions and concepts into simple terms. Use markdown for chemical formulas and equations.",
+  biology: "You are a biology tutor. Explain biological processes clearly with examples from nature. Use markdown for scientific terms and diagrams.",
+  computer: "You are a programming tutor. Provide clear code examples and explain concepts with practical applications. Use markdown for code blocks.",
+  literature: "You are a literature tutor. Help analyze texts and explain literary concepts clearly. Use markdown for quotes and emphasis.",
+  history: "You are a history tutor. Make historical events engaging and relevant. Use markdown for dates and important terms.",
+  general: "You are a helpful academic tutor. Provide clear, concise explanations with practical examples."
 };
 
 // Detect subject based on keywords
@@ -36,20 +36,7 @@ function detectSubject(message) {
   return 'general';
 }
 
-// Format response with markdown
-function formatResponse(text) {
-  if (!text) return "I apologize, but I couldn't generate a response. Please try again.";
-  
-  return text
-    .replace(/^(.*?)$/gm, (match) => {
-      if (match.toLowerCase().includes('example')) return `### Example\n${match}`;
-      if (match.toLowerCase().includes('key point')) return `**${match}**`;
-      if (match.toLowerCase().includes('tip')) return `*Tip:* ${match}`;
-      return match;
-    });
-}
-
-// Main chat function
+// Main chat function with improved prompt
 export async function chat(userMessage, chatHistory = [], subject = 'general') {
   try {
     // Validate inputs
@@ -62,18 +49,26 @@ export async function chat(userMessage, chatHistory = [], subject = 'general') {
       throw new Error('API key is not configured');
     }
 
-    // Create the prompt
-    const prompt = `As an academic tutor, ${SUBJECT_CONTEXTS[subject] || SUBJECT_CONTEXTS.general}
+    // Create a more focused and structured prompt
+    const prompt = `${SUBJECT_CONTEXTS[subject] || SUBJECT_CONTEXTS.general}
 
 Question: ${userMessage}
 
-Please provide a clear, educational response using markdown formatting with:
-- A direct answer
-- Step-by-step explanation
-- Relevant examples
-- Practice suggestions`;
+Provide a response that is:
+1. Clear and concise
+2. Easy to understand
+3. Includes practical examples
+4. Uses markdown formatting
 
-    // Make API request
+Format your response with:
+- Use ### for main points
+- Use ** for important terms
+- Use * for emphasis
+- Use \` for code or technical terms
+- Use numbered lists for steps
+- Use bullet points for examples`;
+
+    // Make API request with optimized settings
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
@@ -86,7 +81,13 @@ Please provide a clear, educational response using markdown formatting with:
             parts: [{
               text: prompt
             }]
-          }]
+          }],
+          generationConfig: {
+            temperature: 0.7,
+            topK: 40,
+            topP: 0.95,
+            maxOutputTokens: 1024, // Reduced for faster responses
+          }
         })
       }
     );
@@ -115,6 +116,34 @@ Please try:
 - Checking your internet connection
 - Trying again in a moment`;
   }
+}
+
+// Enhanced response formatting
+function formatResponse(text) {
+  if (!text) return "I apologize, but I couldn't generate a response. Please try again.";
+  
+  // Clean up the response
+  text = text
+    .replace(/```/g, '`') // Fix code block markers
+    .replace(/\n{3,}/g, '\n\n') // Remove excessive newlines
+    .trim();
+  
+  // Add spacing around headers
+  text = text.replace(/###/g, '\n###');
+  
+  // Format code blocks
+  text = text.replace(/`([^`]+)`/g, (match, code) => {
+    return `\`${code.trim()}\``;
+  });
+  
+  // Format lists
+  text = text.replace(/^\d+\./gm, (match) => `\n${match}`);
+  text = text.replace(/^-/gm, (match) => `\n${match}`);
+  
+  // Add emphasis to key terms
+  text = text.replace(/\b(key point|important|note|remember|tip):/gi, '**$1:**');
+  
+  return text;
 }
 
 // Helper functions
