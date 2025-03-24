@@ -3,29 +3,70 @@ import { getConfig } from '../utils/config';
 
 const config = getConfig();
 
-const client = new Client()
-    .setEndpoint('https://cloud.appwrite.io/v1')
-    .setProject(import.meta.env.VITE_APPWRITE_PROJECT_ID);
+// Get environment variables
+const env = {
+    endpoint: import.meta.env.VITE_APPWRITE_ENDPOINT,
+    projectId: import.meta.env.VITE_APPWRITE_PROJECT_ID,
+    databaseId: import.meta.env.VITE_APPWRITE_DATABASE_ID,
+    requestsCollectionId: import.meta.env.VITE_APPWRITE_REQUESTS_COLLECTION_ID,
+    imagesBucketId: import.meta.env.VITE_APPWRITE_IMAGES_BUCKET_ID
+};
+
+// Validate environment variables
+const validateEnv = () => {
+    const required = [
+        'endpoint',
+        'projectId',
+        'databaseId',
+        'requestsCollectionId',
+        'imagesBucketId'
+    ];
+
+    const missing = required.filter(key => !env[key]);
+
+    if (missing.length > 0) {
+        throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
+    }
+
+    return true;
+};
+
+// Initialize Appwrite
+const initializeAppwrite = () => {
+    validateEnv();
+
+    const client = new Client()
+        .setEndpoint(env.endpoint)
+        .setProject(env.projectId);
+
+    return {
+        client,
+        account: new Account(client),
+        databases: new Databases(client),
+        env
+    };
+};
+
+const appwrite = initializeAppwrite();
 
 // Initialize services
-export const databases = new Databases(client);
-export const storage = new Storage(client);
-export const account = new Account(client);
+export const { databases, storage } = appwrite;
+export const account = appwrite.account;
 
 // Add this for debugging
 console.log('Appwrite Configuration:', {
-    endpoint: config.VITE_APPWRITE_ENDPOINT,
-    projectId: config.VITE_APPWRITE_PROJECT_ID
+    endpoint: env.endpoint,
+    projectId: env.projectId
 });
 
 // Export the client as both default and named export
-export { client };
-export default client;
+export { appwrite.client };
+export default appwrite.client;
 
 export const appwriteConfig = {
-    databaseId: config.VITE_APPWRITE_DATABASE_ID,
+    databaseId: env.databaseId,
     coachingCollectionId: config.VITE_APPWRITE_COACHING_COLLECTION_ID,
-    imagesBucketId: config.VITE_APPWRITE_IMAGES_BUCKET_ID
+    imagesBucketId: env.imagesBucketId
 };
 
 // Add this function to check auth status
