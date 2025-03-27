@@ -9,14 +9,14 @@ import CoachingDashboard from './pages/CoachingDashboard';
 import CoachingRegistration from './pages/coaching/CoachingRegistration';
 import Navbar from './components/Navbar';
 import CoachingDetails from './pages/coaching/[slug]';
-import NotFound from './pages/NotFound';
 import { Toaster } from 'react-hot-toast';
 import AuthCallback from './components/AuthCallback';
 import ErrorBoundary from './components/ErrorBoundary';
 import AcademicBot from './pages/AcademicBot';
 import { useState, useEffect } from 'react';
 import { validateConfig } from './config/appwrite';
-// import Routes from './Routes';
+import NotFound from './pages/NotFound';
+import RazorpayPayment from './pages/RazorpayPayment'; // ✅ Correct import
 
 function App() {
     const [configError, setConfigError] = useState(null);
@@ -37,9 +37,7 @@ function App() {
                     <h1 className="text-2xl font-bold text-red-600 mb-4">
                         Configuration Error
                     </h1>
-                    <p className="text-gray-700 mb-4">
-                        {configError}
-                    </p>
+                    <p className="text-gray-700 mb-4">{configError}</p>
                     <p className="text-sm text-gray-500">
                         Please check your environment variables and restart the application.
                     </p>
@@ -51,7 +49,7 @@ function App() {
     return (
         <ErrorBoundary>
             <AuthProvider>
-                <Toaster 
+                <Toaster
                     position="top-right"
                     toastOptions={{
                         duration: 5000,
@@ -76,6 +74,7 @@ function App() {
                             <Route path="/login" element={<Login />} />
                             <Route path="/register" element={<Register />} />
                             <Route path="/auth/callback" element={<AuthCallback />} />
+
                             <Route
                                 path="/student/dashboard"
                                 element={
@@ -92,6 +91,7 @@ function App() {
                                     </ProtectedRoute>
                                 }
                             />
+                            <Route path="/payment" element={<RazorpayPayment />} /> {/* ✅ Corrected */}
                             <Route
                                 path="/coaching/registration"
                                 element={
