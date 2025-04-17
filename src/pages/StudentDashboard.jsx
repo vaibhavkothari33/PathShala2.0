@@ -516,12 +516,12 @@ const StudentDashboard = () => {
 
       <Link
         to="/student/academic-bot"
-        className="flex items-center p-3 bg-white rounded-lg shadow hover:shadow-md transition-shadow"
+        className="fixed bottom-6 right-6 flex items-center gap-3 p-4 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 group"
       >
-        <Bot className="h-6 w-6 text-indigo-600 mr-3" />
-        <div>
+        <Bot className="h-6 w-6" />
+        <div className="hidden group-hover:block animate-fadeIn">
           <h3 className="font-medium">Academic Assistant</h3>
-          <p className="text-sm text-gray-500">Get help with your studies</p>
+          <p className="text-sm text-indigo-100">Get help with your studies</p>
         </div>
       </Link>
     </div>

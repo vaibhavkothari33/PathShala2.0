@@ -17,7 +17,7 @@ import { useState, useEffect } from 'react';
 import { validateConfig } from './config/appwrite';
 import NotFound from './pages/NotFound';
 import RazorpayPayment from './pages/RazorpayPayment'; // ✅ Correct import
-
+import HeroSection from './pages/Herosection';
 function App() {
     const [configError, setConfigError] = useState(null);
 
@@ -74,6 +74,7 @@ function App() {
                             <Route path="/login" element={<Login />} />
                             <Route path="/register" element={<Register />} />
                             <Route path="/auth/callback" element={<AuthCallback />} />
+                            <Route path="/hero" element={<HeroSection />} />
 
                             <Route
                                 path="/student/dashboard"
