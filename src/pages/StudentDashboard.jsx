@@ -4,6 +4,7 @@ import { Search, MapPin, Filter, Star, Clock, Users, BookOpen, ChevronDown, X, A
 import { Link } from 'react-router-dom';
 import { databases } from '../config/appwrite'; // Import Appwrite databases
 import { toast } from 'react-hot-toast';
+import { FaCartArrowDown } from "react-icons/fa";
 // import coachingService from '../services/coachingService';
 const StudentDashboard = () => {
   const [coachingCenters, setCoachingCenters] = useState([]);
@@ -251,17 +252,35 @@ const StudentDashboard = () => {
                 </motion.div>
               )}
             </div>
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg"
-            >
-              <BookOpen className="h-5 w-5 mr-2" />
-              My Enrolled Courses
-            </motion.button>
-          </div>
-        </div>
-      </div>
+  
+            {/* Buttons Section */}
+            <div className="flex  sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0">
+            <Link to="/buysell" className="w-full sm:w-auto">
+              {/* Buy/Sell Button */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg"
+              >
+                
+                <FaCartArrowDown className="h-5 w-5 mr-2" />
+                  Buy/Sell
+                
+              </motion.button>
+              </Link>
+  
+              {/* My Enrolled Courses Button */}
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg"
+              >
+                <BookOpen className="h-5 w-5 mr-2" />
+                My Enrolled Courses
+              </motion.button>
+            </div>
+          </div> 
+
 
       {/* Enhanced Search and Filters */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
@@ -525,7 +544,11 @@ const StudentDashboard = () => {
         </div>
       </Link>
     </div>
+    </div>
+    </div>
   );
 };
+
+
 
 export default StudentDashboard;
