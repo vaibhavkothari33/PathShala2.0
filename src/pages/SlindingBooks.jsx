@@ -98,7 +98,7 @@ const SlidingBooks = () => {
       {/* ✅ "Explore All Books" button */}
       <div className="text-center mt-8">
         <Link
-          to="/all-books"
+          to="/explore-books"
           className="bg-yellow-400  text-black font-semibold py-2 px-6 rounded-lg hover:bg-yellow-500 transition"
         >
           Explore all used books
