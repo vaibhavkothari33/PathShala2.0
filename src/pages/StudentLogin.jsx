@@ -49,7 +49,7 @@ const StudentLogin = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      await account.createOAuth2Session('google', 'http://localhost:5173/auth/callback');
+      await account.createOAuth2Session('google', 'https://pathshala-rho.vercel.app/auth/callback');
     } catch (error) {
       console.error('Google login error:', error);
       setError(error.message || 'Failed to login with Google');
