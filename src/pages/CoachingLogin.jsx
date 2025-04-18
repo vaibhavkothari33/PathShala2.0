@@ -65,8 +65,8 @@ const CoachingLogin = () => {
       // Specify coaching in the redirect URL to identify user type after OAuth
       await account.createOAuth2Session(
         'google', 
-        'http://localhost:5173/coaching/registration',  // Failure redirect to coaching registration
-        'http://localhost:5173/coaching/auth/callback',  // Changed URL to specify coaching path
+        'https://pathshala-rho.vercel.app/coaching/registration',  // Failure redirect to coaching registration
+        'https://pathshala-rho.vercel.app/auth/callback',  // Changed URL to specify coaching path
       );
     } catch (error) {
       console.error('Google login error:', error);
