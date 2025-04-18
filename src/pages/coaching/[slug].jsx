@@ -145,7 +145,7 @@ const CoachingDetails = () => {
       // Check if user is logged in
       if (!user) {
         toast.error('Please login to book a demo class');
-        navigate('/login', { state: { from: `/coaching/${slug}` } });
+        navigate('/student/login', { state: { from: `/coaching/${slug}` } });
         return;
       }
 
@@ -210,7 +210,7 @@ const CoachingDetails = () => {
       // Check if user is logged in
       if (!user) {
         toast.error('Please login to book a demo class');
-        navigate('/login', { state: { from: `/coaching/${slug}` } });
+        navigate('/student/login', { state: { from: `/coaching/${slug}` } });
         return;
       }
 

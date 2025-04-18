@@ -23,6 +23,7 @@ const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [user] = useState(null);
 
   const handleInputChange = (e) => {
     const { name, value, files } = e.target;
@@ -90,7 +91,6 @@ const Register = () => {
 
       // Add user role and profile picture if available
       try {
-        // Note: You'll need to implement these methods in your AuthContext
         await user.addLabel(userType);
         if (profilePictureUrl) {
           await user.updatePrefs({
@@ -105,7 +105,7 @@ const Register = () => {
 
       // Redirect based on role
       if (userType === 'coaching') {
-        navigate('/coaching/dashboard');
+        navigate('/coaching/registration');
       } else {
         navigate('/student/dashboard');
       }
@@ -144,6 +144,16 @@ const Register = () => {
       { icon: CheckCircle, text: "Detailed analytics and insights" },
     ]
   };
+
+  useEffect(() => {
+    if (user) {
+      if (user.labels?.includes('coaching')) {
+        navigate('/coaching/registration');
+      } else {
+        navigate('/student/dashboard');
+      }
+    }
+  }, [user, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 flex">
@@ -445,7 +455,7 @@ const Register = () => {
 
             <p className="mt-8 text-center text-sm text-gray-600">
               Already have an account?{' '}
-              <Link to="/login" className="font-medium text-indigo-600 hover:text-indigo-500">
+              <Link to="/student/login" className="font-medium text-indigo-600 hover:text-indigo-500">
                 Sign in instead
               </Link>
             </p>

@@ -226,7 +226,7 @@ const HeroSection = () => {
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 >
                   <Link
-                    to="/register?role=student"
+                    to="/student/login"
                     className="group relative w-full sm:w-auto inline-flex items-center justify-center px-10 py-5 border border-transparent text-lg font-bold rounded-2xl text-indigo-600 bg-white hover:bg-gray-50 md:text-xl md:px-12 transition-all duration-300"
                   >
                     <span className="absolute inset-0 w-full h-full transition duration-300 ease-out transform translate-x-1 translate-y-1 bg-indigo-100 group-hover:translate-x-0 group-hover:translate-y-0 rounded-2xl"></span>
@@ -249,7 +249,7 @@ const HeroSection = () => {
                   transition={{ type: "spring", stiffness: 400, damping: 10 }}
                 >
                   <Link
-                    to="/register?role=coaching"
+                    to="/coaching/login"
                     className="group relative w-full sm:w-auto inline-flex items-center justify-center px-10 py-5 border border-transparent text-lg font-bold rounded-2xl text-white bg-indigo-600 hover:bg-indigo-700 md:text-xl md:px-12 transition-all duration-300"
                   >
                     <span className="absolute inset-0 w-full h-full transition duration-300 ease-out transform translate-x-1 translate-y-1 bg-indigo-800 group-hover:translate-x-0 group-hover:translate-y-0 rounded-2xl"></span>

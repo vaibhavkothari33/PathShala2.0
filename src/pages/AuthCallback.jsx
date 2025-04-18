@@ -39,13 +39,13 @@ const AuthCallback = () => {
         } else {
           console.log("No session found");
           toast.error('Authentication failed');
-          navigate('/login');
+          navigate('/student/login');
         }
       } catch (error) {
         console.error('Auth callback error:', error);
         localStorage.removeItem('jwt');
         toast.error('Authentication failed');
-        navigate('/login');
+        navigate('/student/login');
       } finally {
         setIsProcessing(false);
       }

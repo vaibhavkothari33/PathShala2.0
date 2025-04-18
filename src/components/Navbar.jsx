@@ -99,13 +99,13 @@ const Navbar = () => {
             ) : (
               <div className="space-x-4">
                 <Link
-                  to="/login"
+                  to="/student/login"
                   className="text-gray-700 hover:text-indigo-600 font-medium transition-colors px-4 py-2 rounded-lg hover:bg-gray-50"
                 >
                   Login
                 </Link>
                 <Link
-                  to="/register"
+                  to="/student/register"
                   className="bg-gradient-to-r from-indigo-600 to-blue-600 text-white px-6 py-2 rounded-lg hover:from-indigo-700 hover:to-blue-700 transition-all duration-200 shadow-md hover:shadow-lg font-medium"
                 >
                   Register

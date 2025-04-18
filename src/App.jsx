@@ -2,7 +2,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import LandingPage from './pages/LandingPage';
-import Login from './pages/Login';
+import StudentLogin from './pages/StudentLogin';
+import CoachingLogin from './pages/CoachingLogin';
 import Register from './pages/Register';
 import StudentDashboard from './pages/StudentDashboard';
 import CoachingDashboard from './pages/CoachingDashboard';
@@ -74,10 +75,12 @@ function App() {
                         <Navbar />
                         <Routes>
                             <Route path="/" element={<LandingPage />} />
-                            <Route path="/login" element={<Login />} />
+                            <Route path="/student/login" element={<StudentLogin />} />
+                            <Route path="/coaching/login" element={<CoachingLogin />} />
                             <Route path="/register" element={<Register />} />
                             <Route path="/auth/callback" element={<AuthCallback />} />
-                            {/* <Route path="/buysell" element={<Buysell />} /> */}
+                            <Route path="/buysell" element={<Buysell />} />
+                            <Route path="/bookform" element={<BookForm />} />
                             <Route
                                 path="/student/dashboard"
                                 element={
@@ -86,15 +89,19 @@ function App() {
                                     </ProtectedRoute>
                                 }
                             />
-                             <Route path="/buysell" element={<Buysell />} />
-                            <Route path="/bookform" element={<BookForm />} />
-                            
-                            
                             <Route
                                 path="/coaching/registration"
                                 element={
                                     <ProtectedRoute>
                                         <CoachingRegistration />
+                                    </ProtectedRoute>
+                                }
+                            />
+                            <Route
+                                path="/coaching/dashboard"
+                                element={
+                                    <ProtectedRoute>
+                                        <CoachingDashboard />
                                     </ProtectedRoute>
                                 }
                             />

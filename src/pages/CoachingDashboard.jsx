@@ -78,7 +78,7 @@ const CoachingDashboard = () => {
 
         // Check for user authentication
         if (!user || !user.$id) {
-          navigate('/login');
+          navigate('/coaching/login');
           return;
         }
 
@@ -591,11 +591,13 @@ const CoachingDashboard = () => {
   const MessagesSection = () => {
     const [messages, setMessages] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState(null);
     
     useEffect(() => {
       const fetchMessages = async () => {
         try {
           setLoading(true);
+          setError(null);
           
           const databaseId = import.meta.env.VITE_APPWRITE_DATABASE_ID;
           const messagesCollectionId = 'messages';
@@ -617,8 +619,10 @@ const CoachingDashboard = () => {
           setMessages(response.documents || []);
         } catch (error) {
           console.error('Error fetching messages:', error);
+          setError('Messages feature is not available yet');
+          setMessages([]);
         } finally {
-      setLoading(false);
+          setLoading(false);
         }
       };
       
@@ -627,6 +631,46 @@ const CoachingDashboard = () => {
       }
     }, [coaching, user]);
 
+    return (
+      <div className="bg-white rounded-lg shadow mb-8">
+        <div className="flex items-center justify-between p-6 border-b">
+          <h2 className="text-xl font-semibold text-gray-900">Messages</h2>
+        </div>
+        <div className="p-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
+            </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <div className="text-gray-500 mb-2">{error}</div>
+              <p className="text-sm text-gray-400">This feature will be available soon</p>
+            </div>
+          ) : messages.length > 0 ? (
+            <div className="space-y-4">
+              {messages.map((message) => (
+                <div key={message.$id} className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-medium text-gray-900">{message.recipient_name}</h3>
+                      <p className="text-sm text-gray-500">{message.content}</p>
+                    </div>
+                    <span className="text-xs text-gray-400">
+                      {new Date(message.createdAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <div className="text-gray-500 mb-2">No messages yet</div>
+              <p className="text-sm text-gray-400">Your messages will appear here</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   // Show loading state
@@ -878,95 +922,95 @@ const StatsCard = ({ icon, title, value, bgColor }) => (
   </div>
 );
 
-const FacultyCard = ({ teacher }) => (
-  <div className="border rounded-lg p-4">
-    <div className="flex items-center">
-      {teacher.image ? (
-        <img 
-          src={teacher.image} 
-          alt={teacher.name}
-          className="w-10 h-10 rounded-full object-cover mr-3"
-          onError={(e) => {
-            console.error('Faculty image load error:', e);
-            e.target.src = '/default-faculty.jpg';
-          }}
-        />
-      ) : (
-        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center mr-3">
-          <User className="h-6 w-6 text-gray-500" />
-        </div>
-      )}
-      <div>
-        <h3 className="font-semibold">{teacher.name}</h3>
-        <div className="text-sm text-gray-500">
-          {teacher.subject} • {teacher.experience}
-        </div>
-      </div>
-    </div>
-  </div>
-);
+const FacultyCard = ({ teacher }) => {
+  const [imageError, setImageError] = useState(false);
 
-const PreviewSection = ({ coaching }) => (
-  <div className="bg-white rounded-lg shadow">
-    <div className="p-6 border-b">
-      <h2 className="text-xl font-semibold text-gray-900">Preview</h2>
-    </div>
-    <div className="p-6">
-      <div className="mb-4">
-        {coaching.images?.coverImage ? (
+  return (
+    <div className="border rounded-lg p-4">
+      <div className="flex items-center">
+        {teacher.image && !imageError ? (
           <img 
-            src={coaching.images.coverImage} 
-            alt="Cover"
-            className="w-full h-32 object-cover rounded-lg"
-            onError={(e) => {
-              console.error('Cover image load error:', e);
-              e.target.src = '/default-cover.jpg';
-            }}
+            src={teacher.image} 
+            alt={teacher.name}
+            className="w-10 h-10 rounded-full object-cover mr-3"
+            onError={() => setImageError(true)}
           />
         ) : (
-          <div className="w-full h-32 bg-gray-200 rounded-lg flex items-center justify-center">
-            <span className="text-gray-400">No cover image</span>
+          <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-blue-600 flex items-center justify-center mr-3">
+            <User className="h-5 w-5 text-white" />
           </div>
         )}
-      </div>
-      
-      <div className="flex items-start">
-        {coaching.images?.logo ? (
-          <img 
-            src={coaching.images.logo} 
-            alt="Logo"
-            className="w-12 h-12 object-cover rounded-lg mr-3"
-            onError={(e) => {
-              console.error('Logo load error:', e);
-              e.target.src = '/default-logo.jpg';
-            }}
-          />
-        ) : (
-          <div className="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center mr-3">
-            <span className="text-gray-400 text-xs">Logo</span>
-          </div>
-        )}
-        
         <div>
-          <h3 className="font-semibold">{coaching.name}</h3>
+          <h3 className="font-semibold">{teacher.name}</h3>
           <div className="text-sm text-gray-500">
-            {coaching.address || coaching.city}
+            {teacher.subject} • {teacher.experience}
           </div>
         </div>
       </div>
-      
-      <div className="mt-4">
-        <Link 
-          to={`/coaching/${coaching.slug}`} 
-          target="_blank"
-          className="w-full block text-center bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors duration-200"
-        >
-          View Public Page
-        </Link>
+    </div>
+  );
+};
+
+const PreviewSection = ({ coaching }) => {
+  const [coverImageError, setCoverImageError] = useState(false);
+  const [logoError, setLogoError] = useState(false);
+
+  return (
+    <div className="bg-white rounded-lg shadow">
+      <div className="p-6 border-b">
+        <h2 className="text-xl font-semibold text-gray-900">Preview</h2>
+      </div>
+      <div className="p-6">
+        <div className="mb-4">
+          {coaching.images?.coverImage && !coverImageError ? (
+            <img 
+              src={coaching.images.coverImage} 
+              alt="Cover"
+              className="w-full h-32 object-cover rounded-lg"
+              onError={() => setCoverImageError(true)}
+            />
+          ) : (
+            <div className="w-full h-32 rounded-lg bg-gradient-to-r from-indigo-500 to-blue-600 flex items-center justify-center">
+              <span className="text-white font-medium">Cover Image</span>
+            </div>
+          )}
+        </div>
+        
+        <div className="flex items-start">
+          {coaching.images?.logo && !logoError ? (
+            <img 
+              src={coaching.images.logo} 
+              alt="Logo"
+              className="w-12 h-12 object-cover rounded-lg mr-3"
+              onError={() => setLogoError(true)}
+            />
+          ) : (
+            <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-indigo-500 to-blue-600 flex items-center justify-center mr-3">
+              <span className="text-white text-xs">Logo</span>
+            </div>
+          )}
+          
+          <div>
+            <h3 className="font-semibold">{coaching.name}</h3>
+            <div className="text-sm text-gray-500">
+              {coaching.address || coaching.city}
+            </div>
+          </div>
+        </div>
+        
+        <div className="mt-4">
+          <Link 
+            to={`/coaching/${coaching.slug}`} 
+            target="_blank"
+            className="w-full block text-center bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700 transition-colors duration-200"
+          >
+            View Public Page
+          </Link>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 const QuickLinks = () => (
   <div className="bg-white rounded-lg shadow">

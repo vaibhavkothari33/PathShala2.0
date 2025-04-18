@@ -93,7 +93,7 @@ const CoachingRegistration = () => {
   useEffect(() => {
     if (!user) {
       toast.error('Please login to register a coaching center');
-      navigate('/login');
+      navigate('/coaching/login');
     }
   }, [user, navigate]);
 
