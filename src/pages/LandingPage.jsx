@@ -12,6 +12,7 @@ import {
   DevicePhoneMobileIcon,
   ShieldCheckIcon
 } from '@heroicons/react/24/outline';
+import HeroSection from './Herosection';
 
 // Animation variants
 const containerVariants = {
@@ -21,30 +22,6 @@ const containerVariants = {
     transition: {
       staggerChildren: 0.2,
       delayChildren: 0.3,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.5,
-      ease: "easeOut",
-    },
-  },
-};
-
-const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: {
-      duration: 0.6,
-      ease: "easeOut",
     },
   },
 };
@@ -200,173 +177,8 @@ const LandingPage = () => {
       animate="visible"
       className="bg-white overflow-hidden"
     >
+      <HeroSection/>
       {/* Hero Section with Advanced Animation */}
-      <div className="relative">
-        <motion.div
-          initial={{ skewY: 0 }}
-          animate={{ skewY: -6 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-          className="absolute inset-0 bg-gradient-to-r from-indigo-600 via-blue-500 to-purple-500"
-        >
-          <motion.div
-            animate={{
-              background: [
-                "linear-gradient(45deg, rgba(99,102,241,0.4) 0%, rgba(59,130,246,0.4) 100%)",
-                "linear-gradient(45deg, rgba(139,92,246,0.4) 0%, rgba(59,130,246,0.4) 100%)"
-              ]
-            }}
-            transition={{ duration: 4, repeat: Infinity, repeatType: "reverse" }}
-            className="absolute inset-0"
-          />
-          {/* Animated particles background for added depth */}
-          <motion.div className="absolute inset-0 overflow-hidden">
-            {Array.from({ length: 15 }).map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute bg-white rounded-full opacity-20"
-                style={{
-                  width: Math.random() * 20 + 10,
-                  height: Math.random() * 20 + 10,
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                }}
-                animate={{
-                  y: [0, -100, 0],
-                  opacity: [0.1, 0.3, 0.1],
-                }}
-                transition={{
-                  duration: Math.random() * 10 + 15,
-                  repeat: Infinity,
-                  delay: Math.random() * 5,
-                }}
-              />
-            ))}
-          </motion.div>
-        </motion.div>
-
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="py-24 md:py-32">
-            <motion.div
-              variants={containerVariants}
-              className="text-center"
-            >
-              <motion.h1
-                variants={itemVariants}
-                className="text-4xl tracking-tight font-extrabold text-white sm:text-5xl md:text-6xl"
-              >
-                <motion.span
-                  initial={{ opacity: 0, y: -30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.8,
-                    delay: 0.2,
-                    type: "spring",
-                    stiffness: 100
-                  }}
-                  className="block bg-clip-text text-transparent bg-gradient-to-r from-white to-indigo-200"
-                >
-                  Welcome to Pathshala
-                </motion.span>
-                <motion.span
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{
-                    duration: 0.8,
-                    delay: 0.5,
-                    type: "spring",
-                    stiffness: 100
-                  }}
-                  className="block text-indigo-200 mt-3"
-                >
-                  Your Learning Journey Starts Here
-                </motion.span>
-              </motion.h1>
-
-              <motion.p
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.7 }}
-                className="mt-8 max-w-md mx-auto text-base text-indigo-100 sm:text-lg md:mt-8 md:text-xl md:max-w-3xl leading-relaxed font-medium"
-              >
-                Connect with the best local coaching centers in your area.
-                Find the perfect match for your educational needs.
-              </motion.p>
-
-              {/* Enhanced CTA Buttons with Interactive Effects */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.9 }}
-                className="mt-12 max-w-lg mx-auto sm:flex sm:justify-center md:mt-14 space-y-4 sm:space-y-0 sm:space-x-6"
-              >
-                <motion.div
-                  whileHover={{
-                    scale: 1.05,
-                    boxShadow: "0 15px 30px -5px rgba(79, 70, 229, 0.3)"
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                >
-                  <Link
-                    to="/register?role=student"
-                    className="group relative w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-medium rounded-md text-indigo-600 bg-white hover:bg-gray-50 md:py-4 md:text-lg md:px-10 transition-all duration-300"
-                  >
-                    <span className="absolute inset-0 w-full h-full transition duration-300 ease-out transform translate-x-1 translate-y-1 bg-indigo-100 group-hover:translate-x-0 group-hover:translate-y-0 rounded-md"></span>
-                    <span className="absolute inset-0 w-full h-full border-2 border-indigo-600 rounded-md"></span>
-                    <span className="relative flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                      I'm a Student
-                    </span>
-                  </Link>
-                </motion.div>
-
-                <motion.div
-                  whileHover={{
-                    scale: 1.05,
-                    boxShadow: "0 15px 30px -5px rgba(79, 70, 229, 0.5)"
-                  }}
-                  whileTap={{ scale: 0.95 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 10 }}
-                >
-                  <Link
-                    to="/register?role=coaching"
-                    className="group relative w-full sm:w-auto inline-flex items-center justify-center px-8 py-4 border border-transparent text-base font-medium rounded-md text-white bg-indigo-700 hover:bg-indigo-800 md:py-4 md:text-lg md:px-10 transition-all duration-300"
-                  >
-                    <span className="absolute inset-0 w-full h-full transition duration-300 ease-out transform translate-x-1 translate-y-1 bg-indigo-800 group-hover:translate-x-0 group-hover:translate-y-0 rounded-md"></span>
-                    <span className="absolute inset-0 w-full h-full border-2 border-white rounded-md"></span>
-                    <span className="relative flex items-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-                      </svg>
-                      I'm a Coaching Center
-                    </span>
-                  </Link>
-                </motion.div>
-              </motion.div>
-
-              {/* Optional: Add a scrolling indicator for better UX */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 1.2, duration: 0.8 }}
-                className="mt-16 hidden md:block"
-              >
-                <motion.div
-                  animate={{ y: [0, 10, 0] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                  className="flex justify-center"
-                >
-                  <svg className="w-6 h-6 text-white opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-                  </svg>
-                </motion.div>
-              </motion.div>
-            </motion.div>
-          </div>
-        </div>
-      </div>
 
       {/* Enhanced Features Section with Staggered Animation */}
       <div className="py-20 bg-gradient-to-b from-gray-50 to-white">
@@ -421,7 +233,7 @@ const LandingPage = () => {
                     scale: 1.05,
                     boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)"
                   }}
-                  className="relative bg-white p-6 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100"
+                  className="relative bg-white border-2 border-gray-300 p-6 rounded-xl shadow-md hover:border-indigo-600 transition-all duration-100 hover:shadow-xl"
                 >
                   <motion.div
                     initial={{ scale: 0 }}
@@ -484,7 +296,7 @@ const LandingPage = () => {
                   y: -10,
                   boxShadow: "0 12px 24px -6px rgba(79, 70, 229, 0.25)"
                 }}
-                className="text-center p-8 rounded-xl hover:bg-indigo-50 transition-all duration-300 border border-gray-100 bg-white shadow-sm"
+                className="text-center p-8 rounded-xl border-2 border-gray-300 hover:bg-indigo-100 transition-all duration-300 bg-white shadow-sm"
               >
                 <motion.div
                   whileHover={{ rotate: 360, scale: 1.1 }}
@@ -600,7 +412,7 @@ const LandingPage = () => {
                 transition={{ duration: 0.5, delay: 0.1 * index }}
                 viewport={{ once: true, margin: "-100px" }}
                 whileHover={{ y: -8 }}
-                className="bg-white p-6 rounded-xl shadow-md relative"
+                className="bg-white p-6 rounded-xl border-2 border-gray-300 shadow-md relative"
               >
                 <div className="absolute -top-4 -left-4">
                   <motion.div

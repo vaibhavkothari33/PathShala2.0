@@ -9,7 +9,6 @@ import CoachingDashboard from './pages/CoachingDashboard';
 import CoachingRegistration from './pages/coaching/CoachingRegistration';
 import Navbar from './components/Navbar';
 import CoachingDetails from './pages/coaching/[slug]';
-import NotFound from './pages/NotFound';
 import { Toaster } from 'react-hot-toast';
 import AuthCallback from './components/AuthCallback';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -41,9 +40,7 @@ function App() {
                     <h1 className="text-2xl font-bold text-red-600 mb-4">
                         Configuration Error
                     </h1>
-                    <p className="text-gray-700 mb-4">
-                        {configError}
-                    </p>
+                    <p className="text-gray-700 mb-4">{configError}</p>
                     <p className="text-sm text-gray-500">
                         Please check your environment variables and restart the application.
                     </p>
@@ -55,7 +52,7 @@ function App() {
     return (
         <ErrorBoundary>
             <AuthProvider>
-                <Toaster 
+                <Toaster
                     position="top-right"
                     toastOptions={{
                         duration: 5000,

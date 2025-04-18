@@ -283,7 +283,7 @@ const Register = () => {
                       value={formData.name}
                       onChange={handleInputChange}
                       className="appearance-none rounded-lg relative block w-full px-10 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                      placeholder="John Doe"
+                      placeholder="Vaibhav Kothari"
                     />
                   </div>
                 </div>

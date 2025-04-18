@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Send, Bot, User, Loader2, ChevronLeft, 
-  Lightbulb, BookOpen, History, Eraser, 
-  Download, Copy, Check, Mic, Square, 
-  BookmarkPlus, ThumbsUp, ThumbsDown, Share
+  Send, Bot, User, Loader2, ChevronLeft, ChevronRight,
+  BookOpen, History, Eraser, Download, Copy, 
+  Check, Mic, Square, BookmarkPlus, ThumbsUp, 
+  ThumbsDown, Share, Menu, X, Settings, Bookmark, Info
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -23,36 +23,41 @@ const AcademicBot = () => {
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [savedChats, setSavedChats] = useState([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [showHistory, setShowHistory] = useState(false);
+  const [isRightSidebarOpen, setIsRightSidebarOpen] = useState(false);
+  // const [showHistory, setShowHistory] = useState(false);
   const [feedbackMessage, setFeedbackMessage] = useState(null);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
-  const mediaRecorderRef = useRef(null);
   const [copiedIndex, setCopiedIndex] = useState(null);
   const [speechRecognition, setSpeechRecognition] = useState(null);
   const [transcription, setTranscription] = useState('');
+  const [activeTab, setActiveTab] = useState('chat');
+  const [theme, setTheme] = useState('light');
+  const [fontSize, setFontSize] = useState('medium');
+  const [showTips, setShowTips] = useState(true);
 
   const subjects = [
-    { id: 'math', name: 'Mathematics', icon: '📐' },
-    { id: 'physics', name: 'Physics', icon: '⚡' },
-    { id: 'chemistry', name: 'Chemistry', icon: '🧪' },
-    { id: 'biology', name: 'Biology', icon: '🧬' },
-    { id: 'computer', name: 'Computer Science', icon: '💻' },
-    { id: 'english', name: 'English & Literature', icon: '📚' },
-    { id: 'history', name: 'History', icon: '🏛️' },
-    { id: 'language', name: 'Languages', icon: '🌎' },
-    { id: 'general', name: 'General Knowledge', icon: '🌟' },
+    { id: 'math', name: 'Mathematics', icon: '📐', color: 'bg-blue-100', description: 'Algebra, Calculus, Geometry, Statistics and more' },
+    { id: 'science', name: 'Science', icon: '🔬', color: 'bg-green-100', description: 'Physics, Chemistry, Biology, Astronomy and more' },
+    // { id: 'english', name: 'English', icon: '📚', color: 'bg-purple-100', description: 'Grammar, Literature, Essay Writing, Analysis' },
+    // { id: 'history', name: 'History', icon: '🏛️', color: 'bg-amber-100', description: 'World History, Civilizations, Historical Events' },
+    { id: 'computer-science', name: 'Computer Science', icon: '💻', color: 'bg-cyan-100', description: 'Programming, Algorithms, Data Structures' },
+    { id: 'general', name: 'General', icon: '🌟', color: 'bg-gray-100', description: 'Any other topic you need help with' },
   ];
 
-  const quickPrompts = [
-    "Explain this concept simply",
-    "Give me an example",
-    "How do I solve this?",
-    "Why is this important?",
-    "Show me step by step",
-    "Create a practice problem",
-    "How can I remember this?",
-    "Connect this to real life",
+  const sampleQuestions = [
+    { subject: 'math', question: "Can you explain integration by parts?" },
+    { subject: 'science', question: "How does photosynthesis work?" },
+    { subject: 'english', question: "What are the key themes in Macbeth?" },
+    { subject: 'general', question: "How can I improve my study habits?" },
+  ];
+
+  const studyTips = [
+    "Break complex topics into smaller chunks",
+    "Use the Pomodoro technique: 25 minutes study, 5 minutes break",
+    "Teach concepts to someone else to test your understanding",
+    "Review material regularly, not just before tests",
+    "Create mind maps to visualize connections between concepts"
   ];
 
   // Initialize welcome message
@@ -61,31 +66,16 @@ const AcademicBot = () => {
       setMessages([
         {
           role: 'assistant',
-          content: `# Welcome to Your Academic Assistant! 👋
+          content: `# Welcome to PathShala AI, ${user?.name || 'Student'}! 👋
 
-Hello ${user?.name || 'there'}! I'm here to help you learn and understand better. I can assist you with:
+I'm your AI learning companion, ready to help you understand any topic better. I can:
 
-## Subjects I Can Help With:
-- 📐 Mathematics
-- ⚡ Physics
-- 🧪 Chemistry
-- 🧬 Biology
-- 💻 Computer Science
-- 📚 English & Literature
-- 🏛️ History
-- 🌎 Languages
-- And more!
+- Break down complex concepts into simple explanations
+- Guide you through problem-solving step-by-step  
+- Answer questions at any level
+- Provide relevant examples and practice problems
 
-## What I Can Do:
-- Explain complex concepts simply
-- Help solve problems step-by-step
-- Provide relevant examples and analogies
-- Answer questions at any academic level
-- Guide your learning journey
-- Create practice exercises and quizzes
-- Connect concepts to real-world applications
-
-Choose a subject above or just ask me anything! I'm here to make learning enjoyable and effective.`
+Just select a subject or ask me anything to get started!`
         }
       ]);
     }
@@ -143,17 +133,6 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
     setInput(`Help me with ${subject.name}: `);
     inputRef.current?.focus();
     
-    // If on mobile, close sidebar after selection
-    if (window.innerWidth < 1024) {
-      setIsSidebarOpen(false);
-    }
-  };
-
-  const handleQuickPrompt = (prompt) => {
-    setInput(prev => `${prev} ${prompt}`);
-    inputRef.current?.focus();
-    
-    // If on mobile, close sidebar after selection
     if (window.innerWidth < 1024) {
       setIsSidebarOpen(false);
     }
@@ -169,41 +148,6 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
         console.error('Error starting speech recognition:', error);
         toast.error('Could not start voice recognition');
       }
-    } else {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
-        const audioChunks = [];
-
-        mediaRecorder.ondataavailable = (event) => {
-          audioChunks.push(event.data);
-        };
-
-        mediaRecorder.onstop = async () => {
-          const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
-          // Convert audio to base64 and send to a speech-to-text service
-          const reader = new FileReader();
-          reader.onloadend = async () => {
-            const base64Audio = reader.result.split(',')[1];
-            try {
-              // For now, just use a placeholder response
-              setInput("How can you help me learn this topic better?");
-              toast.success('Voice input processed!');
-            } catch (error) {
-              console.error('Speech to text error:', error);
-              toast.error('Could not process voice input');
-            }
-          };
-          reader.readAsDataURL(audioBlob);
-        };
-
-        mediaRecorderRef.current = mediaRecorder;
-        mediaRecorder.start();
-        setIsRecording(true);
-      } catch (error) {
-        console.error('Error accessing microphone:', error);
-        toast.error('Could not access microphone');
-      }
     }
   };
 
@@ -212,9 +156,6 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
       speechRecognition.stop();
       setIsRecording(false);
       toast.success('Voice recording stopped!');
-    } else if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
-      setIsRecording(false);
     }
   };
 
@@ -228,8 +169,6 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
   const handleFeedback = (messageIndex, isPositive) => {
     setFeedbackMessage(messageIndex);
     toast.success(`Thank you for your ${isPositive ? 'positive' : 'negative'} feedback!`);
-    
-    // Optional: Reset feedback message after a delay
     setTimeout(() => setFeedbackMessage(null), 3000);
   };
 
@@ -239,21 +178,15 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
 
     const userMessage = input.trim();
     setInput('');
-    
-    // Add user message to chat
     setMessages(prev => [...prev, { role: 'user', content: userMessage }]);
     setIsLoading(true);
 
     try {
-      // Detect subject if none selected
       const detectedSubject = !selectedSubject ? 
         helpers.detectSubject(userMessage) : 
         selectedSubject.id;
       
-      // Get chat history for context (last 6 messages)
       const chatHistory = messages.slice(-6);
-      
-      // Get response from chat service
       const botResponse = await chat(userMessage, chatHistory, detectedSubject);
 
       setMessages(prev => [...prev, { 
@@ -265,10 +198,9 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
       console.error('Chat error:', error);
       toast.error('Failed to get response. Please try again.');
       
-      // Add a fallback response instead of removing the user's message
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: "I'm having trouble connecting to my knowledge base right now. Please try again in a moment, or try rephrasing your question.",
+        content: "I'm having trouble connecting right now. Please try again in a moment.",
         isError: true
       }]);
     } finally {
@@ -276,372 +208,532 @@ Choose a subject above or just ask me anything! I'm here to make learning enjoya
     }
   };
 
-  const clearChat = () => {
-    // Keep just the welcome message
-    setMessages([messages[0]]); 
-    setSelectedSubject(null);
-    toast.success('Chat cleared!');
+  const handleSampleQuestion = (question) => {
+    setInput(question);
+    inputRef.current?.focus();
   };
 
-  const saveCurrentChat = () => {
-    if (messages.length <= 1) {
-      toast.error('No conversation to save yet!');
-      return;
+  const handleSaveChat = () => {
+    if (messages.length > 1) {
+      const chatTitle = messages.find(m => m.role === 'user')?.content?.substring(0, 30) + '...' || 'Saved Chat';
+      const newChat = {
+        id: Date.now().toString(),
+        title: chatTitle,
+        date: new Date().toISOString(),
+        messages: messages,
+        subject: selectedSubject?.id || 'general'
+      };
+      
+      const updatedChats = [...savedChats, newChat];
+      setSavedChats(updatedChats);
+      localStorage.setItem('savedAcademicChats', JSON.stringify(updatedChats));
+      toast.success('Chat saved successfully!');
+    } else {
+      toast.error('No conversation to save yet');
     }
-    
-    // Create a chat title from the first user message
-    const firstUserMessage = messages.find(m => m.role === 'user');
-    const chatTitle = firstUserMessage ? 
-      (firstUserMessage.content.length > 30 ? 
-        firstUserMessage.content.substring(0, 30) + '...' : 
-        firstUserMessage.content) : 
-      'Saved Chat';
-    
-    const newSavedChat = {
-      id: Date.now().toString(),
-      title: chatTitle,
-      date: new Date().toISOString(),
-      messages: messages,
-      subject: selectedSubject?.id || 'general'
-    };
-    
-    const updatedSavedChats = [newSavedChat, ...savedChats];
-    setSavedChats(updatedSavedChats);
-    
-    // Save to localStorage
-    localStorage.setItem('savedAcademicChats', JSON.stringify(updatedSavedChats));
-    
-    toast.success('Chat saved successfully!');
   };
 
-  const loadSavedChat = (savedChat) => {
-    setMessages(savedChat.messages);
-    
-    // Find and set the subject
-    if (savedChat.subject) {
-      const subject = subjects.find(s => s.id === savedChat.subject);
-      setSelectedSubject(subject || null);
+  const handleClearChat = () => {
+    if (window.confirm('Are you sure you want to clear the current conversation?')) {
+      setMessages([{
+        role: 'assistant',
+        content: `# Welcome back, ${user?.name || 'Student'}! 👋\n\nHow can I help you today?`
+      }]);
+      setSelectedSubject(null);
+      toast.success('Chat cleared');
     }
-    
-    setShowHistory(false);
-    toast.success('Chat loaded!');
   };
 
-  const deleteSavedChat = (id, e) => {
-    e.stopPropagation(); // Prevent triggering the parent click
-    
-    const updatedSavedChats = savedChats.filter(chat => chat.id !== id);
-    setSavedChats(updatedSavedChats);
-    
-    // Update localStorage
-    localStorage.setItem('savedAcademicChats', JSON.stringify(updatedSavedChats));
-    
-    toast.success('Chat deleted!');
+  const handleToggleTheme = () => {
+    setTheme(theme === 'light' ? 'dark' : 'light');
   };
 
-  const downloadChat = () => {
-    if (messages.length <= 1) {
-      toast.error('No conversation to download yet!');
-      return;
+  const renderMainContent = () => {
+    switch (activeTab) {
+      case 'chat':
+        return (
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-blue-200 scrollbar-track-transparent">
+            {showTips && messages.length <= 2 && (
+              <div className="bg-blue-50 rounded-lg p-4 mb-6 border border-blue-200">
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-medium text-blue-800 flex items-center gap-2">
+                    <Info className="h-4 w-4" /> Quick Tips
+                  </h3>
+                  <button 
+                    onClick={() => setShowTips(false)}
+                    className="text-blue-600 hover:text-blue-800"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <ul className="space-y-1 text-sm text-blue-700">
+                  {studyTips.map((tip, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span>•</span>
+                      <span>{tip}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            
+            {messages.length <= 1 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+                <h3 className="font-medium text-gray-700 col-span-full">Try asking:</h3>
+                {sampleQuestions.map((item, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handleSampleQuestion(item.question)}
+                    className="p-3 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 text-left transition shadow-sm hover:shadow"
+                  >
+                    <p className="text-gray-900">{item.question}</p>
+                    <span className="text-xs text-gray-500 mt-1 inline-block">
+                      #{subjects.find(s => s.id === item.subject)?.name || item.subject}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            <AnimatePresence>
+              {messages.map((message, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.2 }}
+                  className={`flex ${message.role === 'assistant' ? 'justify-start' : 'justify-end'} relative group`}
+                >
+                  <div className={`max-w-[85%] rounded-xl p-4 ${
+                    message.role === 'assistant' 
+                      ? 'bg-blue-50 text-gray-800' 
+                      : 'bg-blue-600 text-white'
+                  }`}>
+                    {message.role === 'assistant' && (
+                      <div className="flex items-center mb-2 text-blue-700">
+                        <Bot className="h-5 w-5 mr-2" />
+                        <span className="font-medium">EduAI</span>
+                        {message.subject && (
+                          <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                            {subjects.find(s => s.id === message.subject)?.name || message.subject}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    
+                    {message.role === 'user' && (
+                      <div className="flex items-center justify-end mb-2 text-blue-100">
+                        <span className="font-medium">{user?.name || 'You'}</span>
+                        <User className="h-4 w-4 ml-2" />
+                      </div>
+                    )}
+                    
+                    <ReactMarkdown
+                      components={{
+                        code({node, inline, className, children, ...props}) {
+                          const match = /language-(\w+)/.exec(className || '');
+                          return !inline && match ? (
+                            <SyntaxHighlighter
+                              style={atomDark}
+                              language={match[1]}
+                              PreTag="div"
+                              {...props}
+                            >
+                              {String(children).replace(/\n$/, '')}
+                            </SyntaxHighlighter>
+                          ) : (
+                            <code className={className} {...props}>
+                              {children}
+                            </code>
+                          );
+                        }
+                      }}
+                    >
+                      {message.content}
+                    </ReactMarkdown>
+                    
+                    {message.role === 'assistant' && (
+                      <div className="mt-2 pt-2 border-t border-blue-100 flex items-center justify-between text-xs text-blue-500">
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={() => handleFeedback(index, true)}
+                            className="p-1 hover:bg-blue-100 rounded flex items-center gap-1"
+                          >
+                            <ThumbsUp className="h-3 w-3" /> Helpful
+                          </button>
+                          <button 
+                            onClick={() => handleFeedback(index, false)}
+                            className="p-1 hover:bg-blue-100 rounded flex items-center gap-1"
+                          >
+                            <ThumbsDown className="h-3 w-3" /> Not Helpful
+                          </button>
+                        </div>
+                        <button 
+                          onClick={() => handleCopy(message.content, index)}
+                          className="p-1 hover:bg-blue-100 rounded flex items-center gap-1"
+                        >
+                          {copiedIndex === index ? (
+                            <Check className="h-3 w-3" />
+                          ) : (
+                            <Copy className="h-3 w-3" />
+                          )}
+                          {copiedIndex === index ? 'Copied' : 'Copy'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+            
+            {isLoading && (
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="flex gap-2 items-center text-gray-500 bg-blue-50 px-4 py-3 rounded-lg max-w-xs"
+              >
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" style={{ animationDelay: "0s" }}></div>
+                  <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" style={{ animationDelay: "0.2s" }}></div>
+                  <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" style={{ animationDelay: "0.4s" }}></div>
+                </div>
+                <span className="text-blue-700">PathShala AI is thinking...</span>
+              </motion.div>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+        );
+      case 'history':
+        return (
+          <div className="flex-1 overflow-y-auto p-4">
+            <h2 className="font-medium text-lg mb-4">Chat History</h2>
+            {savedChats.length > 0 ? (
+              <div className="space-y-3">
+                {savedChats.map((chat) => (
+                  <div 
+                    key={chat.id}
+                    className="border border-gray-200 rounded-lg p-4 hover:border-blue-300 transition cursor-pointer"
+                  >
+                    <div className="flex justify-between items-center">
+                      <h3 className="font-medium">{chat.title}</h3>
+                      <span className="text-xs text-gray-500">
+                        {new Date(chat.date).toLocaleDateString()}
+                      </span>
+                    </div>
+                    <div className="flex items-center mt-2 text-sm text-gray-600">
+                      <span className="bg-gray-100 px-2 py-0.5 rounded text-xs">
+                        {subjects.find(s => s.id === chat.subject)?.name || chat.subject}
+                      </span>
+                      <span className="ml-3">{chat.messages.length} messages</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-10 text-gray-500">
+                <BookmarkPlus className="h-10 w-10 mx-auto mb-2 text-gray-400" />
+                <p>No saved conversations yet</p>
+                <p className="text-sm mt-1">Your saved chats will appear here</p>
+              </div>
+            )}
+          </div>
+        );
+      case 'settings':
+        return (
+          <div className="flex-1 overflow-y-auto p-4">
+            <h2 className="font-medium text-lg mb-4">Settings</h2>
+            <div className="space-y-6">
+              <div className="border-b pb-4">
+                <h3 className="font-medium mb-2">Appearance</h3>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <span>Theme</span>
+                    <button 
+                      onClick={handleToggleTheme}
+                      className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded-lg text-sm transition"
+                    >
+                      {theme === 'light' ? 'Light Mode' : 'Dark Mode'}
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Font Size</span>
+                    <div className="flex gap-2">
+                      {['small', 'medium', 'large'].map((size) => (
+                        <button
+                          key={size}
+                          onClick={() => setFontSize(size)}
+                          className={`px-3 py-1 rounded-lg text-sm transition ${
+                            fontSize === size 
+                              ? 'bg-blue-600 text-white' 
+                              : 'bg-gray-100 hover:bg-gray-200'
+                          }`}
+                        >
+                          {size.charAt(0).toUpperCase() + size.slice(1)}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="border-b pb-4">
+                <h3 className="font-medium mb-2">Chat Settings</h3>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between">
+                    <span>Show Tips</span>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        type="checkbox" 
+                        checked={showTips}
+                        onChange={() => setShowTips(!showTips)}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+                    </label>
+                  </div>
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="font-medium mb-2">Data Management</h3>
+                <button 
+                  onClick={() => {
+                    if (window.confirm('Are you sure you want to delete all saved chats?')) {
+                      setSavedChats([]);
+                      localStorage.removeItem('savedAcademicChats');
+                      toast.success('All saved chats deleted');
+                    }
+                  }}
+                  className="bg-red-50 text-red-600 hover:bg-red-100 px-4 py-2 rounded-lg text-sm transition flex items-center gap-2"
+                >
+                  <Eraser className="h-4 w-4" />
+                  Delete All Saved Chats
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      default:
+        return null;
     }
-    
-    const firstUserMessage = messages.find(m => m.role === 'user');
-    const fileName = firstUserMessage ? 
-      `academic-chat-${firstUserMessage.content.substring(0, 20).replace(/[^a-z0-9]/gi, '-').toLowerCase()}.md` : 
-      'academic-chat.md';
-    
-    // Format as Markdown for better readability
-    const text = messages
-      .map(m => `## ${m.role === 'assistant' ? 'Tutor' : 'You'}\n\n${m.content}\n\n---\n\n`)
-      .join('');
-    
-    const blob = new Blob([text], { type: 'text/markdown' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = fileName;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success('Chat downloaded!');
-  };
-
-  const shareChat = () => {
-    if (messages.length <= 1) {
-      toast.error('No conversation to share yet!');
-      return;
-    }
-    
-    // In a real app, you would generate a shareable link
-    // For now, simulate with a copy-to-clipboard of a fictional URL
-    
-    const shareId = Math.random().toString(36).substring(2, 10);
-    const shareUrl = `https://yourdomain.com/shared-chat/${shareId}`;
-    
-    navigator.clipboard.writeText(shareUrl);
-    toast.success('Shareable link copied to clipboard!');
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 to-white">
-      {/* Header with modern design */}
-      <header className="bg-white shadow-md sticky top-0 z-20 border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/student/dashboard"
-                className="group flex items-center text-gray-600 hover:text-indigo-600 transition-all"
-              >
-                <ChevronLeft className="h-5 w-5 mr-1 group-hover:-translate-x-1 transition-transform" />
-                <span className="hidden sm:inline font-medium">Dashboard</span>
-              </Link>
-              <div className="h-6 w-px bg-gray-200" />
-              <div className="flex items-center space-x-3">
-                <Bot className="h-6 w-6 text-indigo-600 animate-pulse" />
-                <span className="font-semibold text-gray-900 tracking-tight">Academic AI</span>
-              </div>
+    <div className={`min-h-screen ${theme === 'dark' ? 'bg-gray-900 text-gray-100' : 'bg-gradient-to-br from-blue-50 to-white text-gray-800'}`}>
+      <header className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-100'} shadow-sm border-b sticky top-0 z-20`}>
+        <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link to="/student/dashboard" className={`${theme === 'dark' ? 'text-gray-300 hover:text-blue-400' : 'text-gray-600 hover:text-blue-600'} flex items-center gap-1`}>
+              <ChevronLeft className="h-5 w-5" />
+              <span className="hidden sm:inline">Dashboard</span>
+            </Link>
+            <div className="flex items-center gap-2">
+              <Bot className="h-6 w-6 text-blue-600" />
+              <span className="font-medium text-lg">PathShala AI</span>
             </div>
-            <div className="flex items-center space-x-4">
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => setIsRightSidebarOpen(!isRightSidebarOpen)}
+              className={`p-2 rounded-lg ${theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'} lg:hidden`}
+            >
+              <Settings className="h-5 w-5" />
+            </button>
+            
+            <div className="hidden md:flex gap-2 items-center">
               <button
-                onClick={() => setShowHistory(!showHistory)}
-                className="p-2 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-indigo-50 transition-all group"
-                title="Chat History"
+                onClick={handleSaveChat}
+                className={`${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-gray-100' : 'bg-gray-100 hover:bg-gray-200 text-gray-800'} p-2 rounded-lg flex items-center gap-1 text-sm`}
               >
-                <History className="h-5 w-5 group-hover:rotate-6 transition-transform" />
+                <BookmarkPlus className="h-4 w-4" /> Save
               </button>
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={saveCurrentChat}
-                className="hidden sm:flex items-center px-4 py-2 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-lg hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg"
+              <button
+                onClick={handleClearChat}
+                className={`${theme === 'dark' ? 'bg-gray-700 hover:bg-gray-600 text-gray-100' : 'bg-gray-100 hover:bg-gray-200 text-gray-800'} p-2 rounded-lg flex items-center gap-1 text-sm`}
               >
-                <BookmarkPlus className="h-4 w-4 mr-2" />
-                Save Chat
-              </motion.button>
+                <Eraser className="h-4 w-4" /> Clear
+              </button>
+            </div>
+            
+            <div className={`h-8 w-8 ${theme === 'dark' ? 'bg-gray-700' : 'bg-blue-100'} rounded-full flex items-center justify-center font-medium text-sm ${theme === 'dark' ? 'text-blue-300' : 'text-blue-800'}`}>
+              {user?.name?.charAt(0) || 'S'}
             </div>
           </div>
         </div>
       </header>
 
-      {/* Main Content with Enhanced Layout */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Enhanced Sidebar */}
-          <div className={`lg:col-span-1 ${isSidebarOpen ? 'block' : 'hidden lg:block'}`}>
-            <div className="sticky top-20 space-y-6">
-              {/* Subject Selection Card with Enhanced Design */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-4 bg-gradient-to-r from-indigo-600 to-purple-600">
-                  <h2 className="text-lg font-semibold text-white flex items-center">
-                    <BookOpen className="h-5 w-5 mr-2" />
-                    Subjects
-                  </h2>
-                </div>
-                <div className="p-4 space-y-2">
-                  {subjects.map(subject => (
-                    <motion.button
-                      key={subject.id}
-                      onClick={() => handleSubjectSelect(subject)}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className={`w-full text-left px-4 py-3 rounded-xl flex items-center transition-all ${
-                        selectedSubject?.id === subject.id
-                          ? 'bg-indigo-50 text-indigo-600 font-medium shadow-sm'
-                          : 'hover:bg-gray-50 text-gray-700'
-                      }`}
-                    >
-                      <span className="text-2xl mr-3">{subject.icon}</span>
-                      <span className="text-sm font-medium">{subject.name}</span>
-                    </motion.button>
-                  ))}
-                </div>
+      <main className="max-w-7xl mx-auto p-4">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          {/* Left Sidebar */}
+          <aside className={`lg:block lg:col-span-1 ${isSidebarOpen ? 'block' : 'hidden'}`}>
+            <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-sm p-4 space-y-4 sticky top-24`}>
+              <div className="flex items-center justify-between">
+                <h2 className="font-medium">Subjects</h2>
+                <button
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="lg:hidden p-1 rounded-md hover:bg-gray-100"
+                >
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
               </div>
-
-              {/* Quick Prompts Card with Enhanced Design */}
-              <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-                <div className="p-4 bg-gradient-to-r from-cyan-600 to-blue-600">
-                  <h2 className="text-lg font-semibold text-white flex items-center">
-                    <Lightbulb className="h-5 w-5 mr-2" />
-                    Quick Prompts
-                  </h2>
-                </div>
-                <div className="p-4 space-y-2">
-                  {quickPrompts.map((prompt, index) => (
-                    <motion.button
-                      key={index}
-                      onClick={() => handleQuickPrompt(prompt)}
-                      whileHover={{ scale: 1.02 }}
-                      whileTap={{ scale: 0.98 }}
-                      className="w-full text-left px-4 py-3 rounded-xl text-sm text-gray-700 hover:bg-gray-50 transition-all"
-                    >
-                      {prompt}
-                    </motion.button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Enhanced Chat Container */}
-          <div className="lg:col-span-3">
-            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 flex flex-col h-[calc(100vh-8rem)]">
-              {/* Messages Area with Enhanced Styling */}
-              <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                <div className="space-y-6">
-                  {messages.map((message, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className={`flex ${message.role === 'assistant' ? 'justify-start' : 'justify-end'}`}
-                    >
-                      <div className={`flex max-w-[80%] ${message.role === 'assistant' ? 'flex-row' : 'flex-row-reverse'}`}>
-                        <div className={`relative group px-4 py-3 rounded-lg ${
-                          message.role === 'assistant' 
-                            ? 'bg-white border border-gray-200 shadow-sm' 
-                            : 'bg-indigo-600 text-white'
-                        }`}>
-                          <ReactMarkdown
-                            className="prose max-w-none dark:prose-invert"
-                            components={{
-                              code({node, inline, className, children, ...props}) {
-                                return inline ? (
-                                  <code className="px-1 py-0.5 rounded-md bg-gray-100 text-gray-800" {...props}>
-                                    {children}
-                                  </code>
-                                ) : (
-                                  <SyntaxHighlighter
-                                    style={atomDark}
-                                    language="javascript"
-                                    PreTag="div"
-                                    {...props}
-                                  >
-                                    {String(children).replace(/\n$/, '')}
-                                  </SyntaxHighlighter>
-                                );
-                              }
-                            }}
-                          >
-                            {message.content}
-                          </ReactMarkdown>
-
-                          {/* Action buttons for assistant messages */}
-                          {message.role === 'assistant' && (
-                            <div className="absolute top-2 right-2 flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              {/* Copy button */}
-                              <button
-                                onClick={() => handleCopy(message.content, index)}
-                                className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-gray-700 transition-colors"
-                                title="Copy message"
-                              >
-                                {copiedIndex === index ? (
-                                  <Check className="h-4 w-4 text-green-500" />
-                                ) : (
-                                  <Copy className="h-4 w-4" />
-                                )}
-                              </button>
-
-                              {/* Feedback buttons */}
-                              {feedbackMessage !== index && (
-                                <>
-                                  <button
-                                    onClick={() => handleFeedback(index, true)}
-                                    className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-green-500 transition-colors"
-                                    title="Helpful"
-                                  >
-                                    <ThumbsUp className="h-4 w-4" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleFeedback(index, false)}
-                                    className="p-1 rounded hover:bg-gray-100 text-gray-500 hover:text-red-500 transition-colors"
-                                    title="Not helpful"
-                                  >
-                                    <ThumbsDown className="h-4 w-4" />
-                                  </button>
-                                </>
-                              )}
-
-                              {/* Feedback confirmation */}
-                              {feedbackMessage === index && (
-                                <span className="text-xs text-green-500 bg-green-50 px-2 py-1 rounded">
-                                  Thanks for your feedback!
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))}
-                  {isLoading && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex justify-start"
-                    >
-                      <div className="bg-white border border-gray-100 rounded-2xl px-6 py-4 shadow-sm">
-                        <div className="flex items-center space-x-3">
-                          <Loader2 className="h-5 w-5 animate-spin text-indigo-600" />
-                          <span className="text-sm text-gray-500">Thinking...</span>
-                        </div>
-                      </div>
-                    </motion.div>
-                  )}
-                </div>
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Enhanced Input Area */}
-              <div className="border-t border-gray-100 p-6">
-                <form onSubmit={handleSubmit} className="flex space-x-4">
-                  <div className="flex-1 flex items-center space-x-3 px-4 py-3 border border-gray-200 rounded-xl focus-within:ring-2 focus-within:ring-indigo-500 focus-within:border-indigo-500 bg-white shadow-sm">
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      placeholder="Ask any academic question..."
-                      className="flex-1 focus:outline-none text-sm"
-                      disabled={isLoading}
-                    />
-                    <button
-                      type="button"
-                      onClick={isRecording ? stopRecording : startRecording}
-                      className={`p-2 rounded-lg transition-colors ${
-                        isRecording 
-                          ? 'text-red-500 hover:text-red-600 bg-red-50'
-                          : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50'
-                      }`}
-                    >
-                      {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
-                    </button>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isLoading || !input.trim()}
-                    className={`px-6 py-3 rounded-xl flex items-center space-x-2 transition-all ${
-                      isLoading || !input.trim()
-                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                        : 'bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm hover:shadow-md'
+              
+              <div className="space-y-2">
+                {subjects.map(subject => (
+                  <motion.button
+                    key={subject.id}
+                    onClick={() => handleSubjectSelect(subject)}
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className={`w-full p-3 rounded-lg flex items-center gap-3 transition ${
+                      selectedSubject?.id === subject.id
+                        ? theme === 'dark' ? 'bg-blue-900 text-blue-100' : 'bg-blue-50 text-blue-700'
+                        : theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
                     }`}
                   >
-                    <span className="hidden sm:inline font-medium">Send</span>
-                    <Send className="h-5 w-5" />
+                    <span className={`text-xl h-8 w-8 flex items-center justify-center rounded-lg ${subject.color}`}>
+                      {subject.icon}
+                    </span>
+                    <div className="text-left">
+                      <span className="block">{subject.name}</span>
+                      <span className="text-xs text-gray-500 block">{subject.description}</span>
+                    </div>
+                  </motion.button>
+                ))}
+              </div>
+              
+              <div className="pt-3 mt-3 border-t border-gray-200">
+                <div className="flex flex-col gap-1">
+                  <button
+                    onClick={() => setActiveTab('chat')}
+                    className={`p-2 rounded-lg flex items-center gap-2 ${
+                      activeTab === 'chat' 
+                        ? theme === 'dark' ? 'bg-gray-700 text-blue-400' : 'bg-blue-50 text-blue-700' 
+                        : theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    <Bot className="h-5 w-5" />
+                    <span>Chat</span>
                   </button>
-                </form>
+                  <button
+                    onClick={() => setActiveTab('history')}
+                    className={`p-2 rounded-lg flex items-center gap-2 ${
+                      activeTab === 'history' 
+                        ? theme === 'dark' ? 'bg-gray-700 text-blue-400' : 'bg-blue-50 text-blue-700' 
+                        : theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    <History className="h-5 w-5" />
+                    <span>History</span>
+                  </button>
+                  <button
+                    onClick={() => setActiveTab('settings')}
+                    className={`p-2 rounded-lg flex items-center gap-2 ${
+                      activeTab === 'settings' 
+                        ? theme === 'dark' ? 'bg-gray-700 text-blue-400' : 'bg-blue-50 text-blue-700' 
+                        : theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    <Settings className="h-5 w-5" />
+                    <span>Settings</span>
+                  </button>
+                </div>
               </div>
             </div>
+          </aside>
+
+          {/* Main Chat Area */}
+          <div className="lg:col-span-3">
+            <div className={`${theme === 'dark' ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'} rounded-xl shadow-sm flex flex-col h-[calc(100vh-8rem)]`}>
+              {renderMainContent()}
+              
+              {activeTab === 'chat' && (
+                <div className="border-t p-4 bg-white">
+                  <form onSubmit={handleSubmit} className="flex gap-2">
+                    <div className="flex-1 flex items-center gap-2 border rounded-xl px-4 py-2 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent transition-all">
+                      <input
+                        ref={inputRef}
+                        type="text"
+                        value={input}
+                        onChange={(e) => setInput(e.target.value)}
+                        placeholder="Ask your question..."
+                        className="flex-1 focus:outline-none bg-transparent"
+                      />
+                      <button 
+                        type="button"
+                        onClick={isRecording ? stopRecording : startRecording}
+                        className={`p-2 rounded-lg transition-colors ${
+                          isRecording 
+                            ? 'text-red-500 hover:bg-red-50' 
+                            : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        {isRecording ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}
+                      </button>
+                    </div>
+                    <motion.button
+                      type="submit"
+                      disabled={isLoading || !input.trim()}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="px-6 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 disabled:bg-gray-200 disabled:cursor-not-allowed transition-colors"
+                    >
+                      <Send className="h-5 w-5" />
+                    </motion.button>
+                  </form>
+                </div>
+              )}
+            </div>
           </div>
+
+          {/* Right Sidebar */}
+          <aside className={`lg:block lg:col-span-1 ${isRightSidebarOpen ? 'block' : 'hidden'}`}>
+            <div className={`${theme === 'dark' ? 'bg-gray-800' : 'bg-white'} rounded-xl shadow-sm p-4 space-y-4 sticky top-24`}>
+              <div className="flex items-center justify-between">
+                <h2 className="font-medium">Quick Actions</h2>
+                <button
+                  onClick={() => setIsRightSidebarOpen(!isRightSidebarOpen)}
+                  className="lg:hidden p-1 rounded-md hover:bg-gray-100"
+                >
+                  <X className="h-5 w-5 text-gray-500" />
+                </button>
+              </div>
+              
+              <div className="space-y-2">
+                <button
+                  onClick={handleSaveChat}
+                  className={`w-full p-3 rounded-lg flex items-center gap-3 transition ${
+                    theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <Bookmark className="h-5 w-5" />
+                  <span>Save Chat</span>
+                </button>
+                <button
+                  onClick={handleClearChat}
+                  className={`w-full p-3 rounded-lg flex items-center gap-3 transition ${
+                    theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <Eraser className="h-5 w-5" />
+                  <span>Clear Chat</span>
+                </button>
+                <button
+                  onClick={handleToggleTheme}
+                  className={`w-full p-3 rounded-lg flex items-center gap-3 transition ${
+                    theme === 'dark' ? 'hover:bg-gray-700' : 'hover:bg-gray-50'
+                  }`}
+                >
+                  <Settings className="h-5 w-5" />
+                  <span>Toggle Theme</span>
+                </button>
+              </div>
+            </div>
+          </aside>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
 
 export default AcademicBot;
-
-
-            
