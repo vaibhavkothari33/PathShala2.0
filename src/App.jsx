@@ -19,6 +19,8 @@ import { validateConfig } from './config/appwrite';
 import NotFound from './pages/NotFound';
 import Buysell from './pages/Buysell';
 import BookForm from './pages/sellbooks/BookForm';
+// import { Razorpay } from 'razorpay-checkout';
+import RazorpayPayment from './pages/RazorpayPayment';
 
 // import Routes from './Routes';
 
@@ -81,6 +83,8 @@ function App() {
                             <Route path="/auth/callback" element={<AuthCallback />} />
                             <Route path="/buysell" element={<Buysell />} />
                             <Route path="/bookform" element={<BookForm />} />
+                            <Route path="/coaching/payment" element={<RazorpayPayment />} />
+
                             <Route
                                 path="/student/dashboard"
                                 element={

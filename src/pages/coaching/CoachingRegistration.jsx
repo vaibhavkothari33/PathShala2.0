@@ -327,7 +327,7 @@ const CoachingRegistration = () => {
       toast.success("Coaching center registered successfully!");
 
       // Important: Redirect to dashboard after successful registration
-      navigate("/coaching/dashboard");
+      navigate("/coaching/payment");
     } catch (error) {
       console.error("Registration error:", error);
       toast.error(error.message || "Failed to register coaching center");
