@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import books from './booksdata';
-import { FiArrowLeft, FiShoppingCart, FiHeart, FiShare2, FiBookmark, FiMessageCircle } from 'react-icons/fi';
+import { FiArrowLeft, FiShoppingCart, FiUser, FiMail, FiPhone, FiMapPin, FiStar } from 'react-icons/fi';
 
 const BookDetail = () => {
   const { slug } = useParams();
@@ -9,36 +9,30 @@ const BookDetail = () => {
   const [book, setBook] = useState(null);
   const [relatedBooks, setRelatedBooks] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showSellerInfo, setShowSellerInfo] = useState(false);
 
   useEffect(() => {
-    // Parse the book ID from the slug
     const bookId = parseInt(slug.split('-').pop());
-    
-    // Find the book with matching ID
     const foundBook = books.find(book => book.id === bookId);
-    
+
     if (foundBook) {
       setBook(foundBook);
-      
-      // Find related books in the same category
       const related = books
         .filter(item => item.category === foundBook.category && item.id !== foundBook.id)
         .slice(0, 3);
-      
       setRelatedBooks(related);
     }
-    
+
     setIsLoading(false);
   }, [slug]);
 
-  // Generate slug for book titles (for related books)
   const generateSlug = (title, id) => {
     return `${title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')}-${id}`;
   };
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
@@ -49,8 +43,8 @@ const BookDetail = () => {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="bg-white rounded-xl shadow-md p-12 text-center max-w-md">
           <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <h1 className="text-2xl font-bold mb-2">Book Not Found</h1>
@@ -68,29 +62,25 @@ const BookDetail = () => {
 
   return (
     <div className="bg-gray-50 min-h-screen py-8">
-      <div className="container mx-auto px-4">
-        {/* Back button */}
+      <div className="container mx-auto px-4 max-w-6xl">
         <button 
           onClick={() => navigate(-1)} 
-          className="flex items-center text-gray-600 hover:text-blue-600 mb-6 transition"
+          className="flex items-center text-gray-600 hover:text-blue-600 mb-6 transition group"
         >
-          <FiArrowLeft className="mr-2" />
-          Back to Marketplace
+          <FiArrowLeft className="mr-2 group-hover:translate-x-1 transition-transform" />
+          <span className="font-medium">Back to Marketplace</span>
         </button>
-        
-        {/* Main Content */}
-        <div className="bg-white shadow-md rounded-xl overflow-hidden">
+
+        <div className="bg-white shadow-lg rounded-2xl overflow-hidden mb-8">
           <div className="flex flex-col md:flex-row">
-            {/* Book Cover */}
-            <div className="md:w-1/3 bg-gray-100 flex items-center justify-center p-8">
+            <div className="md:w-1/3 bg-gradient-to-br from-blue-50 to-gray-100 flex items-center justify-center p-8">
               <img 
                 src={book.coverImage || "/api/placeholder/300/450"} 
                 alt={book.title}
-                className="max-h-96 object-cover shadow-lg rounded-lg"
+                className="max-h-96 object-cover shadow-lg rounded-lg transform transition-all duration-300 hover:scale-105"
               />
             </div>
-            
-            {/* Book Details */}
+
             <div className="md:w-2/3 p-8">
               <div className="flex flex-wrap gap-2 mb-4">
                 <span className={`inline-block px-3 py-1 rounded-full text-sm font-medium ${
@@ -106,94 +96,135 @@ const BookDetail = () => {
                   {book.category}
                 </span>
               </div>
-              
+
               <h1 className="text-3xl font-bold mb-2 text-gray-800">{book.title}</h1>
               <p className="text-xl text-gray-600 mb-4">by {book.author}</p>
-              
+
               <div className="flex items-center mb-6">
-                <div className="text-2xl font-bold text-blue-600 mr-4">${book.price.toFixed(2)}</div>
-                <div className="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
+                <div className="text-3xl font-bold text-blue-600 mr-4">₹{book.price.toFixed(2)}</div>
+                <div className="text-sm bg-green-100 text-green-800 px-3 py-1 rounded-full font-medium">
                   In Stock
                 </div>
               </div>
-              
+
               <div className="mb-8">
-                <h2 className="text-lg font-semibold mb-2">Description</h2>
-                <p className="text-gray-700">{book.description}</p>
+                <h2 className="text-lg font-semibold mb-2 text-gray-800">Description</h2>
+                <p className="text-gray-700 leading-relaxed">{book.description}</p>
               </div>
-              
+
               <div className="mb-8">
-                <h2 className="text-lg font-semibold mb-2">Details</h2>
+                <h2 className="text-lg font-semibold mb-2 text-gray-800">Details</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="border-b border-gray-100 pb-2">
                     <span className="text-gray-500">Seller:</span> 
-                    <span className="font-medium ml-2">{book.seller}</span>
+                    <span className="font-medium ml-2 text-gray-800">{book.seller}</span>
                   </div>
                   <div className="border-b border-gray-100 pb-2">
                     <span className="text-gray-500">ISBN:</span> 
-                    <span className="font-medium ml-2">{book.isbn || 'N/A'}</span>
+                    <span className="font-medium ml-2 text-gray-800">{book.isbn || 'N/A'}</span>
                   </div>
                   <div className="border-b border-gray-100 pb-2">
                     <span className="text-gray-500">Published:</span> 
-                    <span className="font-medium ml-2">{book.publishedDate || 'N/A'}</span>
+                    <span className="font-medium ml-2 text-gray-800">{book.publishedDate || 'N/A'}</span>
                   </div>
                   <div className="border-b border-gray-100 pb-2">
                     <span className="text-gray-500">Pages:</span> 
-                    <span className="font-medium ml-2">{book.pages || 'N/A'}</span>
+                    <span className="font-medium ml-2 text-gray-800">{book.pages || 'N/A'}</span>
                   </div>
                 </div>
               </div>
-              
+
               <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
-                <button className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition flex items-center justify-center">
+                <button 
+                  onClick={() => setShowSellerInfo(!showSellerInfo)} 
+                  className="flex-1 bg-blue-600 text-white py-3 px-6 rounded-lg hover:bg-blue-700 transition flex items-center justify-center font-medium"
+                >
                   <FiShoppingCart className="mr-2" />
-                  Add to Cart
+                  {showSellerInfo ? 'Hide Contact Info' : 'Contact Seller'}
                 </button>
-                <button className="flex-1 border border-blue-600 text-blue-600 py-3 px-6 rounded-lg hover:bg-blue-50 transition flex items-center justify-center">
-                  Buy Now
-                </button>
-                <button className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                  <FiHeart className="w-6 h-6 text-gray-600" />
-                </button>
-              </div>
-            </div>
-          </div>
-          
-          {/* Additional Content */}
-          <div className="border-t border-gray-100 p-8">
-            <div className="flex flex-wrap gap-4 mb-8">
-              <button className="flex items-center px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-                <FiShare2 className="mr-2" />
-                Share
-              </button>
-              <button className="flex items-center px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-                <FiBookmark className="mr-2" />
-                Save for Later
-              </button>
-              <button className="flex items-center px-4 py-2 border border-gray-200 rounded-lg hover:bg-gray-50 transition">
-                <FiMessageCircle className="mr-2" />
-                Contact Seller
-              </button>
-            </div>
-            
-            {/* Seller Info */}
-            <div className="bg-gray-50 p-6 rounded-xl mb-8">
-              <h2 className="text-lg font-semibold mb-4">About the Seller</h2>
-              <div className="flex items-center">
-                <div className="w-12 h-12 bg-gray-200 rounded-full mr-4"></div>
-                <div>
-                  <p className="font-medium">{book.seller}</p>
-                  <p className="text-sm text-gray-500">Member since 2023 • 4.8 ★ (42 ratings)</p>
-                </div>
               </div>
             </div>
           </div>
         </div>
-        
-        {/* Related Books */}
+
+        {showSellerInfo && (
+          <div className="bg-white shadow-lg rounded-2xl overflow-hidden mb-8 p-6">
+            <div className="flex flex-col md:flex-row items-start">
+              <div className="md:w-1/3 pr-8">
+                <div className="flex items-center mb-4">
+                  <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                    <FiUser className="w-6 h-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-800">{book.seller || 'Seller'}</h2>
+                    <div className="flex items-center">
+                      <FiStar className="text-yellow-500 mr-1" />
+                      <span className="font-medium mr-1">4.8</span>
+                      <span className="text-gray-500 text-sm">(42 ratings)</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-gray-50 p-4 rounded-lg mb-4">
+                  <p className="text-gray-700 mb-2"><span className="font-medium">Member since:</span> 2023</p>
+                  <p className="text-gray-700 mb-2"><span className="font-medium">Books sold:</span> 24</p>
+                  <p className="text-gray-700"><span className="font-medium">Response time:</span> ~2 hours</p>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div className="h-2 bg-green-100 rounded-full w-full">
+                    <div className="h-2 bg-green-500 rounded-full w-4/5"></div>
+                  </div>
+                  <span className="ml-2 text-sm text-gray-500">80% response rate</span>
+                </div>
+              </div>
+              
+              <div className="md:w-2/3 md:border-l md:border-gray-200 md:pl-8 mt-6 md:mt-0">
+                <h3 className="text-lg font-semibold mb-4 text-gray-800">Contact Information</h3>
+                
+                <div className="space-y-4">
+                  <div className="flex items-start">
+                    <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mr-4">
+                      <FiPhone className="text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-800">Phone</p>
+                      <p className="text-gray-600">{book.phone || '(555) 123-4567'}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start">
+                    <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mr-4">
+                      <FiMail className="text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-800">Email</p>
+                      <p className="text-gray-600">{book.email || 'seller@example.com'}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start">
+                    <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center mr-4">
+                      <FiMapPin className="text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-gray-800">Address</p>
+                      <p className="text-gray-600">{book.address || '123 Book St, Reading, CA 90210'}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <p className="text-sm text-yellow-800">
+                    <span className="font-medium">Quick tip:</span> When contacting the seller, mention that you found this listing on BookSwap to establish trust.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {relatedBooks.length > 0 && (
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold mb-6">Related Books</h2>
+          <div className="mt-8">
+            <h2 className="text-2xl font-bold mb-6 text-gray-800">Related Books</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {relatedBooks.map((relatedBook) => {
                 const bookSlug = generateSlug(relatedBook.title, relatedBook.id);

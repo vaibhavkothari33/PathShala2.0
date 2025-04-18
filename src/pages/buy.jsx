@@ -22,10 +22,10 @@ const Buy = () => {
   // Price range options
   const priceRanges = {
     'All': { min: 0, max: Infinity },
-    'Under $10': { min: 0, max: 10 },
-    '$10 - $20': { min: 10, max: 20 },
-    '$20 - $30': { min: 20, max: 30 },
-    'Over $30': { min: 30, max: Infinity }
+    'Under ₹10': { min: 0, max: 10 },
+    '₹10 - ₹20': { min: 10, max: 20 },
+    '₹20 - ₹30': { min: 20, max: 30 },
+    'Over ₹30': { min: 30, max: Infinity }
   };
 
   // Sort options
@@ -319,10 +319,10 @@ const Buy = () => {
                           <img 
                             src={book.coverImage || "/api/placeholder/200/300"} 
                             alt={book.title}
-                            className="h-full w-full object-cover hover:scale-105 transition-transform duration-300"
+                            className="max-h-full max-w-full object-contain hover:scale-105 transition-transform duration-300"
                           />
                           <div className="absolute top-0 right-0 bg-blue-600 text-white px-3 py-1 m-3 rounded-full text-sm font-medium">
-                            ${book.price.toFixed(2)}
+                            ₹{book.price.toFixed(2)}
                           </div>
                         </div>
                       </Link>
@@ -350,13 +350,9 @@ const Buy = () => {
                           <p>Seller: {book.seller}</p>
                         </div>
                         <div className="flex space-x-2">
-                          <button className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition flex items-center justify-center">
-                            <FiShoppingCart className="w-4 h-4 mr-2" />
-                            Buy Now
-                          </button>
-                          <button className="p-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
-                            <FiHeart className="w-5 h-5 text-gray-600" />
-                          </button>
+                          <Link to={`/book/${bookSlug}`} className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition flex items-center justify-center text-center">
+                          Details
+                          </Link>
                         </div>
                       </div>
                     </div>
