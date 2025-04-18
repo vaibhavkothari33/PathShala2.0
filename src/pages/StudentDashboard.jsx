@@ -255,7 +255,7 @@ const StudentDashboard = () => {
   
             {/* Buttons Section */}
             <div className="flex  sm:flex-row sm:space-x-4 space-y-2 sm:space-y-0">
-            <Link to="/buysell" className="w-full sm:w-auto">
+            <Link to="/buy" className="w-full sm:w-auto">
               {/* Buy/Sell Button */}
               <motion.button
                 whileHover={{ scale: 1.02 }}
