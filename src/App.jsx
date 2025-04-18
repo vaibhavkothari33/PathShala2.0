@@ -15,7 +15,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 import AcademicBot from './pages/AcademicBot';
 import { useState, useEffect } from 'react';
 import { validateConfig } from './config/appwrite';
-
+import NotFound from './pages/NotFound';
 import Buysell from './pages/Buysell';
 import BookForm from './pages/sellbooks/BookForm';
 
