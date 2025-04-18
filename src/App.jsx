@@ -23,6 +23,7 @@ import BookForm from './pages/sellbooks/BookForm';
 import RazorpayPayment from './pages/RazorpayPayment';
 import Buy from './pages/buy';
 import Sell from './pages/sell';
+import BookDetail from './pages/BookDetails';
 // import Routes from './Routes';
 
 function App() {
@@ -87,6 +88,7 @@ function App() {
                             <Route path="/coaching/payment" element={<RazorpayPayment />} />
                             <Route path="/buy" element={<Buy />} />
                             <Route path="/sell" element={<Sell />} />
+                            <Route path="/book/:slug" element={<BookDetail />} />
 
                             <Route
                                 path="/student/dashboard"
