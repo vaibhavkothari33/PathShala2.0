@@ -1,88 +1,88 @@
 const books = [
-    {
-      id: 1,
-      title: "To Kill a Mockingbird",
-      author: "Harper Lee",
-      price: 12.99,
-      category: "Fiction",
-      condition: "Good",
-      description: "Classic novel about racial injustice and childhood innocence in the American South.",
-      coverImage: "/images/mockingbird.jpg",
-      seller: "John Doe",
-      contactEmail: "john@example.com"
-    },
-    {
-      id: 2,
-      title: "1984",
-      author: "George Orwell",
-      price: 10.50,
-      category: "Fiction",
-      condition: "Like New",
-      description: "Dystopian novel depicting a totalitarian regime and government surveillance.",
-      coverImage: "/images/1984.jpg",
-      seller: "Jane Smith",
-      contactEmail: "jane@example.com"
-    },
-    {
-      id: 3,
-      title: "The Great Gatsby",
-      author: "F. Scott Fitzgerald",
-      price: 9.99,
-      category: "Fiction",
-      condition: "Good",
-      description: "Story of wealth, love and decadence in the Roaring Twenties.",
-      coverImage: "/images/gatsby.jpg",
-      seller: "Michael Brown",
-      contactEmail: "michael@example.com"
-    },
-    {
-      id: 4,
-      title: "Principles of Physics",
-      author: "David Halliday",
-      price: 45.00,
-      category: "Textbook",
-      condition: "Used",
-      description: "Comprehensive introduction to physics concepts for college students.",
-      coverImage: "/images/physics.jpg",
-      seller: "Sarah Williams",
-      contactEmail: "sarah@example.com"
-    },
-    {
-      id: 5,
-      title: "The Alchemist",
-      author: "Paulo Coelho",
-      price: 8.75,
-      category: "Fiction",
-      condition: "Excellent",
-      description: "Philosophical novel about following your dreams and finding your destiny.",
-      coverImage: "/images/alchemist.jpg",
-      seller: "Robert Johnson",
-      contactEmail: "robert@example.com"
-    },
-    {
-      id: 6,
-      title: "Sapiens: A Brief History of Humankind",
-      author: "Yuval Noah Harari",
-      price: 15.99,
-      category: "Non-Fiction",
-      condition: "Like New",
-      description: "A history of humanity from the Stone Age to the twenty-first century.",
-      coverImage: "/images/sapiens.jpg",
-      seller: "Emily Davis",
-      contactEmail: "emily@example.com"
-    },
-    {
-      id: 7,
-      title: "Harry Potter and the Philosopher's Stone",
-      author: "J.K. Rowling",
-      price: 11.25,
-      category: "Fiction",
-      condition: "Good",
-      description: "First book in the popular Harry Potter series about a young wizard.",
-      coverImage: "/images/harrypotter.jpg",
-      seller: "David Wilson",
-      contactEmail: "david@example.com"
-    }
-  ];
-  
-  export default books;
+  {
+    id: 1,
+    title: "To Kill a Mockingbird",
+    author: "Harper Lee",
+    description: "A classic novel about racial injustice and moral growth in the American South as seen through the eyes of a young girl.",
+    price: 12.99,
+    coverImage: "/api/placeholder/200/300", // Replace with actual image path
+    category: "Fiction",
+    condition: "Good",
+    seller: "John Doe",
+    isbn: "9780061120084",
+    publishedDate: "1960",
+    pages: 336
+  },
+  {
+    id: 2,
+    title: "The Great Gatsby",
+    author: "F. Scott Fitzgerald",
+    description: "A tale of wealth, love, and the American Dream set in the Roaring Twenties.",
+    price: 9.95,
+    coverImage: "/api/placeholder/200/300", // Replace with actual image path
+    category: "Fiction",
+    condition: "Excellent",
+    seller: "Jane Smith",
+    isbn: "9780743273565",
+    publishedDate: "1925",
+    pages: 180
+  },
+  {
+    id: 3,
+    title: "Thinking, Fast and Slow",
+    author: "Daniel Kahneman",
+    description: "A groundbreaking tour of the mind explaining the two systems that drive the way we think.",
+    price: 15.50,
+    coverImage: "/api/placeholder/200/300", // Replace with actual image path
+    category: "Psychology",
+    condition: "Like New",
+    seller: "Robert Johnson",
+    isbn: "9780374533557",
+    publishedDate: "2011",
+    pages: 499
+  },
+  {
+    id: 4,
+    title: "The Power of Habit",
+    author: "Charles Duhigg",
+    description: "An exploration of the science behind habit creation and reformation.",
+    price: 11.99,
+    coverImage: "/api/placeholder/200/300", // Replace with actual image path
+    category: "Self-Help",
+    condition: "Good",
+    seller: "Sarah Wilson",
+    isbn: "9780812981605",
+    publishedDate: "2012",
+    pages: 371
+  },
+  {
+    id: 5,
+    title: "Sapiens: A Brief History of Humankind",
+    author: "Yuval Noah Harari",
+    description: "A narrative of humanity's creation and evolution that explores how biology and history have defined us.",
+    price: 22.50,
+    coverImage: "/api/placeholder/200/300", // Replace with actual image path
+    category: "History",
+    condition: "Excellent",
+    seller: "Michael Brown",
+    isbn: "9780062316097",
+    publishedDate: "2014",
+    pages: 443
+  },
+  {
+    id: 6,
+    title: "Educated: A Memoir",
+    author: "Tara Westover",
+    description: "A memoir about a young girl who leaves her survivalist family and goes on to earn a PhD from Cambridge University.",
+    price: 14.99,
+    coverImage: "/api/placeholder/200/300", // Replace with actual image path
+    category: "Memoir",
+    condition: "Like New",
+    seller: "Emily Davis",
+    isbn: "9780399590504",
+    publishedDate: "2018",
+    pages: 334
+  }
+];
+
+export default books;
