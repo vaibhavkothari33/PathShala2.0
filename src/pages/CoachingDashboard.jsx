@@ -626,56 +626,7 @@ const CoachingDashboard = () => {
         fetchMessages();
       }
     }, [coaching, user]);
-    
-    return (
-      <div className="bg-white rounded-lg shadow mb-8">
-        <div className="flex items-center justify-between p-6 border-b">
-          <h2 className="text-xl font-semibold text-gray-900">Recent Messages</h2>
-          <Link 
-            to="/coaching/messages" 
-            className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
-          >
-            View all
-          </Link>
-        </div>
-        
-        <div className="p-6">
-          {loading ? (
-            <div className="text-center py-4">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
-              <p className="mt-2 text-gray-500 text-sm">Loading messages...</p>
-            </div>
-          ) : messages.length > 0 ? (
-            <div className="divide-y">
-              {messages.slice(0, 3).map((message) => (
-                <div key={message.$id} className="py-4">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-sm text-gray-500">
-                        To: <span className="font-medium">{message.recipient_type === 'student' ? 'Student' : 'Coaching'}</span>
-                      </p>
-                      <p className="mt-1 text-gray-700">{message.content}</p>
-                      <p className="text-xs text-gray-400 mt-1">
-                        {new Date(message.createdAt).toLocaleString()}
-                      </p>
-                    </div>
-                    <span className="px-2 py-1 bg-green-100 text-green-600 rounded-full text-xs">
-                      Sent
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8 text-gray-500">
-              <MessageCircle className="h-12 w-12 mx-auto mb-4 text-gray-400" />
-              <p>No messages yet</p>
-              <p className="text-sm text-gray-400 mt-1">Messages you send to students will appear here</p>
-            </div>
-          )}
-        </div>
-      </div>
-    );
+
   };
 
   // Show loading state

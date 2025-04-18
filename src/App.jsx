@@ -18,6 +18,9 @@ import { validateConfig } from './config/appwrite';
 import NotFound from './pages/NotFound';
 import RazorpayPayment from './pages/RazorpayPayment'; // ✅ Correct import
 import HeroSection from './pages/Herosection';
+import Settings from './pages/Settings';
+import Profile from './pages/Profile';
+
 function App() {
     const [configError, setConfigError] = useState(null);
 
@@ -75,6 +78,8 @@ function App() {
                             <Route path="/register" element={<Register />} />
                             <Route path="/auth/callback" element={<AuthCallback />} />
                             <Route path="/hero" element={<HeroSection />} />
+                            <Route path="/settings" element={<Settings />} />
+                            <Route path="/profile" element={<Profile />} />
 
                             <Route
                                 path="/student/dashboard"
@@ -92,7 +97,7 @@ function App() {
                                     </ProtectedRoute>
                                 }
                             />
-                            <Route path="/payment" element={<RazorpayPayment />} /> {/* ✅ Corrected */}
+                            <Route path="/payment" element={<RazorpayPayment />} /> 
                             <Route
                                 path="/coaching/registration"
                                 element={
