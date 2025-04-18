@@ -16,6 +16,10 @@ import ErrorBoundary from './components/ErrorBoundary';
 import AcademicBot from './pages/AcademicBot';
 import { useState, useEffect } from 'react';
 import { validateConfig } from './config/appwrite';
+
+import Buysell from './pages/Buysell';
+import BookForm from './pages/sellbooks/BookForm';
+
 // import Routes from './Routes';
 
 function App() {
@@ -76,6 +80,7 @@ function App() {
                             <Route path="/login" element={<Login />} />
                             <Route path="/register" element={<Register />} />
                             <Route path="/auth/callback" element={<AuthCallback />} />
+                            {/* <Route path="/buysell" element={<Buysell />} /> */}
                             <Route
                                 path="/student/dashboard"
                                 element={
@@ -84,14 +89,10 @@ function App() {
                                     </ProtectedRoute>
                                 }
                             />
-                            <Route
-                                path="/coaching/dashboard"
-                                element={
-                                    <ProtectedRoute>
-                                        <CoachingDashboard />
-                                    </ProtectedRoute>
-                                }
-                            />
+                             <Route path="/buysell" element={<Buysell />} />
+                            <Route path="/bookform" element={<BookForm />} />
+                            
+                            
                             <Route
                                 path="/coaching/registration"
                                 element={
