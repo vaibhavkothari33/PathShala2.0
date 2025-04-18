@@ -22,10 +22,10 @@ const Buy = () => {
   // Price range options
   const priceRanges = {
     'All': { min: 0, max: Infinity },
-    'Under ₹10': { min: 0, max: 10 },
-    '₹10 - ₹20': { min: 10, max: 20 },
-    '₹20 - ₹30': { min: 20, max: 30 },
-    'Over ₹30': { min: 30, max: Infinity }
+    'Under ₹100': { min: 0, max: 100 },
+    '₹100 - ₹200': { min: 100, max: 200 },
+    '₹200 - ₹300': { min: 200, max: 300 },
+    'Over ₹300': { min: 300, max: Infinity }
   };
 
   // Sort options
